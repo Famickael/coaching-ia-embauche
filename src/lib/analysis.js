@@ -1,0 +1,229 @@
+/* Analyse descriptive d'une prise.
+   Entrée : segments horodatés de la transcription [{start, end, text}], durée, poste visé,
+   mesures de regard issues de gaze.js (facultatif).
+   Sortie : { synthese, dimensions: [{id, titre, type: "appui"|"explorer", observation, conseil, t}], metrics }.
+
+   Règles de conception (AI Act art. 5(1)(f), partis pris pédagogiques) :
+   - uniquement des faits observables (débit, mots d'appui, pauses, structure, regard) ;
+   - aucune note, aucun score, aucune déduction d'émotion ou de trait de personnalité ;
+   - points d'appui présentés avant les points à explorer ;
+   - repères présentés comme des conventions, avec une formulation positive.
+
+   Un modèle de langage peut reformuler le retour (VITE_LLM_ENDPOINT). Sa sortie passe par
+   le même filtre que l'analyse locale ; en cas d'échec ou de rejet, l'analyse locale est utilisée. */
+
+const FILLERS = ["euh", "heu", "hum", "ben", "bah", "en fait", "du coup", "genre", "voilà", "quoi", "tu vois", "vous voyez", "bon"];
+const CONCRETE = /\b(\d+|un|deux|trois|quatre|cinq|six|dix)\s+(ans?|années?|mois|semaines?|clients?|personnes?|projets?|équipes?)\b|\bpar exemple\b|\bquand j'(ai|étais)\b|\blors de\b|\bchez\b/i;
+const CLOSING = /\b(c'est pour(quoi| ça)|en résumé|pour conclure|voilà pourquoi|c'est la raison|donc je)\b/i;
+
+/* Termes interdits dans un retour : états émotionnels ou psychologiques inférés. */
+const FORBIDDEN = /\b(stress|stressé|anxi|angoiss|nerv|émotion|emotion|peur|timide|timidité|confiance en (soi|vous)|manque de confiance|mal à l'aise|à l'aise|sincère|sincérité|motivé|motivation apparente|personnalité|introverti|extraverti|sourire|souriant|enthousias|triste|joie|colère|frustr)\w*/i;
+
+const fmt = s => `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, "0")}`;
+
+function words(text) {
+  return (text.toLowerCase().match(/[a-zàâäçéèêëîïôöûùüÿœ'’-]+/gi) || []);
+}
+
+export function computeMetrics(segments, duration) {
+  const text = segments.map(s => s.text).join(" ").replace(/\s+/g, " ").trim();
+  const w = words(text);
+  const speakingTime = segments.reduce((a, s) => a + Math.max(0, (s.end ?? s.start) - s.start), 0) || duration;
+  const wpm = speakingTime > 5 ? Math.round((w.length / speakingTime) * 60) : null;
+
+  // mots d'appui, avec le premier horodatage d'apparition
+  const lower = " " + text.toLowerCase().replace(/[.,;!?]/g, " ") + " ";
+  const fillers = {};
+  for (const f of FILLERS) {
+    const n = (lower.match(new RegExp(`\\s${f}\\s`, "g")) || []).length;
+    if (n) fillers[f] = n;
+  }
+  const fillerTotal = Object.values(fillers).reduce((a, b) => a + b, 0);
+  const firstFillerSeg = segments.find(s => FILLERS.some(f => (" " + s.text.toLowerCase() + " ").includes(` ${f} `)));
+
+  // pauses : silences de plus de 2 s entre segments
+  const pauses = [];
+  for (let i = 1; i < segments.length; i++) {
+    const gap = segments[i].start - (segments[i - 1].end ?? segments[i - 1].start);
+    if (gap >= 2) pauses.push({ t: segments[i - 1].end ?? segments[i - 1].start, d: gap });
+  }
+
+  // phrases
+  const sentences = text.split(/(?<=[.!?])\s+/).filter(x => words(x).length > 0);
+  const avgSentence = sentences.length ? Math.round(w.length / sentences.length) : w.length;
+
+  // répétitions de mots pleins (>= 5 lettres, >= 4 occurrences)
+  const freq = {};
+  w.filter(x => x.length >= 5).forEach(x => { freq[x] = (freq[x] || 0) + 1; });
+  const repeated = Object.entries(freq).filter(([, n]) => n >= 4).sort((a, b) => b[1] - a[1]).slice(0, 3);
+
+  const concreteSeg = segments.find(s => CONCRETE.test(s.text));
+  const lastSeg = segments[segments.length - 1];
+  const hasClosing = segments.slice(-2).some(s => CLOSING.test(s.text));
+
+  return {
+    wordCount: w.length, duration: Math.round(duration), speakingTime: Math.round(speakingTime), wpm,
+    fillers, fillerTotal, firstFillerAt: firstFillerSeg?.start ?? null,
+    pauses, sentences: sentences.length, avgSentence, repeated,
+    concreteAt: concreteSeg ? concreteSeg.start : null, concreteText: concreteSeg?.text?.trim().replace(/[.!?…]+$/, "") || null,
+    hasClosing, closingAt: lastSeg ? lastSeg.start : null,
+  };
+}
+
+export function localAnalysis({ segments, duration, gaze }) {
+  const m = computeMetrics(segments, duration);
+  const dims = [];
+
+  if (m.wordCount < 15) {
+    return {
+      metrics: m,
+      synthese: "La prise est très courte ou la voix a été peu captée. Vous pouvez recommencer en vous rapprochant du micro, rien n'est enregistré sans votre accord.",
+      dimensions: [{ id: "captation", titre: "Captation du son", type: "explorer", t: 0,
+        observation: `${m.wordCount} mots ont été reconnus sur ${fmt(m.duration)}.`,
+        conseil: "Vérifiez que le micro est autorisé et parlez à environ 50 cm de l'écran." }],
+    };
+  }
+
+  // Débit
+  if (m.wpm) {
+    const inRange = m.wpm >= 110 && m.wpm <= 170;
+    dims.push({
+      id: "debit", titre: "Rythme de parole", type: inRange ? "appui" : "explorer", t: 0,
+      observation: `Environ ${m.wpm} mots par minute sur ${fmt(m.speakingTime)} de parole.`,
+      conseil: inRange
+        ? "Ce rythme laisse à l'interlocuteur le temps de suivre. Vous pouvez le garder."
+        : m.wpm > 170
+          ? "En entretien, un rythme autour de 120 à 160 mots par minute est souvent plus facile à suivre. Une respiration entre deux idées suffit souvent."
+          : "Le rythme est posé. Si vous le souhaitez, vous pouvez enchaîner un peu plus vite les phrases d'une même idée.",
+    });
+  }
+
+  // Pauses
+  if (m.pauses.length) {
+    const longest = m.pauses.reduce((a, b) => (b.d > a.d ? b : a));
+    dims.push({
+      id: "pauses", titre: "Pauses", type: m.pauses.length <= 3 ? "appui" : "explorer", t: longest.t,
+      observation: `${m.pauses.length} pause${m.pauses.length > 1 ? "s" : ""} de plus de 2 secondes, la plus longue à ${fmt(longest.t)} (${Math.round(longest.d)} s).`,
+      conseil: m.pauses.length <= 3
+        ? "Quelques pauses rythment le propos et laissent le temps de réfléchir. C'est une ressource."
+        : "Les pauses sont nombreuses. Préparer deux ou trois mots-clés par question peut aider à enchaîner.",
+    });
+  }
+
+  // Exemples concrets
+  if (m.concreteAt != null) {
+    dims.push({
+      id: "exemples", titre: "Exemples concrets", type: "appui", t: m.concreteAt,
+      observation: `Vous appuyez votre propos sur un élément précis : « ${m.concreteText.slice(0, 90)}${m.concreteText.length > 90 ? "…" : ""} ».`,
+      conseil: "Les exemples datés ou chiffrés rendent une réponse plus facile à retenir pour un recruteur.",
+    });
+  } else {
+    dims.push({
+      id: "exemples", titre: "Exemples concrets", type: "explorer", t: Math.min(10, m.duration / 2),
+      observation: "Aucune situation datée ou chiffrée n'a été repérée dans la réponse.",
+      conseil: "Vous pouvez ajouter une situation vécue : où, quand, ce que vous avez fait, ce que cela a donné.",
+    });
+  }
+
+  // Mots d'appui
+  const perMin = m.speakingTime ? (m.fillerTotal / m.speakingTime) * 60 : 0;
+  if (m.fillerTotal) {
+    const top = Object.entries(m.fillers).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([f, n]) => `« ${f} » (${n})`).join(", ");
+    dims.push({
+      id: "appui", titre: "Mots d'appui", type: perMin <= 4 ? "appui" : "explorer", t: m.firstFillerAt ?? 0,
+      observation: `${m.fillerTotal} mot${m.fillerTotal > 1 ? "s" : ""} d'appui repéré${m.fillerTotal > 1 ? "s" : ""} : ${top}.`,
+      conseil: perMin <= 4
+        ? "Leur présence reste discrète et ne gêne pas la compréhension."
+        : "C'est très courant à l'oral. Marquer un temps de silence à la place, surtout en début de phrase, suffit souvent.",
+    });
+  }
+
+  // Structure
+  dims.push({
+    id: "structure", titre: "Structure du propos", type: m.hasClosing && m.avgSentence <= 30 ? "appui" : "explorer", t: m.closingAt ?? 0,
+    observation: `${m.sentences} phrase${m.sentences > 1 ? "s" : ""}, ${m.avgSentence} mots en moyenne par phrase${m.hasClosing ? ", avec une phrase de conclusion" : ", sans phrase de conclusion repérée"}.`,
+    conseil: m.hasClosing
+      ? (m.avgSentence <= 30 ? "La réponse se termine par une idée de synthèse, ce qui facilite la relance du recruteur." : "Des phrases plus courtes rendraient la conclusion encore plus nette.")
+      : "Selon le poste, terminer par une phrase de synthèse (« c'est pour cela que ce poste me correspond ») aide à clore la réponse.",
+  });
+
+  // Répétitions
+  if (m.repeated.length) {
+    dims.push({
+      id: "repetitions", titre: "Vocabulaire", type: "explorer", t: 0,
+      observation: `Mots revenus souvent : ${m.repeated.map(([x, n]) => `« ${x} » (${n})`).join(", ")}.`,
+      conseil: "Vous pouvez préparer un ou deux synonymes pour varier, si vous le souhaitez.",
+    });
+  }
+
+  // Regard (faits issus du suivi local du visage, sans interprétation)
+  if (gaze && gaze.samples > 10) {
+    const down = Math.round(gaze.downRatio * 100), side = Math.round(gaze.sideRatio * 100), out = Math.round(gaze.absentRatio * 100);
+    const toward = Math.max(0, 100 - down - side - out);
+    dims.push({
+      id: "regard", titre: "Direction du regard", type: toward >= 60 ? "appui" : "explorer", t: gaze.longestAwayAt ?? 0,
+      observation: `Regard orienté vers l'écran environ ${toward} % du temps, vers le bas ${down} %, sur le côté ${side} %${out ? `, visage hors champ ${out} %` : ""}.`,
+      conseil: toward >= 60
+        ? "Le regard est majoritairement tourné vers l'interlocuteur. En visioconférence, regarder la caméra plutôt que l'écran renforce encore ce repère."
+        : "Regarder ailleurs pour réfléchir est naturel. Selon le poste visé, vous pouvez choisir de revenir vers la caméra en fin de phrase.",
+    });
+  }
+
+  dims.sort((a, b) => (a.type === b.type ? a.t - b.t : a.type === "appui" ? -1 : 1));
+  const appuis = dims.filter(d => d.type === "appui").map(d => d.titre.toLowerCase());
+  const synthese = appuis.length
+    ? `Points d'appui repérés : ${appuis.join(", ")}. Les autres repères sont des pistes à explorer si vous le souhaitez.`
+    : "Les repères ci-dessous décrivent votre prise. Ce sont des pistes à explorer, à votre rythme.";
+
+  return { metrics: m, synthese, dimensions: dims };
+}
+
+/* Vérifie qu'un retour (local ou modèle de langage) ne contient ni note ni inférence émotionnelle. */
+export function isCompliant(a) {
+  if (!a || typeof a.synthese !== "string" || !Array.isArray(a.dimensions)) return false;
+  const all = [a.synthese, ...a.dimensions.flatMap(d => [d.titre, d.observation, d.conseil])].join(" ");
+  if (FORBIDDEN.test(all)) return false;
+  if (/\b\d+\s*\/\s*(10|20|100)\b|\bnote\s*:|\bscore\b/i.test(all)) return false;
+  return a.dimensions.every(d => d.id && d.titre && (d.type === "appui" || d.type === "explorer") && typeof d.t === "number");
+}
+
+/* Reformulation facultative par un modèle de langage, via un proxy compatible avec l'API
+   « chat completions » (par exemple Mistral). La clé d'API reste côté serveur, jamais dans le navigateur. */
+export async function analyze({ segments, duration, gaze, poste, question }) {
+  const local = localAnalysis({ segments, duration, gaze });
+  const endpoint = import.meta.env.VITE_LLM_ENDPOINT;
+  if (!endpoint || local.metrics.wordCount < 15) return { ...local, source: "local" };
+
+  const prompt = `Tu aides une personne accompagnée vers l'emploi à préparer un entretien (poste visé : ${poste || "non précisé"}).
+Question posée : « ${question} ».
+Voici sa réponse transcrite et des mesures factuelles déjà calculées. Reformule le retour en français simple, chaleureux, au vouvoiement.
+Règles strictes : décrire des faits observables uniquement ; aucune note, aucun score ; ne déduire AUCUNE émotion, aucun état psychologique, aucun trait de personnalité (interdit par l'article 5(1)(f) du règlement européen sur l'IA) ; présenter les repères comme des conventions qui varient selon les secteurs ; commencer par les points d'appui.
+Conserve exactement les identifiants "id", les types et les valeurs "t" des dimensions fournies. Tu peux améliorer "observation" et "conseil" et ajouter au plus une dimension sur le contenu de la réponse (id "contenu").
+Réponds uniquement en JSON : {"synthese": "...", "dimensions": [{"id","titre","type","observation","conseil","t"}]}.
+TRANSCRIPTION : """${segments.map(s => s.text).join(" ")}"""
+MESURES ET RETOUR LOCAL : ${JSON.stringify({ metrics: local.metrics, dimensions: local.dimensions })}`;
+
+  try {
+    const res = await fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: import.meta.env.VITE_LLM_MODEL || "mistral-small-latest",
+        messages: [{ role: "user", content: prompt }],
+        temperature: 0.2,
+        response_format: { type: "json_object" },
+      }),
+    });
+    if (!res.ok) throw new Error(res.status);
+    const data = await res.json();
+    const text = data.choices?.[0]?.message?.content ?? "";
+    const parsed = JSON.parse(text.replace(/```json|```/g, "").trim());
+    if (!isCompliant(parsed)) throw new Error("retour non conforme");
+    return { ...parsed, metrics: local.metrics, source: "llm" };
+  } catch (e) {
+    console.warn("[analyse] modèle de langage indisponible ou non conforme, analyse locale utilisée", e);
+    return { ...local, source: "local" };
+  }
+}
+
+export { fmt };
