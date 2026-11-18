@@ -16,7 +16,7 @@ export function useVideoUrl(take) {
   return url;
 }
 
-/* Marqueurs : observations de l'assistant + notes horodatées du conseiller. */
+/* Marqueurs : observations de l'assistant + notes horodatées du coach. */
 export function markersOf(take) {
   const dims = (take.analysis?.dimensions || []).map(d => ({ id: d.id, t: d.t, kind: "ia", color: toneOf(d), label: d.titre }));
   const notes = (take.report?.notes || []).map(n => ({ id: n.id, t: n.t, kind: "note", color: T.primary, label: n.text }));
@@ -69,7 +69,7 @@ export function Player({ take, url, markers, active, onActive, playerRef }) {
         </div>
         <div style={{ display: "flex", justifyContent: "space-between", font: `500 11px ${FM}`, color: T.muted, marginBottom: 10 }}><span>{fmt(cur)}</span><span>{fmt(dur)}</span></div>
         <div style={{ display: "flex", gap: 14, flexWrap: "wrap", font: `400 12px ${FB}`, color: T.body }}>
-          <Dot c={T.orange} t="Point d'appui" /><Dot c={T.violet} t="À explorer" /><Dot c={T.primary} t="Note du conseiller" square />
+          <Dot c={T.orange} t="Point d'appui" /><Dot c={T.violet} t="À explorer" /><Dot c={T.primary} t="Note du coach" square />
         </div>
       </div>
     </Card>
@@ -77,7 +77,7 @@ export function Player({ take, url, markers, active, onActive, playerRef }) {
 }
 const Dot = ({ c, t, square }) => <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><span style={{ width: 9, height: 9, borderRadius: square ? 2 : "50%", background: c }} />{t}</span>;
 
-/* Carte d'une observation de l'assistant (avec le commentaire du conseiller s'il existe). */
+/* Carte d'une observation de l'assistant (avec le commentaire du coach s'il existe). */
 export function DimCard({ d, comment, active, onClick, compact }) {
   const c = toneOf(d);
   return (
@@ -94,7 +94,7 @@ export function DimCard({ d, comment, active, onClick, compact }) {
       <div style={{ font: `400 13px/1.55 ${FB}`, color: T.body, background: T.bg, borderRadius: RAD.sm, padding: "9px 12px" }}>{d.conseil}</div>
       {comment && (
         <div style={{ marginTop: 8, display: "flex", gap: 8, font: `400 13px/1.55 ${FB}`, color: T.navy, background: `${T.primary}0D`, borderLeft: `3px solid ${T.primary}`, borderRadius: RAD.xs, padding: "9px 12px" }}>
-          <Icon d={I.note} s={15} c={T.primary} /><span><strong>Votre conseiller :</strong> {comment}</span>
+          <Icon d={I.note} s={15} c={T.primary} /><span><strong>Votre coach :</strong> {comment}</span>
         </div>
       )}
     </div>
@@ -113,8 +113,8 @@ export function ReportBody({ take, mode, counselorName }) {
 
   const intro = rep && (
     <Card style={{ marginBottom: 14, borderLeft: `4px solid ${T.primary}` }}>
-      <div style={{ font: `700 13px ${FB}`, color: T.primary, marginBottom: 6 }}>Le mot de {counselorName || "votre conseiller"}</div>
-      <div style={{ font: `400 15px/1.65 ${FB}`, color: T.navy, whiteSpace: "pre-wrap" }}>{rep.intro || "Votre conseiller a relu votre prise."}</div>
+      <div style={{ font: `700 13px ${FB}`, color: T.primary, marginBottom: 6 }}>Le mot de {counselorName || "votre coach"}</div>
+      <div style={{ font: `400 15px/1.65 ${FB}`, color: T.navy, whiteSpace: "pre-wrap" }}>{rep.intro || "Votre coach a relu votre prise."}</div>
     </Card>
   );
   const notes = rep?.notes?.length > 0 && (

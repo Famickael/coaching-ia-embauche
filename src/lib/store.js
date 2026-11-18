@@ -21,6 +21,18 @@ function read() {
 
 let state = read();
 
+/* Parcours d'essai : code générique pour découvrir l'outil sans passer par la création d'un parcours.
+   Recréé au chargement s'il a été supprimé. À retirer en production (voir README). */
+export const TRIAL_CODE = "REPETE";
+export const TRIAL_COACH = "Coach d'essai";
+if (!state.parcours[TRIAL_CODE]) {
+  state = { ...state, parcours: { ...state.parcours, [TRIAL_CODE]: {
+    code: TRIAL_CODE, prenom: "Camille", poste: "agent d'accueil", warmup: true, counselor: "",
+    trial: true, createdAt: new Date().toISOString(), openedAt: null, consent: null,
+  } } };
+  try { localStorage.setItem(KEY, JSON.stringify(state)); } catch { /* mode privé */ }
+}
+
 function write(next) {
   state = next;
   try { localStorage.setItem(KEY, JSON.stringify(next)); } catch { /* quota ou mode privé */ }
@@ -34,7 +46,7 @@ export function useStore() {
   useEffect(() => {
     listeners.add(setS);
     const onStorage = e => { if (e.key === KEY) { state = read(); listeners.forEach(fn => fn(state)); } };
-    window.addEventListener("storage", onStorage); // synchronise deux onglets (bénéficiaire / conseiller)
+    window.addEventListener("storage", onStorage); // synchronise deux onglets (bénéficiaire / coach)
     return () => { listeners.delete(setS); window.removeEventListener("storage", onStorage); };
   }, []);
   return s;
@@ -53,7 +65,7 @@ function newCode() {
   return c;
 }
 
-/* ── Conseiller ── */
+/* ── Coach ── */
 export function setCounselor(name) {
   write({ ...state, counselor: { name: name.trim(), since: new Date().toISOString() } });
 }
@@ -90,7 +102,7 @@ export async function deleteParcours(code) {
   write({ ...state, parcours: nextParcours, takes: nextTakes });
 }
 
-/* Retrait du consentement : supprime prises et vidéos, garde le parcours (accès conseiller). */
+/* Retrait du consentement : supprime prises et vidéos, garde le parcours (accès coach). */
 export async function withdrawConsent(code) {
   const takes = Object.values(state.takes).filter(t => t.code === code);
   for (const t of takes) await deleteVideo(t.id);

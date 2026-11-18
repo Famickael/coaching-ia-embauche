@@ -1,10 +1,23 @@
 # La Répét' · coaching IA à l'entretien d'embauche
 
-Prototype fonctionnel d'un dispositif d'entraînement à l'entretien d'embauche, assisté par une IA puis par un conseiller. Il a été conçu pour une prestation d'accompagnement vers l'emploi de type « Valoriser son image pro » (France Travail).
+Prototype fonctionnel d'un dispositif d'entraînement à l'entretien d'embauche, assisté par une IA puis par un coach. Il a été conçu pour les prestations d'accompagnement vers l'emploi qui préparent aux entretiens et à la présentation de soi.
 
-Le principe : le conseiller crée un parcours et transmet un code (ou un lien). La personne accompagnée s'entraîne seule, chez elle, autant de fois qu'elle le souhaite. Elle reçoit un retour qui **décrit sans noter**, choisit de se revoir en vidéo ou de lire un rapport écrit, puis décide d'envoyer sa prise au conseiller. Le conseiller annote des moments précis de la vidéo, commente les observations de l'assistant et renvoie un rapport, qui sert de base au débriefing en atelier.
+Le principe : le coach crée un parcours et transmet un code (ou un lien). La personne accompagnée s'entraîne seule, chez elle, autant de fois qu'elle le souhaite. Elle reçoit un retour qui **décrit sans noter**, choisit de se revoir en vidéo ou de lire un rapport écrit, puis décide d'envoyer sa prise au coach. Le coach annote des moments précis de la vidéo, commente les observations de l'assistant et renvoie un rapport, qui sert de base au débriefing en atelier.
 
 > Le logo de l'organisme partenaire est un **logo fictif** (« Votre organisme », marque blanche), défini dans `src/ui.jsx` (`TSMark`, `TSLogo`).
+
+---
+
+## Essayer
+
+| Expérience | Lien | Accès |
+|---|---|---|
+| **Côté bénéficiaire** | https://famickael.github.io/coaching-ia-embauche/#/s/REPETE | code d'essai **`REPETE`**, déjà rempli dans le lien |
+| **Côté coach** | https://famickael.github.io/coaching-ia-embauche/#/coach | identification automatique avec le nom « Coach d'essai » |
+
+Pour voir la boucle complète, ouvre les deux liens **dans le même navigateur** (deux onglets) : enregistre une prise côté bénéficiaire et envoie-la, elle apparaît « À relire » côté coach ; annote-la et envoie le rapport, il apparaît dans l'espace bénéficiaire. Le code `REPETE` est aussi pré-rempli dans l'écran de saisie du code, et le nom « Coach d'essai » dans l'écran d'identification du coach.
+
+Le parcours d'essai (prénom « Camille », poste « agent d'accueil ») est créé automatiquement au premier chargement, et recréé s'il est supprimé (`TRIAL_CODE` et `TRIAL_COACH` dans `src/lib/store.js`). Il ne contient aucune prise fictive. À retirer en production, avec l'accès automatique `#/coach` (`isCoachHash` dans `src/App.jsx`).
 
 ---
 
@@ -20,12 +33,12 @@ Publication : le workflow `.github/workflows/pages.yml` construit et publie le s
 
 Parcours de prise en main :
 
-1. Onglet **Conseiller** : saisir son nom, puis « Nouveau parcours ». Un code de 6 caractères et un lien `…/#/s/CODE` sont générés.
+1. Onglet **Coach** (ou lien `#/coach`) : saisir son nom, puis « Nouveau parcours ». Un code de 6 caractères et un lien `…/#/s/CODE` sont générés.
 2. Ouvrir le lien (ou onglet **Bénéficiaire** puis saisir le code) : consentement, espace personnel, échauffement facultatif, choix d'une question, enregistrement, analyse, rapport, envoi.
-3. Retour onglet **Conseiller** : la prise apparaît « À relire ». Relecture, notes horodatées, commentaires, envoi du rapport.
+3. Retour onglet **Coach** : la prise apparaît « À relire ». Relecture, notes horodatées, commentaires, envoi du rapport.
 4. Côté bénéficiaire, le rapport est visible dans l'espace, avec le même code.
 
-**Important, mode local :** toutes les données sont stockées dans le navigateur (voir « Architecture »). Le conseiller et le bénéficiaire doivent donc utiliser le **même navigateur sur le même appareil** pour que la boucle fonctionne (par exemple deux onglets, synchronisés automatiquement). Un backend est nécessaire pour un usage réel à distance : voir « Passage en production ».
+**Important, mode local :** toutes les données sont stockées dans le navigateur (voir « Architecture »). Le coach et le bénéficiaire doivent donc utiliser le **même navigateur sur le même appareil** pour que la boucle fonctionne (par exemple deux onglets, synchronisés automatiquement). Un backend est nécessaire pour un usage réel à distance : voir « Passage en production ».
 
 Au premier enregistrement analysé, le navigateur télécharge le modèle de transcription Whisper (environ 80 Mo, mis en cache ensuite) depuis Hugging Face, et le modèle de suivi du visage MediaPipe (environ 4 Mo) depuis Google. Aucune donnée personnelle n'est envoyée lors de ces téléchargements. En production, ces fichiers doivent être auto-hébergés (variables `VITE_MODELS_BASE_URL`, `VITE_MEDIAPIPE_WASM`, `VITE_FACE_MODEL`).
 
@@ -46,9 +59,9 @@ Au premier enregistrement analysé, le navigateur télécharge le modèle de tra
 | Reformulation facultative par un modèle de langage | `analyze()` via `VITE_LLM_ENDPOINT`, sortie filtrée par `isCompliant()`, repli sur l'analyse locale |
 | Choix rapport écrit ou relecture vidéo | `Choose`, `ReportBody` (`Report.jsx`) |
 | Repères cliquables sur la barre de lecture (repère ↔ moment) | `Player` (`Report.jsx`) |
-| Partage volontaire prise par prise, avec un mot au conseiller | `Share` |
-| Relecture conseiller : notes horodatées, commentaires par observation, mot d'introduction, brouillon automatique | `Review` (`Counselor.jsx`) |
-| Rapport final IA + conseiller, renvoyable après modification | `take.report` |
+| Partage volontaire prise par prise, avec un mot au coach | `Share` |
+| Relecture coach : notes horodatées, commentaires par observation, mot d'introduction, brouillon automatique | `Review` (`Counselor.jsx`) |
+| Rapport final IA + coach, renvoyable après modification | `take.report` |
 | Réentraînement illimité, y compris après le rapport | espace bénéficiaire |
 | Suppression d'une prise, d'un parcours, de toutes ses données | `deleteTake`, `deleteParcours`, `withdrawConsent` |
 | Indicateurs agrégés non stigmatisants | `List` (`Counselor.jsx`) : prises à relire, parcours, rapports, taux de réentraînement, délai moyen de relecture |
@@ -67,7 +80,7 @@ src/
   ui.jsx              design system v2 : jetons (couleurs, dégradés, rayons, ombres), logos, Btn, Card, Tag, Icon, Rail, GradHead
   legal.jsx           modales : cycle de vie de la vidéo, émotions, CGU, notice RGPD
   Beneficiary.jsx     espace bénéficiaire : code, consentement, espace, échauffement, question, enregistrement, traitement, rapport, partage
-  Counselor.jsx       espace conseiller : identification locale, liste et indicateurs, création de parcours, détail, relecture
+  Counselor.jsx       espace coach : identification locale, liste et indicateurs, création de parcours, détail, relecture
   Recorder.jsx        enregistreur caméra/micro + déclenchement du suivi du regard
   Report.jsx          lecteur avec repères, cartes d'observation, corps du rapport (partagé par les deux espaces)
   lib/
@@ -93,7 +106,7 @@ state = {
   takes:    { [id]:   { id, code, question, duration, transcript, segments: [{start,end,text}],
                         gaze, analysis: { synthese, dimensions: [{id,titre,type,observation,conseil,t}], metrics, source },
                         hasVideo, mime, createdAt, shared, sharedAt, note,
-                        draft:  { intro, comments, notes } | null,               // brouillon conseiller
+                        draft:  { intro, comments, notes } | null,               // brouillon coach
                         report: { intro, comments: {dimId: texte}, notes: [{id,t,text}], sentAt, by } | null } }
 }
 ```
@@ -121,9 +134,9 @@ Ces règles traduisent le cadre réglementaire (AI Act, RGPD) et les partis pris
 2. **Décrire, jamais noter.** Pas de score, de note, de classement ni de jauge de performance.
 3. **Points d'appui avant points à explorer**, formulation positive, repères présentés comme des conventions de secteur.
 4. **La vidéo reste sur l'appareil** tant que la personne ne décide pas de l'envoyer, prise par prise. Seul du texte peut partir vers un modèle de langage.
-5. **Supervision humaine** : rien n'arrive au bénéficiaire de la part du conseiller sans envoi explicite ; le conseiller peut nuancer ou contredire l'assistant.
+5. **Supervision humaine** : rien n'arrive au bénéficiaire de la part du coach sans envoi explicite ; le coach peut nuancer ou contredire l'assistant.
 6. **Choix du mode de restitution** (rapport écrit ou vidéo) et **échauffement sans analyse**.
-7. **Indicateurs agrégés uniquement**, aucune mesure de performance individuelle (ni bénéficiaire, ni conseiller).
+7. **Indicateurs agrégés uniquement**, aucune mesure de performance individuelle (ni bénéficiaire, ni coach).
 8. **Minimisation** : prénom et initiale, poste visé ; aucun identifiant administratif ni adresse électronique.
 
 Couleurs (design system v2) : bleu `#386097` dominant (structure, navigation), bleu clair `#3893CD` secondaire, orange `#C25700` pour l'action et les points d'appui, violet `#5C4BB9` réservé à l'IA et aux points à explorer, vert `#41C77A` pour la validation. Typographies : Manrope (titres), Inter (texte), JetBrains Mono (chiffres).
@@ -135,7 +148,7 @@ Couleurs (design system v2) : bleu `#386097` dominant (structure, navigation), b
 Par ordre de priorité :
 
 1. **Backend et stockage serveur.** Remplacer `src/lib/store.js` par une API (mêmes signatures : `createParcours`, `findParcours`, `createTake`, `updateTake`, `deleteTake`, `withdrawConsent`, `loadVideoUrl`…). Hébergement en France, chiffrement au repos et en transit. La vidéo ne doit être téléversée qu'au moment de `Share` (aujourd'hui `updateTake(..., { shared: true })`) ; avant, elle reste en IndexedDB sur l'appareil.
-2. **Authentification forte des conseillers** (aujourd'hui `Identify` enregistre un simple nom), cloisonnement par site et par conseiller, rôles référent et administrateur.
+2. **Authentification forte des coachs** (aujourd'hui `Identify` enregistre un simple nom), cloisonnement par site et par coach, rôles référent et administrateur.
 3. **Expiration et révocation des codes**, limitation des tentatives de saisie.
 4. **Durées de conservation et purge automatique**, journalisation des accès.
 5. **Auto-hébergement des modèles** (Whisper, MediaPipe) et, si besoin, proxy serveur pour la transcription et la reformulation (modèles hébergés en France).

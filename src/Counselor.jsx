@@ -1,6 +1,6 @@
 import React, { useMemo, useRef, useState } from "react";
 import { T, GRAD_SOFT, FD, FB, FM, RAD, SH, Card, Tag, Btn, Back, Icon, I } from "./ui.jsx";
-import { useStore, setCounselor, createParcours, deleteParcours, takesOf, updateTake, parcoursStatus } from "./lib/store.js";
+import { useStore, TRIAL_COACH, setCounselor, createParcours, deleteParcours, takesOf, updateTake, parcoursStatus } from "./lib/store.js";
 import { Player, DimCard, markersOf, useVideoUrl } from "./Report.jsx";
 import { fmt } from "./lib/analysis.js";
 
@@ -17,7 +17,7 @@ export default function Counselor({ setRole }) {
     <main style={{ maxWidth: 1120, margin: "0 auto", padding: "36px 24px 64px" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24, flexWrap: "wrap", gap: 12 }} className="noprint">
         <div>
-          <h1 style={{ font: `800 27px ${FD}`, margin: "0 0 3px", letterSpacing: "-.025em", color: T.navy }}>Espace conseiller · {s.counselor.name}</h1>
+          <h1 style={{ font: `800 27px ${FD}`, margin: "0 0 3px", letterSpacing: "-.025em", color: T.navy }}>Espace coach · {s.counselor.name}</h1>
           <p style={{ font: `400 14px ${FB}`, color: T.body, margin: 0 }}>Les personnes que vous accompagnez dans le module entretien</p>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
@@ -37,12 +37,12 @@ export default function Counselor({ setRole }) {
 }
 
 function Identify() {
-  const [name, setName] = useState("");
+  const [name, setName] = useState(TRIAL_COACH);
   return (
     <Card pad={32} style={{ maxWidth: 480, margin: "0 auto", boxShadow: SH.sm }}>
-      <Tag tone="primary">Espace conseiller</Tag>
+      <Tag tone="primary">Espace coach</Tag>
       <h1 style={{ font: `800 24px ${FD}`, margin: "12px 0 6px", color: T.navy }}>Comment vous présenter aux bénéficiaires ?</h1>
-      <p style={{ font: `400 14px/1.6 ${FB}`, color: T.body, margin: "0 0 18px" }}>Ce nom apparaît dans leur espace et sur leurs rapports, par exemple « Karim B. ».</p>
+      <p style={{ font: `400 14px/1.6 ${FB}`, color: T.body, margin: "0 0 18px" }}>Ce nom apparaît dans leur espace et sur leurs rapports, par exemple « Camille B. ».</p>
       <form onSubmit={e => { e.preventDefault(); if (name.trim().length >= 2) setCounselor(name); }}>
         <input value={name} onChange={e => setName(e.target.value)} placeholder="Prénom et initiale" style={inp} autoFocus />
         <div style={{ marginTop: 16 }}><Btn kind="primary" full disabled={name.trim().length < 2}>Accéder à mon espace</Btn></div>

@@ -3,22 +3,30 @@ import { T, GRAD, GRAD_MAIN, GRAD_AI, GRAD_SOFT, FD, FB, FM, RAD, SH, sp, RepetM
 import { LegalModal } from "./legal.jsx";
 import Beneficiary from "./Beneficiary.jsx";
 import Counselor from "./Counselor.jsx";
+import { getState, setCounselor, TRIAL_COACH } from "./lib/store.js";
 
 /* La Répét' : coach IA d'entraînement à l'entretien.
-   Rôles : présentation, bénéficiaire (accès par code ou lien #/s/CODE), conseiller. */
+   Rôles : présentation, bénéficiaire (accès par code ou lien #/s/CODE), coach. */
 
 function codeFromHash() {
   const m = location.hash.match(/^#\/s\/([A-Za-z0-9]{6})/);
   return m ? m[1].toUpperCase() : null;
 }
 
+/* Lien direct vers l'espace coach (#/coach) : identification automatique avec le nom d'essai. */
+function isCoachHash() {
+  if (location.hash !== "#/coach") return false;
+  if (!getState().counselor) setCounselor(TRIAL_COACH);
+  return true;
+}
+
 export default function App() {
-  const [role, setRoleState] = useState(() => (codeFromHash() ? "benef" : "home"));
+  const [role, setRoleState] = useState(() => (codeFromHash() ? "benef" : isCoachHash() ? "coach" : "home"));
   const [hashCode, setHashCode] = useState(codeFromHash);
   const [modal, setModal] = useState(null); // "lifecycle" | "cgu" | "rgpd" | "emotion" | null
 
   useEffect(() => {
-    const on = () => { const c = codeFromHash(); setHashCode(c); if (c) setRoleState("benef"); };
+    const on = () => { const c = codeFromHash(); setHashCode(c); if (c) setRoleState("benef"); else if (isCoachHash()) setRoleState("coach"); };
     window.addEventListener("hashchange", on);
     return () => window.removeEventListener("hashchange", on);
   }, []);
@@ -31,7 +39,7 @@ export default function App() {
       <div style={{ flex: 1 }}>
         {role === "home" && <Landing setRole={setRole} setModal={setModal} />}
         {role === "benef" && <Beneficiary key={hashCode || "nocode"} initialCode={hashCode} setModal={setModal} />}
-        {role === "conseiller" && <Counselor setRole={setRole} />}
+        {role === "coach" && <Counselor setRole={setRole} />}
       </div>
       <Footer setModal={setModal} />
       <LegalModal modal={modal} close={() => setModal(null)} />
@@ -40,7 +48,7 @@ export default function App() {
 }
 
 function Nav({ role, setRole, setModal }) {
-  const tabs = [["home", "Présentation"], ["benef", "Bénéficiaire"], ["conseiller", "Conseiller"]];
+  const tabs = [["home", "Présentation"], ["benef", "Bénéficiaire"], ["coach", "Coach"]];
   return (
     <header style={{ position: "sticky", top: 0, zIndex: 50, background: "rgba(248,250,252,.82)", backdropFilter: "blur(14px)", borderBottom: `1px solid ${T.line}` }}>
       <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px", height: 64, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
@@ -82,11 +90,11 @@ function Landing({ setRole, setModal }) {
               Préparez votre entretien,<br /><span style={{ background: GRAD_MAIN, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>sans pression.</span>
             </h1>
             <p style={{ font: `400 19px/1.6 ${FB}`, color: T.body, maxWidth: 520, margin: `0 0 ${sp(8)}px` }}>
-              Entraînez-vous à votre rythme, recevez un retour bienveillant qui <strong style={{ color: T.primary }}>décrit sans noter</strong>, puis échangez avec votre conseiller. Un seul lien, aucun compte à créer.
+              Entraînez-vous à votre rythme, recevez un retour bienveillant qui <strong style={{ color: T.primary }}>décrit sans noter</strong>, puis échangez avec votre coach. Un seul lien, aucun compte à créer.
             </p>
             <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
               <Btn kind="objective" size="lg" onClick={() => setRole("benef")}>Commencer l'entraînement&nbsp;<Icon d={I.arrow} s={18} c="#fff" /></Btn>
-              <Btn kind="secondary" size="lg" onClick={() => setRole("conseiller")}>Espace conseiller</Btn>
+              <Btn kind="secondary" size="lg" onClick={() => setRole("coach")}>Espace coach</Btn>
             </div>
             <div style={{ font: `500 13px ${FB}`, color: T.muted, marginTop: sp(5) }}>
               Pour les <strong style={{ color: T.primary }}>organismes d'accompagnement vers l'emploi</strong>
@@ -105,7 +113,7 @@ function Landing({ setRole, setModal }) {
 
         <Section eyebrow="Pour la DSI & le juridique" title="Réalisable et hébergé en interne, sans prestataire">
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: sp(5) }}>
-            <Proof icon={I.lock} t="Analyse locale, transmission maîtrisée" b="L'analyse de la posture tourne dans le navigateur (MediaPipe). La vidéo n'est transmise et stockée que si le bénéficiaire choisit de la partager à son conseiller, jamais à son insu." />
+            <Proof icon={I.lock} t="Analyse locale, transmission maîtrisée" b="L'analyse de la posture tourne dans le navigateur (MediaPipe). La vidéo n'est transmise et stockée que si le bénéficiaire choisit de la partager à son coach, jamais à son insu." />
             <Proof icon={I.shield} t="Texte traité en souveraineté" b="La transcription (Whisper) et l'analyse descriptive tournent dans le navigateur. Une reformulation par un modèle hébergé en France (par exemple Mistral) peut être activée ; elle ne reçoit que du texte." />
             <Proof icon={I.sparkle} t="Conçu pour être hébergé en interne" b="Application développée et opérée par l'organisme d'accompagnement lui-même. Briques standards, maîtrisables par une équipe interne." />
           </div>
@@ -113,10 +121,10 @@ function Landing({ setRole, setModal }) {
 
         <Section eyebrow="Le parti pris" title="Un coach qui rend autonome, pas conforme">
           <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: sp(5) }}>
-            <Princ n="01" t="Décrire, jamais noter" d="« Tu regardes vers le bas 40 % du temps » plutôt que « contact visuel insuffisant ». Tu observes, et tu décides quoi en faire." />
+            <Princ n="01" t="Décrire, jamais noter" d="« Vous regardez vers le bas 40 % du temps » plutôt que « contact visuel insuffisant ». La personne observe, et décide elle-même quoi en faire." />
             <Princ n="02" t="Des conventions, pas des vérités" d="Chaque repère est une convention de secteur, variable selon le poste et la culture, jamais une qualité personnelle universelle." />
-            <Princ n="03" t="L'humain garde la main" d="Aucun retour n'arrive sans passer par ton conseiller, qui contextualise et annote avant l'envoi." />
-            <Princ n="04" t="On commence en douceur" d="Première prise sans analyse. Et au moment du retour, tu choisis : un rapport écrit, ou te revoir en vidéo." />
+            <Princ n="03" t="L'humain garde la main" d="Le coach relit les prises que la personne choisit de lui envoyer : il contextualise, nuance et annote avant de renvoyer le rapport." />
+            <Princ n="04" t="On commence en douceur" d="Un échauffement sans analyse ni conservation. Puis, au moment du retour, la personne choisit : un rapport écrit, ou se revoir en vidéo." />
           </div>
         </Section>
 
@@ -126,7 +134,7 @@ function Landing({ setRole, setModal }) {
             <div style={{ position: "relative", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 24 }}>
               <div>
                 <h3 style={{ font: `800 30px ${FD}`, color: "#fff", margin: "0 0 8px", letterSpacing: "-.02em" }}>Prêt à voir comment ça marche ?</h3>
-                <p style={{ font: `400 17px ${FB}`, color: "rgba(255,255,255,.9)", margin: 0 }}>Créez un parcours côté conseiller, puis ouvrez le lien côté bénéficiaire.</p>
+                <p style={{ font: `400 17px ${FB}`, color: "rgba(255,255,255,.9)", margin: 0 }}>Créez un parcours côté coach, puis ouvrez le lien côté bénéficiaire.</p>
               </div>
               <Btn kind="objective" size="lg" onClick={() => setRole("benef")}>Commencer&nbsp;<Icon d={I.arrow} s={18} c="#fff" /></Btn>
             </div>
@@ -143,14 +151,14 @@ function HeroVisual() {
       <Card pad={0} style={{ overflow: "hidden", boxShadow: SH.lg, borderRadius: RAD.xl }}>
         <div style={{ background: GRAD, padding: "18px 22px", display: "flex", alignItems: "center", gap: 10 }}>
           <RepetMark s={30} />
-          <div style={{ font: `700 15px ${FD}`, color: "#fff", letterSpacing: "-.01em" }}>Ta prise du jour</div>
+          <div style={{ font: `700 15px ${FD}`, color: "#fff", letterSpacing: "-.01em" }}>Votre prise du jour</div>
           <div style={{ marginLeft: "auto", display: "flex", gap: 5 }}>
             {[0, 1, 2].map(i => <span key={i} style={{ width: 7, height: 7, borderRadius: "50%", background: "rgba(255,255,255,.5)" }} />)}
           </div>
         </div>
         <div style={{ padding: 22 }}>
           {[
-            { t: "Ouverture", tone: "appui", txt: "Tu entres dans le sujet directement." },
+            { t: "Ouverture", tone: "appui", txt: "Vous entrez directement dans le sujet." },
             { t: "Exemples concrets", tone: "appui", txt: "Une expérience précise pour appuyer." },
             { t: "Mots d'appui", tone: "explorer", txt: "« euh » revient quelques fois." },
           ].map((r, i) => {
@@ -207,11 +215,11 @@ const Princ = ({ n, t, d }) => (
 
 function Flow() {
   const steps = [
-    { n: 1, who: "Conseiller", t: "crée un parcours", d: "et génère un lien", c: T.primary },
+    { n: 1, who: "Coach", t: "crée un parcours", d: "et génère un lien", c: T.primary },
     { n: 2, who: "Bénéficiaire", t: "ouvre le lien", d: "saisit son code", c: T.blue },
     { n: 3, who: "Bénéficiaire", t: "s'entraîne seul", d: "retour IA bienveillant", c: T.violet },
     { n: 4, who: "Bénéficiaire", t: "partage sa prise", d: "quand il le décide", c: T.orange },
-    { n: 5, who: "Conseiller", t: "annote", d: "contextualise, nuance", c: T.primary },
+    { n: 5, who: "Coach", t: "annote", d: "contextualise, nuance", c: T.primary },
     { n: 6, who: "Ensemble", t: "débriefing en atelier", d: "en présentiel", c: T.blue },
     { n: 7, who: "Bénéficiaire", t: "peut recommencer", d: "même après l'atelier", c: T.orange },
   ];

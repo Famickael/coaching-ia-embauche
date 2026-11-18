@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { T, GRAD_SOFT, GRAD_AI, FD, FB, FM, RAD, SH, Card, Tag, Btn, Back, Icon, I, Rail, GradHead, RepetMark } from "./ui.jsx";
 import Recorder from "./Recorder.jsx";
 import { ReportBody } from "./Report.jsx";
-import { useStore, findParcours, updateParcours, takesOf, createTake, updateTake, deleteTake, withdrawConsent } from "./lib/store.js";
+import { useStore, TRIAL_CODE, findParcours, updateParcours, takesOf, createTake, updateTake, deleteTake, withdrawConsent } from "./lib/store.js";
 import { transcribe } from "./lib/transcribe.js";
 import { analyze } from "./lib/analysis.js";
 import { QUESTIONS, WARMUP_QUESTION, fill } from "./lib/questions.js";
@@ -15,10 +15,11 @@ export default function Beneficiary({ initialCode, setModal }) {
   const [code, setCode] = useState(() => (initialCode && findParcours(initialCode) ? initialCode.toUpperCase() : null));
   const [view, setView] = useState("home");
   const [ctx, setCtx] = useState({}); // question, recording, takeId, mode
-  const p = code ? s.parcours[code] : null;
+  const p0 = code ? s.parcours[code] : null;
+  const p = p0 && { ...p0, counselor: p0.counselor || s.counselor?.name || "" }; // nom du coach affiché
 
   useEffect(() => { if (p && !p.openedAt) updateParcours(p.code, { openedAt: new Date().toISOString() }); }, [p?.code]);
-  useEffect(() => { if (code && !p) setCode(null); }, [p, code]); // parcours supprimé par le conseiller
+  useEffect(() => { if (code && !p) setCode(null); }, [p, code]); // parcours supprimé par le coach
 
   if (!p) return <main style={{ padding: "36px 24px 64px" }}><CodeEntry initial={initialCode} onOk={c => { setCode(c); setView("home"); }} /></main>;
   if (!p.consent) return <main style={{ padding: "36px 24px 64px" }}><Consent p={p} setModal={setModal} onBack={() => setCode(null)} /></main>;
@@ -58,18 +59,18 @@ export default function Beneficiary({ initialCode, setModal }) {
 
 /* ─── Saisie du code ─── */
 function CodeEntry({ initial, onOk }) {
-  const [code, setCode] = useState((initial || "").toUpperCase());
+  const [code, setCode] = useState((initial || TRIAL_CODE).toUpperCase());
   const [err, setErr] = useState(initial ? "Ce code n'existe pas ou n'est plus actif." : "");
   const submit = e => {
     e?.preventDefault();
     const p = findParcours(code);
-    if (p) onOk(p.code); else setErr("Ce code n'existe pas ou n'est plus actif. Vérifiez-le auprès de votre conseiller.");
+    if (p) onOk(p.code); else setErr("Ce code n'existe pas ou n'est plus actif. Vérifiez-le auprès de votre coach.");
   };
   return (
     <div style={{ ...wrap(460), textAlign: "center" }}>
       <div style={{ display: "inline-flex", marginBottom: 24 }}><RepetMark s={58} /></div>
       <h1 style={{ font: `800 30px ${FD}`, letterSpacing: "-.03em", color: T.navy, margin: "0 0 12px" }}>Bienvenue sur La Répét'</h1>
-      <p style={{ font: `400 16px/1.6 ${FB}`, color: T.body, margin: "0 0 28px" }}>Saisissez le code transmis par votre conseiller, ou ouvrez directement le lien qu'il vous a envoyé.</p>
+      <p style={{ font: `400 16px/1.6 ${FB}`, color: T.body, margin: "0 0 28px" }}>Saisissez le code transmis par votre coach, ou ouvrez directement le lien qu'il vous a envoyé.</p>
       <Card pad={28} style={{ boxShadow: SH.sm }}>
         <form onSubmit={submit}>
           <label htmlFor="code" style={{ font: `600 13px ${FB}`, color: T.navy, display: "block", textAlign: "left", marginBottom: 8 }}>Votre code d'accès</label>
@@ -80,6 +81,7 @@ function CodeEntry({ initial, onOk }) {
         </form>
       </Card>
       <p style={{ font: `400 12.5px ${FB}`, color: T.muted, marginTop: 20 }}>Aucun compte à créer. Ce code vous est personnel.</p>
+      <p style={{ font: `400 12.5px ${FB}`, color: T.muted, marginTop: 4 }}>Pour découvrir l'outil, utilisez le code d'essai <span style={{ font: `700 12.5px ${FM}`, color: T.primary, letterSpacing: ".1em" }}>{TRIAL_CODE}</span>, déjà saisi ci-dessus.</p>
     </div>
   );
 }
@@ -103,7 +105,7 @@ function Consent({ p, setModal, onBack }) {
     <Card pad={0} style={{ ...wrap(680), overflow: "hidden", boxShadow: SH.sm }}>
       <GradHead tag={`Bonjour ${p.prenom}`} title="Avant de commencer" sub="Cet espace est le vôtre. Vous vous entraînez à votre rythme, rien n'est noté et rien n'est partagé sans votre accord." />
       <div style={{ padding: "24px 32px 8px" }}>
-        {box("local", "Enregistrer et analyser mes prises sur cet appareil", "La vidéo et le son restent sur votre appareil. Ils ne sont envoyés à votre conseiller que si vous le décidez, prise par prise.", true)}
+        {box("local", "Enregistrer et analyser mes prises sur cet appareil", "La vidéo et le son restent sur votre appareil. Ils ne sont envoyés à votre coach que si vous le décidez, prise par prise.", true)}
         {box("ai", "Recevoir un retour de l'assistant", "Un retour écrit qui décrit des faits (rythme, pauses, structure, direction du regard). Il ne note pas et ne déduit aucune émotion. Sans cette option, vous pouvez quand même vous enregistrer et vous revoir.")}
         <div style={{ font: `400 13px/1.6 ${FB}`, color: T.body, margin: "12px 0 4px" }}>
           En continuant, vous confirmez avoir pris connaissance des {link("cgu", "conditions d'utilisation")}, de la {link("rgpd", "notice de protection des données")} et du {link("lifecycle", "cycle de vie de la vidéo")}. Vous pouvez retirer votre consentement à tout moment depuis votre espace, sans justification.
@@ -149,7 +151,7 @@ function Home({ p, takes, go, counselor, onQuit }) {
 
       {reports.length > 0 && (
         <div style={{ background: `${T.orange}10`, border: `1px solid ${T.orange}33`, borderRadius: RAD.md, padding: "14px 18px", marginBottom: 18, font: `500 14px ${FB}`, color: T.navy }}>
-          {counselor || "Votre conseiller"} vous a envoyé {reports.length > 1 ? `${reports.length} rapports` : "un rapport"}. Ouvrez la prise concernée pour le lire.
+          {counselor || "Votre coach"} vous a envoyé {reports.length > 1 ? `${reports.length} rapports` : "un rapport"}. Ouvrez la prise concernée pour le lire.
         </div>
       )}
 
@@ -256,7 +258,7 @@ function Processing({ p, ctx, go }) {
           setStage("Préparation de votre retour…");
           analysis = await analyze({ segments, duration: rec.duration, gaze: rec.gaze, poste: p.poste, question: ctx.question });
         } else {
-          analysis = { synthese: "Le retour de l'assistant est désactivé à votre demande. Vous pouvez revoir votre prise et la partager à votre conseiller.", dimensions: [], source: "none" };
+          analysis = { synthese: "Le retour de l'assistant est désactivé à votre demande. Vous pouvez revoir votre prise et la partager à votre coach.", dimensions: [], source: "none" };
         }
         if (!alive) return;
         const id = await createTake({ code: p.code, question: ctx.question, duration: rec.duration, blob: rec.blob, transcript, segments, gaze: rec.gaze, analysis });
@@ -323,7 +325,7 @@ function TakeReport({ p, take, mode, go }) {
   return (
     <div style={wrap(mode === "video" ? 1000 : 760)}>
       <Card pad={0} style={{ overflow: "hidden", marginBottom: 16, boxShadow: SH.sm }}>
-        <GradHead tag={take.report ? "Rapport de votre conseiller" : "Votre retour"} title={take.question}
+        <GradHead tag={take.report ? "Rapport de votre coach" : "Votre retour"} title={take.question}
           sub={`${dateFr(take.createdAt)} · ${Math.round(take.duration)} s. Ce retour décrit des faits, il ne note pas.`}
           action={take.hasVideo && (
             <button className="noprint" onClick={() => go("report", { mode: mode === "video" ? "simple" : "video" })} style={{ font: `600 12px ${FB}`, color: "#fff", background: "rgba(255,255,255,.18)", border: "1px solid rgba(255,255,255,.3)", borderRadius: RAD.pill, padding: "8px 14px", cursor: "pointer" }}>
@@ -333,14 +335,14 @@ function TakeReport({ p, take, mode, go }) {
       <ReportBody take={take} mode={mode} counselorName={p.counselor} />
       <Card style={{ marginTop: 16, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12, background: take.shared ? T.successBg : "#fff" }} className="noprint">
         <div>
-          <div style={{ font: `700 15px ${FD}`, color: T.navy }}>{take.report ? "Rapport reçu" : take.shared ? "Prise envoyée à votre conseiller" : `Prêt·e à en parler avec ${p.counselor || "votre conseiller"} ?`}</div>
+          <div style={{ font: `700 15px ${FD}`, color: T.navy }}>{take.report ? "Rapport reçu" : take.shared ? "Prise envoyée à votre coach" : `Prêt·e à en parler avec ${p.counselor || "votre coach"} ?`}</div>
           <div style={{ font: `400 13px ${FB}`, color: T.body }}>{take.shared ? "Vous pouvez continuer à vous entraîner et envoyer une nouvelle prise à tout moment." : "Cette prise reste sur votre appareil tant que vous ne l'envoyez pas."}</div>
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <Btn kind="ghost" size="sm" onClick={del}><Icon d={I.trash} s={15} c={T.primary} /> Supprimer</Btn>
           <Btn kind="ghost" size="sm" onClick={() => window.print()}><Icon d={I.print} s={15} c={T.primary} /> Imprimer ou PDF</Btn>
           <Btn kind="secondary" size="sm" onClick={() => go("pick")}><Icon d={I.redo} s={15} c={T.primary} /> M'entraîner encore</Btn>
-          {!take.shared && <Btn kind="objective" size="sm" onClick={() => go("share")}>Envoyer à mon conseiller&nbsp;<Icon d={I.send} s={15} c="#fff" /></Btn>}
+          {!take.shared && <Btn kind="objective" size="sm" onClick={() => go("share")}>Envoyer à mon coach&nbsp;<Icon d={I.send} s={15} c="#fff" /></Btn>}
         </div>
       </Card>
       <div style={{ marginTop: 12 }} className="noprint"><Back onClick={() => go("home")} /></div>
@@ -353,9 +355,9 @@ function Share({ p, take, go }) {
   return (
     <Card pad={32} style={{ ...wrap(640), boxShadow: SH.sm }}>
       <Tag tone="success">Partage · vous décidez</Tag>
-      <h1 style={{ font: `800 24px ${FD}`, margin: "12px 0 6px", color: T.navy }}>Envoyer cette prise à {p.counselor || "votre conseiller"}</h1>
-      <p style={{ font: `400 14.5px/1.6 ${FB}`, color: T.body, margin: "0 0 18px" }}>Votre prise et le retour de l'assistant seront transmis uniquement à votre conseiller. Vous pouvez supprimer la prise à tout moment.</p>
-      <label htmlFor="note" style={{ font: `600 13px ${FB}`, color: T.navy, display: "block", marginBottom: 8 }}>Un mot pour votre conseiller (facultatif)</label>
+      <h1 style={{ font: `800 24px ${FD}`, margin: "12px 0 6px", color: T.navy }}>Envoyer cette prise à {p.counselor || "votre coach"}</h1>
+      <p style={{ font: `400 14.5px/1.6 ${FB}`, color: T.body, margin: "0 0 18px" }}>Votre prise et le retour de l'assistant seront transmis uniquement à votre coach. Vous pouvez supprimer la prise à tout moment.</p>
+      <label htmlFor="note" style={{ font: `600 13px ${FB}`, color: T.navy, display: "block", marginBottom: 8 }}>Un mot pour votre coach (facultatif)</label>
       <textarea id="note" value={note} onChange={e => setNote(e.target.value)} placeholder="Par exemple : j'ai l'impression de parler trop vite, qu'en pensez-vous ?"
         style={{ width: "100%", minHeight: 90, padding: 14, borderRadius: RAD.md, border: `1.5px solid ${T.line}`, font: `400 14px/1.5 ${FB}`, color: T.navy, resize: "vertical", marginBottom: 20 }} />
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -371,7 +373,7 @@ function Sent({ p, go }) {
     <Card pad={40} style={{ ...wrap(580), textAlign: "center", boxShadow: SH.sm }}>
       <div style={{ width: 60, height: 60, borderRadius: "50%", background: T.successBg, display: "grid", placeItems: "center", margin: "0 auto 16px" }}><Icon d={I.check} s={28} c={T.success} /></div>
       <h1 style={{ font: `800 24px ${FD}`, color: T.navy, margin: "0 0 10px" }}>Prise envoyée</h1>
-      <p style={{ font: `400 15px/1.65 ${FB}`, color: T.body, margin: "0 auto 22px", maxWidth: 430 }}>{p.counselor || "Votre conseiller"} va relire votre prise et y ajouter ses remarques. Vous retrouverez son rapport dans votre espace, avec ce même code, et vous en parlerez ensemble en atelier.</p>
+      <p style={{ font: `400 15px/1.65 ${FB}`, color: T.body, margin: "0 auto 22px", maxWidth: 430 }}>{p.counselor || "Votre coach"} va relire votre prise et y ajouter ses remarques. Vous retrouverez son rapport dans votre espace, avec ce même code, et vous en parlerez ensemble en atelier.</p>
       <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
         <Btn kind="secondary" onClick={() => go("home")}>Revenir à mon espace</Btn>
         <Btn kind="objective" onClick={() => go("pick")}><Icon d={I.redo} s={16} c="#fff" /> M'entraîner à nouveau</Btn>
