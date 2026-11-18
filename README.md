@@ -16,6 +16,8 @@ npm run dev          # http://localhost:5173
 npm run build        # production dans dist/ (chemins relatifs, déployable sur un hébergement statique)
 ```
 
+Publication : le workflow `.github/workflows/pages.yml` construit et publie le site sur GitHub Pages à chaque envoi sur `main` (réglage du dépôt : Pages, source « GitHub Actions »). Adresse : https://famickael.github.io/coaching-ia-embauche/. GitHub Pages ne permet pas d'activer l'isolation inter-origines (en-têtes COOP/COEP) : Whisper y tourne sur un seul cœur, ou sur WebGPU quand le navigateur le propose.
+
 Parcours de prise en main :
 
 1. Onglet **Conseiller** : saisir son nom, puis « Nouveau parcours ». Un code de 6 caractères et un lien `…/#/s/CODE` sont générés.
