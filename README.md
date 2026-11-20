@@ -66,7 +66,20 @@ Photos provisoires issues d'[Unsplash](https://unsplash.com), utilisées sous la
 | `ressources/questions-a-poser-et-questions-interdites.webp` | Mina Rad | https://unsplash.com/photos/-P7kHROe-6A |
 | `ressources/reussir-un-entretien-en-visio.webp` | Vitaly Gariev | https://unsplash.com/photos/DHrmBvaey5g |
 
-Les autres images de `public/img/ressources/` et `public/img/categories/` sont des visuels de remplacement générés (bulles aux couleurs de la marque), sans droits tiers.
+Les photos suivantes proviennent de Pexels et sont utilisées sous la [licence Pexels](https://www.pexels.com/license/). Elles ont été recadrées et converties en WebP.
+
+| Fichier (`public/img/`) | Photographe | Photo |
+|---|---|---|
+| `categories/preparer.webp` | Mikhail Nilov | [Pexels](https://www.pexels.com/photo/a-man-writing-on-a-notebook-while-studying-7594201/) |
+| `categories/questions.webp` | cottonbro studio | [Pexels](https://www.pexels.com/photo/woman-getting-a-job-interview-5989931/) |
+| `categories/visio.webp` | Julia M Cameron | [Pexels](https://www.pexels.com/photo/person-writing-on-notebook-4145190/) |
+| `categories/guides.webp` | Mizuno K | [Pexels](https://www.pexels.com/photo/woman-using-a-smart-phone-fixed-on-a-tripod-13929354/) |
+| `categories/coachs.webp` | Anna Shvets | [Pexels](https://www.pexels.com/photo/person-writing-on-a-notebook-4226208/) |
+| `categories/organismes.webp` | fauxels | [Pexels](https://www.pexels.com/photo/photo-of-people-sitting-near-wooden-table-3182764/) |
+| `ressources/deployer-la-repet-dans-votre-organisme.webp` | Arina Krasnikova | [Pexels](https://www.pexels.com/photo/two-women-talking-at-an-office-desk-6016370/) |
+| `ressources/gerer-le-trac-et-preparer-sa-venue.webp` | Ketut Subiyanto | [Pexels](https://www.pexels.com/photo/faceless-businessman-with-smartphone-walking-on-crosswalk-in-sunlight-4560165/) |
+| `ressources/scenario-accompagnement-a-distance.webp` | Annushka Ahuja | [Pexels](https://www.pexels.com/photo/a-girl-having-video-call-on-her-laptop-on-a-table-8055483/) |
+| `ressources/scenario-atelier-collectif.webp` | Alena Shekhovtcova | [Pexels](https://www.pexels.com/photo/women-talking-on-a-meeting-in-an-office-8067880/) |
 
 ---
 

@@ -4,7 +4,7 @@ category: organismes
 type: cas
 summary: Scénario d'usage : garder le fil entre deux rendez-vous espacés, quand la personne accompagnée habite loin de l'agence.
 image: ressources/scenario-accompagnement-a-distance.webp
-imageAlt: Une personne échange en visio depuis son domicile, un carnet à côté de son ordinateur.
+imageAlt: Une personne participe à un appel vidéo sur un ordinateur portable, une feuille de notes à portée de main.
 date: 2026-11-20
 readingTime: 6
 author: Équipe La Répét'

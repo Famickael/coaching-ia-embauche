@@ -4,7 +4,7 @@ category: coachs
 type: cas
 summary: Scénario d'usage : comment un atelier hebdomadaire pourrait s'appuyer sur les répétitions faites à la maison pour gagner en concret.
 image: ressources/scenario-atelier-collectif.webp
-imageAlt: Un groupe de personnes échange autour d'une table lors d'un atelier.
+imageAlt: Des personnes discutent autour d’une petite table dans un espace de travail.
 date: 2026-11-20
 readingTime: 6
 author: Équipe La Répét'
