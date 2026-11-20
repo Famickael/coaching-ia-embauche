@@ -29,7 +29,7 @@ npm run dev          # http://localhost:5173
 npm run build        # production dans dist/ (chemins relatifs, déployable sur un hébergement statique)
 ```
 
-Publication : le workflow `.github/workflows/pages.yml` construit et publie le site sur GitHub Pages à chaque envoi sur `main` (réglage du dépôt : Pages, source « GitHub Actions »). Adresse : https://famickael.github.io/coaching-ia-embauche/. GitHub Pages ne permet pas d'activer l'isolation inter-origines (en-têtes COOP/COEP) : Whisper y tourne sur un seul cœur, ou sur WebGPU quand le navigateur le propose.
+Publication : le workflow `.github/workflows/pages.yml` construit et publie le site sur GitHub Pages à chaque envoi sur `main` (réglage du dépôt : Pages, source « GitHub Actions »). Adresse : https://famickael.github.io/coaching-ia-embauche/. Si le site affiche une page blanche, vérifier ce réglage : avec la source « Deploy from a branch », GitHub publie les fichiers sources bruts (`index.html` pointe alors vers `/src/main.jsx`, introuvable) à la place de la version construite. GitHub Pages ne permet pas d'activer l'isolation inter-origines (en-têtes COOP/COEP) : Whisper y tourne sur un seul cœur, ou sur WebGPU quand le navigateur le propose.
 
 Parcours de prise en main :
 

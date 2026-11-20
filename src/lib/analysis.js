@@ -49,7 +49,7 @@ export function computeMetrics(segments, duration) {
   }
 
   // phrases
-  const sentences = text.split(/(?<=[.!?])\s+/).filter(x => words(x).length > 0);
+  const sentences = text.replace(/([.!?])\s+/g, "$1\n").split("\n").filter(x => words(x).length > 0);
   const avgSentence = sentences.length ? Math.round(w.length / sentences.length) : w.length;
 
   // répétitions de mots pleins (>= 5 lettres, >= 4 occurrences)
