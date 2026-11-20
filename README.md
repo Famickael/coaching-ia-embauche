@@ -29,7 +29,7 @@ npm run dev          # http://localhost:5173
 npm run build        # production dans dist/ (chemins relatifs, déployable sur un hébergement statique)
 ```
 
-Publication : le workflow `.github/workflows/pages.yml` construit et publie le site sur GitHub Pages à chaque envoi sur `main` (réglage du dépôt : Pages, source « GitHub Actions »). Adresse : https://famickael.github.io/coaching-ia-embauche/. GitHub Pages ne permet pas d'activer l'isolation inter-origines (en-têtes COOP/COEP) : Whisper y tourne sur un seul cœur, ou sur WebGPU quand le navigateur le propose.
+Publication : le workflow `.github/workflows/pages.yml` construit et publie le site sur GitHub Pages à chaque envoi sur `main` (réglage du dépôt : Pages, source « GitHub Actions »). Adresse : https://famickael.github.io/coaching-ia-embauche/. Si le site affiche une page blanche, vérifier ce réglage : avec la source « Deploy from a branch », GitHub publie les fichiers sources bruts (`index.html` pointe alors vers `/src/main.jsx`, introuvable) à la place de la version construite. GitHub Pages ne permet pas d'activer l'isolation inter-origines (en-têtes COOP/COEP) : Whisper y tourne sur un seul cœur, ou sur WebGPU quand le navigateur le propose.
 
 Parcours de prise en main :
 
@@ -169,6 +169,7 @@ Limites connues :
 npm run test:analysis                                   # analyse et garde-fou, sans navigateur
 npx playwright install chromium && npm run test:e2e     # parcours complet dans Chromium
 # ou, avec un Chromium déjà installé : CHROMIUM_PATH=/chemin/vers/chromium npm run test:e2e
+E2E_VIEWPORT=390x844 npm run test:e2e                 # même parcours en taille téléphone, échoue si une page déborde en largeur
 ```
 
 Le test de bout en bout construit l'application avec un service de transcription simulé (`tests/mock-stt.mjs`), utilise la caméra et le micro simulés de Chromium, rejoue la boucle complète (création du parcours, consentement, enregistrement, analyse, rapport vidéo, envoi, relecture et annotation, envoi du rapport, lecture du rapport final) et enregistre des captures dans `tests/screenshots/`.
@@ -182,6 +183,7 @@ Contexte utile pour reprendre ce dépôt :
 - **Origine.** Prototype conçu en plusieurs itérations (octobre et novembre 2026) : d'abord un fichier React unique destiné à une démonstration, puis cette version modulaire et fonctionnelle. Deux documents de cadrage, hors dépôt, l'accompagnent : un cadre AI Act, architecture et DPIA, et un cadre psychosociologique (partis pris, points de vigilance) ; ainsi qu'un cahier des charges fonctionnel (exigences EF-01 à EF-42 et ENF-01 à ENF-20, classées indispensable ou souhaitable) et un benchmark de marché qui conclut à une construction interne plutôt qu'à l'achat d'une solution.
 - **Ce qui a été vérifié.** Compilation (`npm run build`), test unitaire de l'analyse, test de bout en bout complet dans Chromium avec caméra simulée et transcription simulée.
 - **Ce qui n'a pas pu être vérifié.** Le téléchargement et l'exécution réels de Whisper et de MediaPipe (réseau de l'environnement de développement restreint) : à tester en premier dans un vrai navigateur, avec une vraie caméra et un vrai micro (`npm run dev`, puis un parcours complet).
+- **Affichage mobile.** Les styles en ligne ne gèrent pas les media queries : l'adaptation au téléphone passe par des classes `rp-*` définies dans `GStyle` (`ui.jsx`, sous 760 px), qui surchargent les styles en ligne.
 - **Où intervenir.** Logique métier dans `src/lib/`, écrans dans `Beneficiary.jsx` et `Counselor.jsx`, composants visuels dans `ui.jsx`. Les styles sont écrits en ligne avec les jetons de `ui.jsx` (`T`, `RAD`, `SH`, `FD`, `FB`, `FM`) ; conserver ce système plutôt que d'introduire une autre bibliothèque.
 - **Langue et ton.** Interface en français, vouvoiement côté bénéficiaire, ton positif et non évaluatif (« vous pouvez renforcer… » plutôt que « insuffisant »). Pas de tiret cadratin dans les textes d'interface.
 - **Prochaine étape suggérée.** Point 1 de « Passage en production » : un backend minimal (par exemple Supabase ou une API Node hébergée en France) branché derrière les fonctions de `store.js`, sans changer les écrans.

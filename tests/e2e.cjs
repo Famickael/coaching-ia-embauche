@@ -3,13 +3,20 @@ const SC = process.argv[2] || "tests/screenshots";
 require("fs").mkdirSync(SC, { recursive: true });
 (async () => {
   const b = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || undefined, args: ["--use-fake-device-for-media-stream", "--use-fake-ui-for-media-stream", "--autoplay-policy=no-user-gesture-required"] });
-  const ctx = await b.newContext({ viewport: { width: 1280, height: 900 }, permissions: ["camera", "microphone", "clipboard-read", "clipboard-write"] });
+  const [vw, vh] = (process.env.E2E_VIEWPORT || "1280x900").split("x").map(Number); // ex. 390x844 pour un téléphone
+  const mobile = vw < 600;
+  const ctx = await b.newContext({ viewport: { width: vw, height: vh }, isMobile: mobile, hasTouch: mobile, permissions: ["camera", "microphone", "clipboard-read", "clipboard-write"] });
   const p = await ctx.newPage();
   const errors = [];
   p.on("pageerror", e => errors.push("pageerror " + e.message));
   p.on("console", m => { if (m.type() === "error") errors.push("console " + m.text().slice(0, 160)); });
   p.on("dialog", d => d.accept());
-  const shot = n => p.screenshot({ path: `${SC}/${n}.png`, fullPage: true });
+  const overflow = [];
+  const shot = async n => {
+    const w = await p.evaluate(() => document.documentElement.scrollWidth);
+    if (w > vw + 1) overflow.push(`${n} : ${w}px pour ${vw}px`);
+    await p.screenshot({ path: `${SC}/${n}.png`, fullPage: true });
+  };
   const click = t => p.getByRole("button", { name: t }).first().click();
 
   await p.goto("http://localhost:5098/"); await shot("01-accueil");
@@ -43,5 +50,6 @@ require("fs").mkdirSync(SC, { recursive: true });
   await p.goto(`http://localhost:5098/#/s/${code}`); await p.waitForTimeout(500); await shot("12-espace-benef");
   await click("Ouvrir"); await p.getByText("Un rapport écrit").first().click(); await p.waitForTimeout(500); await shot("13-rapport-final");
   console.log("erreurs:", errors.filter(e => !/fonts.googleapis|jsdelivr|googleapis|Failed to load resource|ERR_TUNNEL/.test(e)));
+  if (overflow.length) { console.error("débordement horizontal:", overflow); process.exitCode = 1; }
   await b.close();
 })().catch(e => { console.error("ECHEC", e.message); process.exit(1); });

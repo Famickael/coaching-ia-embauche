@@ -21,8 +21,8 @@ export default function Beneficiary({ initialCode, setModal }) {
   useEffect(() => { if (p && !p.openedAt) updateParcours(p.code, { openedAt: new Date().toISOString() }); }, [p?.code]);
   useEffect(() => { if (code && !p) setCode(null); }, [p, code]); // parcours supprimé par le coach
 
-  if (!p) return <main style={{ padding: "36px 24px 64px" }}><CodeEntry initial={initialCode} onOk={c => { setCode(c); setView("home"); }} /></main>;
-  if (!p.consent) return <main style={{ padding: "36px 24px 64px" }}><Consent p={p} setModal={setModal} onBack={() => setCode(null)} /></main>;
+  if (!p) return <main className="rp-pad" style={{ padding: "36px 24px 64px" }}><CodeEntry initial={initialCode} onOk={c => { setCode(c); setView("home"); }} /></main>;
+  if (!p.consent) return <main className="rp-pad" style={{ padding: "36px 24px 64px" }}><Consent p={p} setModal={setModal} onBack={() => setCode(null)} /></main>;
 
   const go = (v, patch) => { if (patch) setCtx(c => ({ ...c, ...patch })); setView(v); window.scrollTo({ top: 0 }); };
   const flowSteps = ["Question", "Entraînement", "Analyse", "Retour"];
@@ -30,7 +30,7 @@ export default function Beneficiary({ initialCode, setModal }) {
   const take = ctx.takeId ? s.takes[ctx.takeId] : null;
 
   return (
-    <main style={{ padding: "36px 24px 64px" }}>
+    <main className="rp-pad" style={{ padding: "36px 24px 64px" }}>
       {flowIdx !== undefined && <div style={{ ...wrap(view === "report" && ctx.mode === "video" ? 1000 : 820), marginBottom: 28 }} className="noprint"><Rail step={flowIdx} steps={flowSteps} /></div>}
       <div key={view} className="up">
         {view === "home" && <Home p={p} takes={takesOf(p.code, s)} go={go} counselor={p.counselor} onQuit={() => setCode(null)} />}
@@ -104,14 +104,14 @@ function Consent({ p, setModal, onBack }) {
   return (
     <Card pad={0} style={{ ...wrap(680), overflow: "hidden", boxShadow: SH.sm }}>
       <GradHead tag={`Bonjour ${p.prenom}`} title="Avant de commencer" sub="Cet espace est le vôtre. Vous vous entraînez à votre rythme, rien n'est noté et rien n'est partagé sans votre accord." />
-      <div style={{ padding: "24px 32px 8px" }}>
+      <div className="rp-card-pad" style={{ padding: "24px 32px 8px" }}>
         {box("local", "Enregistrer et analyser mes prises sur cet appareil", "La vidéo et le son restent sur votre appareil. Ils ne sont envoyés à votre coach que si vous le décidez, prise par prise.", true)}
         {box("ai", "Recevoir un retour de l'assistant", "Un retour écrit qui décrit des faits (rythme, pauses, structure, direction du regard). Il ne note pas et ne déduit aucune émotion. Sans cette option, vous pouvez quand même vous enregistrer et vous revoir.")}
         <div style={{ font: `400 13px/1.6 ${FB}`, color: T.body, margin: "12px 0 4px" }}>
           En continuant, vous confirmez avoir pris connaissance des {link("cgu", "conditions d'utilisation")}, de la {link("rgpd", "notice de protection des données")} et du {link("lifecycle", "cycle de vie de la vidéo")}. Vous pouvez retirer votre consentement à tout moment depuis votre espace, sans justification.
         </div>
       </div>
-      <div style={{ padding: "18px 32px 28px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+      <div className="rp-card-pad" style={{ padding: "18px 32px 28px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
         <Back onClick={onBack} />
         <Btn kind="objective" disabled={!c.local} onClick={() => updateParcours(p.code, { consent: { at: new Date().toISOString(), local: true, ai: c.ai } })}>Je consens et je commence&nbsp;<Icon d={I.arrow} s={18} c="#fff" /></Btn>
       </div>
@@ -143,7 +143,7 @@ function Home({ p, takes, go, counselor, onQuit }) {
       <Card pad={0} style={{ overflow: "hidden", boxShadow: SH.sm, marginBottom: 18 }}>
         <GradHead tag={counselor ? `Accompagnement avec ${counselor}` : "Votre espace"} title={`Bonjour ${p.prenom}`}
           sub={`Poste visé : ${p.poste || "non précisé"}. Entraînez-vous autant de fois que vous le souhaitez, y compris après vos ateliers.`} />
-        <div style={{ padding: "20px 28px", display: "flex", gap: 10, flexWrap: "wrap" }}>
+        <div className="rp-card-pad" style={{ padding: "20px 28px", display: "flex", gap: 10, flexWrap: "wrap" }}>
           {suggestWarmup && <Btn kind="secondary" onClick={() => go("warmup")}>Commencer par un échauffement</Btn>}
           <Btn kind="objective" onClick={() => go("pick")}><Icon d={I.plus} s={17} c="#fff" /> Nouvel entraînement</Btn>
         </div>

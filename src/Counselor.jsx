@@ -11,10 +11,10 @@ export const linkFor = code => `${location.origin}${location.pathname}#/s/${code
 export default function Counselor({ setRole }) {
   const s = useStore();
   const [view, setView] = useState({ name: "list" });
-  if (!s.counselor) return <main style={{ padding: "36px 24px 64px" }}><Identify /></main>;
+  if (!s.counselor) return <main className="rp-pad" style={{ padding: "36px 24px 64px" }}><Identify /></main>;
 
   return (
-    <main style={{ maxWidth: 1120, margin: "0 auto", padding: "36px 24px 64px" }}>
+    <main className="rp-pad" style={{ maxWidth: 1120, margin: "0 auto", padding: "36px 24px 64px" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24, flexWrap: "wrap", gap: 12 }} className="noprint">
         <div>
           <h1 style={{ font: `800 27px ${FD}`, margin: "0 0 3px", letterSpacing: "-.025em", color: T.navy }}>Espace coach · {s.counselor.name}</h1>
@@ -161,7 +161,7 @@ function Created({ p, back, openAsBenef }) {
         <CopyBtn text={link} label="Copier le lien" />
         <Btn kind="secondary" size="sm" onClick={() => { location.href = `mailto:?subject=${encodeURIComponent("Votre accès La Répét'")}&body=${encodeURIComponent(`Bonjour ${p.prenom},\n\nVoici votre accès personnel pour vous entraîner à l'entretien : ${link}\nCode : ${p.code}\n\nÀ bientôt.`)}`; }}>Préparer un courriel</Btn>
       </div>
-      <div style={{ display: "flex", gap: 10, justifyContent: "center", marginTop: 20 }}>
+      <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap", marginTop: 20 }}>
         <Btn kind="ghost" size="sm" onClick={back}>Retour à la liste</Btn>
         <Btn kind="primary" size="sm" onClick={openAsBenef}>Ouvrir l'espace bénéficiaire sur cet appareil</Btn>
       </div>
@@ -248,7 +248,7 @@ function Review({ s, p, take, back }) {
     <div>
       <div style={{ font: `800 20px ${FD}`, color: T.navy, marginBottom: 4 }}>{take.question}</div>
       <div style={{ font: `400 13px ${FB}`, color: T.muted, marginBottom: 16 }}>{p.prenom} · envoyée le {dateFr(take.sharedAt)}{take.report ? " · rapport déjà envoyé, vous pouvez le modifier et le renvoyer" : ""}</div>
-      <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1.15fr) minmax(0,1fr)", gap: 20 }}>
+      <div className="rp-split" style={{ display: "grid", gridTemplateColumns: "minmax(0,1.15fr) minmax(0,1fr)", gap: 20 }}>
         <div>
           <Player take={virtualTake} url={url} markers={markersOf(virtualTake)} active={active} onActive={setActive} playerRef={playerRef} />
           <Card style={{ marginTop: 12 }}>

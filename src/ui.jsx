@@ -197,6 +197,25 @@ const GStyle = () => (
     .up{animation:up .45s cubic-bezier(.2,.7,.3,1) both}
     input:focus,textarea:focus{outline:none;border-color:${T.blue}!important;box-shadow:0 0 0 4px ${T.blue}22}
     button:focus-visible{outline:2px solid ${T.blue};outline-offset:2px}
+    @media (max-width:760px){
+      .rp-hide-m{display:none!important}
+      .rp-nav{padding:0 16px!important;height:56px!important;gap:10px}
+      .rp-tabs{padding:3px!important;gap:2px!important}
+      .rp-tabs button{padding:7px 9px!important;font-size:12px!important}
+      .rp-hero{grid-template-columns:1fr!important;padding:40px 16px 44px!important;gap:24px!important}
+      .rp-h1{font-size:38px!important}
+      .rp-h2{font-size:26px!important}
+      .rp-h3{font-size:22px!important}
+      .rp-section{padding-top:48px!important}
+      .rp-stack{grid-template-columns:1fr!important}
+      .rp-cta{padding:32px 22px!important}
+      .rp-flow{flex-direction:column;gap:18px!important;overflow:visible!important}
+      .rp-flow-step{flex:none!important;min-width:0!important}
+      .rp-pad{padding-left:16px!important;padding-right:16px!important}
+      .rp-split{grid-template-columns:minmax(0,1fr)!important}
+      .rp-head{padding:22px 20px!important}
+      .rp-card-pad{padding-left:20px!important;padding-right:20px!important}
+    }
     @media print{header,footer,.noprint{display:none!important}body{background:#fff}}
     ::-webkit-scrollbar{height:8px;width:8px}::-webkit-scrollbar-thumb{background:${T.line};border-radius:4px}
   `}</style>
@@ -223,7 +242,7 @@ function Rail({ step, steps }) {
 
 function GradHead({ tag, title, sub, action, soft }) {
   return (
-    <div style={{ position: "relative", overflow: "hidden", padding: "28px 32px", borderRadius: `${RAD.lg}px ${RAD.lg}px 0 0`, background: soft ? GRAD_SOFT : GRAD }}>
+    <div className="rp-head" style={{ position: "relative", overflow: "hidden", padding: "28px 32px", borderRadius: `${RAD.lg}px ${RAD.lg}px 0 0`, background: soft ? GRAD_SOFT : GRAD }}>
       {!soft && <Halo style={{ width: 220, height: 220, background: "rgba(255,255,255,.16)", bottom: -120, right: -30 }} />}
       <div style={{ position: "relative", display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 14, flexWrap: "wrap" }}>
         <div>
