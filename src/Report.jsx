@@ -3,7 +3,7 @@ import { T, FD, FB, FM, RAD, SH, Card, Tag, Icon, I } from "./ui.jsx";
 import { loadVideoUrl } from "./lib/store.js";
 import { fmt } from "./lib/analysis.js";
 
-export const toneOf = d => (d.type === "appui" ? T.orange : T.violet);
+export const toneOf = d => (d.type === "appui" ? T.accent : T.violet);
 
 /* Charge l'URL locale de la vidéo d'une prise. */
 export function useVideoUrl(take) {
@@ -69,7 +69,7 @@ export function Player({ take, url, markers, active, onActive, playerRef }) {
         </div>
         <div style={{ display: "flex", justifyContent: "space-between", font: `500 11px ${FM}`, color: T.muted, marginBottom: 10 }}><span>{fmt(cur)}</span><span>{fmt(dur)}</span></div>
         <div style={{ display: "flex", gap: 14, flexWrap: "wrap", font: `400 12px ${FB}`, color: T.body }}>
-          <Dot c={T.orange} t="Point d'appui" /><Dot c={T.violet} t="À explorer" /><Dot c={T.primary} t="Note du coach" square />
+          <Dot c={T.accent} t="Point d'appui" /><Dot c={T.violet} t="À explorer" /><Dot c={T.primary} t="Note du coach" square />
         </div>
       </div>
     </Card>
@@ -88,7 +88,7 @@ export function DimCard({ d, comment, active, onClick, compact }) {
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 7, flexWrap: "wrap" }}>
         <span style={{ minWidth: 36, height: 22, padding: "0 7px", borderRadius: RAD.pill, background: c, color: "#fff", display: "grid", placeItems: "center", font: `700 11px ${FM}` }}>{fmt(d.t)}</span>
         <span style={{ font: `700 15px ${FD}`, color: T.navy, flex: 1 }}>{d.titre}</span>
-        <Tag tone={d.type === "appui" ? "orange" : "ai"}>{d.type === "appui" ? "Point d'appui" : "À explorer"}</Tag>
+        <Tag tone={d.type === "appui" ? "appui" : "ai"}>{d.type === "appui" ? "Point d'appui" : "À explorer"}</Tag>
       </div>
       <div style={{ font: `500 14px/1.55 ${FB}`, color: T.navy, marginBottom: 8 }}>{d.observation}</div>
       <div style={{ font: `400 13px/1.55 ${FB}`, color: T.body, background: T.bg, borderRadius: RAD.sm, padding: "9px 12px" }}>{d.conseil}</div>

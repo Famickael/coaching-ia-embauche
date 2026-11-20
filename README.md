@@ -4,7 +4,7 @@ Prototype fonctionnel d'un dispositif d'entraînement à l'entretien d'embauche,
 
 Le principe : le coach crée un parcours et transmet un code (ou un lien). La personne accompagnée s'entraîne seule, chez elle, autant de fois qu'elle le souhaite. Elle reçoit un retour qui **décrit sans noter**, choisit de se revoir en vidéo ou de lire un rapport écrit, puis décide d'envoyer sa prise au coach. Le coach annote des moments précis de la vidéo, commente les observations de l'assistant et renvoie un rapport, qui sert de base au débriefing en atelier.
 
-> Le logo de l'organisme partenaire est un **logo fictif** (« Votre organisme », marque blanche), défini dans `src/ui.jsx` (`TSMark`, `TSLogo`).
+> L'emplacement du logo de l'organisme qui déploie l'outil (marque blanche) affiche pour l'instant « Famickael » dans un cadre en pointillés : `OrgLogo` dans `src/ui.jsx`. Renseigner `ORG_LOGO_URL` pour afficher une image à la place.
 
 ---
 
@@ -13,11 +13,11 @@ Le principe : le coach crée un parcours et transmet un code (ou un lien). La pe
 | Expérience | Lien | Accès |
 |---|---|---|
 | **Côté bénéficiaire** | https://famickael.github.io/la-repet/#/s/REPETE | code d'essai **`REPETE`**, déjà rempli dans le lien |
-| **Côté coach** | https://famickael.github.io/la-repet/#/coach | identification automatique avec le nom « Coach d'essai » |
+| **Côté coach** | https://famickael.github.io/la-repet/#/coach | page de connexion simulée, identifiants fictifs pré-remplis (« Sophie M. ») |
 
-Pour voir la boucle complète, ouvre les deux liens **dans le même navigateur** (deux onglets) : enregistre une prise côté bénéficiaire et envoie-la, elle apparaît « À relire » côté coach ; annote-la et envoie le rapport, il apparaît dans l'espace bénéficiaire. Le code `REPETE` est aussi pré-rempli dans l'écran de saisie du code, et le nom « Coach d'essai » dans l'écran d'identification du coach.
+Pour voir la boucle complète, ouvre les deux liens **dans le même navigateur** (deux onglets) : enregistre une prise côté bénéficiaire et envoie-la, elle apparaît « À relire » côté coach ; annote-la et envoie le rapport, il apparaît dans l'espace bénéficiaire. Le code `REPETE` est aussi pré-rempli dans la page « Mon espace ».
 
-Le parcours d'essai (prénom « Camille », poste « agent d'accueil ») est créé automatiquement au premier chargement, et recréé s'il est supprimé (`TRIAL_CODE` et `TRIAL_COACH` dans `src/lib/store.js`). Il ne contient aucune prise fictive. À retirer en production, avec l'accès automatique `#/coach` (`isCoachHash` dans `src/App.jsx`).
+Le parcours d'essai (prénom « Camille », poste « agent d'accueil ») est créé automatiquement au premier chargement, et recréé s'il est supprimé (`TRIAL_CODE` dans `src/lib/store.js`). Il ne contient aucune prise fictive. À retirer en production, avec la connexion coach simulée (`TRIAL_LOGIN` dans `src/lib/store.js`, `Login` dans `src/Counselor.jsx`) : aucune vérification n'est faite, les identifiants servent uniquement à projeter l'usage.
 
 ---
 
@@ -33,9 +33,9 @@ Publication : le workflow `.github/workflows/pages.yml` construit et publie le s
 
 Parcours de prise en main :
 
-1. Onglet **Coach** (ou lien `#/coach`) : saisir son nom, puis « Nouveau parcours ». Un code de 6 caractères et un lien `…/#/s/CODE` sont générés.
-2. Ouvrir le lien (ou onglet **Bénéficiaire** puis saisir le code) : consentement, espace personnel, échauffement facultatif, choix d'une question, enregistrement, analyse, rapport, envoi.
-3. Retour onglet **Coach** : la prise apparaît « À relire ». Relecture, notes horodatées, commentaires, envoi du rapport.
+1. **Mon espace** puis « Accéder à l'espace coach » (ou lien `#/coach`) : se connecter, puis « Nouveau parcours ». Un code de 6 caractères et un lien `…/#/s/CODE` sont générés.
+2. Ouvrir le lien (ou **Mon espace** puis saisir le code) : consentement, espace personnel, échauffement facultatif, choix d'une question, enregistrement, analyse, rapport, envoi.
+3. Retour à l'espace coach (**Changer** dans l'en-tête) : la prise apparaît « À relire ». Relecture, notes horodatées, commentaires, envoi du rapport.
 4. Côté bénéficiaire, le rapport est visible dans l'espace, avec le même code.
 
 **Important, mode local :** toutes les données sont stockées dans le navigateur (voir « Architecture »). Le coach et le bénéficiaire doivent donc utiliser le **même navigateur sur le même appareil** pour que la boucle fonctionne (par exemple deux onglets, synchronisés automatiquement). Un backend est nécessaire pour un usage réel à distance : voir « Passage en production ».
@@ -76,7 +76,10 @@ Au premier enregistrement analysé, le navigateur télécharge le modèle de tra
 index.html
 src/
   main.jsx            point d'entrée React
-  App.jsx             routage (rôles + lien #/s/CODE), navigation, page de présentation, pied de page
+  App.jsx             routage par ancre (#/, #/fonctionnement, #/espace, #/s/CODE, #/coach), en-tête, page « Mon espace », pied de page
+  Home.jsx            page d'accueil : héros animé, défilement raconté en quatre temps, parti pris, publics
+  HowItWorks.jsx      page « Fonctionnement » : déroulé, ce que l'assistant observe, principes, garanties techniques
+  motion.jsx          apparition au défilement (IntersectionObserver), compteur, respect de « réduire les animations »
   ui.jsx              design system v2 : jetons (couleurs, dégradés, rayons, ombres), logos, Btn, Card, Tag, Icon, Rail, GradHead
   legal.jsx           modales : cycle de vie de la vidéo, émotions, CGU, notice RGPD
   Beneficiary.jsx     espace bénéficiaire : code, consentement, espace, échauffement, question, enregistrement, traitement, rapport, partage
@@ -139,7 +142,7 @@ Ces règles traduisent le cadre réglementaire (AI Act, RGPD) et les partis pris
 7. **Indicateurs agrégés uniquement**, aucune mesure de performance individuelle (ni bénéficiaire, ni coach).
 8. **Minimisation** : prénom et initiale, poste visé ; aucun identifiant administratif ni adresse électronique.
 
-Couleurs (design system v2) : bleu `#386097` dominant (structure, navigation), bleu clair `#3893CD` secondaire, orange `#C25700` pour l'action et les points d'appui, violet `#5C4BB9` réservé à l'IA et aux points à explorer, vert `#41C77A` pour la validation. Typographies : Manrope (titres), Inter (texte), JetBrains Mono (chiffres).
+Couleurs (design system v2) : bleu `#386097` dominant (structure, navigation), bleu clair `#3893CD` secondaire, sarcelle `#0B7A75` pour l'action principale et les points d'appui (une seule action pleine par écran ; « appui » et « à explorer » se distinguent aussi par le libellé, l'icône et la forme du repère, jamais par la couleur seule), violet `#5C4BB9` réservé à l'IA et aux points à explorer, vert `#41C77A` pour la validation. Typographies : Manrope (titres), Inter (texte), JetBrains Mono (chiffres).
 
 ---
 

@@ -7,7 +7,7 @@
 import { useEffect, useState } from "react";
 
 const KEY = "larepet.v1";
-const EMPTY = { counselor: null, parcours: {}, takes: {} };
+const EMPTY = { counselor: null, parcours: {}, takes: {}, lastSpace: null }; // lastSpace : { role: "benef", code } | { role: "coach" }
 const listeners = new Set();
 
 function read() {
@@ -24,7 +24,9 @@ let state = read();
 /* Parcours d'essai : code générique pour découvrir l'outil sans passer par la création d'un parcours.
    Recréé au chargement s'il a été supprimé. À retirer en production (voir README). */
 export const TRIAL_CODE = "REPETE";
-export const TRIAL_COACH = "Coach d'essai";
+export const TRIAL_COACH = "Sophie M.";
+/* Connexion coach simulée : identifiants fictifs pré-remplis (aucune vérification). */
+export const TRIAL_LOGIN = { email: "s.martin@famickael.fr", password: "repet-2026", name: TRIAL_COACH };
 if (!state.parcours[TRIAL_CODE]) {
   state = { ...state, parcours: { ...state.parcours, [TRIAL_CODE]: {
     code: TRIAL_CODE, prenom: "Camille", poste: "agent d'accueil", warmup: true, counselor: "",
@@ -65,9 +67,19 @@ function newCode() {
   return c;
 }
 
+/* Dernier espace ouvert sur cet appareil, pour que « Mon espace » y ramène directement. */
+export function setLastSpace(ls) {
+  if (JSON.stringify(state.lastSpace || null) === JSON.stringify(ls || null)) return;
+  write({ ...state, lastSpace: ls || null });
+}
+
 /* ── Coach ── */
 export function setCounselor(name) {
   write({ ...state, counselor: { name: name.trim(), since: new Date().toISOString() } });
+}
+
+export function logoutCounselor() {
+  write({ ...state, counselor: null, lastSpace: state.lastSpace?.role === "coach" ? null : state.lastSpace });
 }
 
 /* ── Parcours ── */

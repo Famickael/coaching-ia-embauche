@@ -1,45 +1,69 @@
 import React, { useEffect, useState } from "react";
-import { T, GRAD, GRAD_MAIN, GRAD_AI, GRAD_SOFT, FD, FB, FM, RAD, SH, sp, RepetMark, RepetLogo, TSLogo, Halo, Tag, Btn, Card, Icon, I, GStyle } from "./ui.jsx";
+import { T, FD, FB, FM, RAD, SH, sp, RepetLogo, OrgLogo, Tag, Btn, Card, Icon, I, GStyle } from "./ui.jsx";
 import { LegalModal } from "./legal.jsx";
+import Home from "./Home.jsx";
+import HowItWorks from "./HowItWorks.jsx";
 import Beneficiary from "./Beneficiary.jsx";
 import Counselor from "./Counselor.jsx";
-import { getState, setCounselor, TRIAL_COACH } from "./lib/store.js";
+import { useStore, getState, setLastSpace, findParcours, TRIAL_CODE } from "./lib/store.js";
 
 /* La Répét' : coach IA d'entraînement à l'entretien.
-   Rôles : présentation, bénéficiaire (accès par code ou lien #/s/CODE), coach. */
+   Routes (dans l'ancre de l'adresse, pour que le bouton Retour du navigateur fonctionne) :
+     #/                 accueil
+     #/fonctionnement   fonctionnement détaillé
+     #/espace           choix de l'espace (code bénéficiaire ou coach)
+     #/s/CODE           espace bénéficiaire
+     #/beneficiaire     saisie du code
+     #/coach            espace coach (connexion simulée, identifiants pré-remplis) */
 
-function codeFromHash() {
-  const m = location.hash.match(/^#\/s\/([A-Za-z0-9]{6})/);
-  return m ? m[1].toUpperCase() : null;
+function routeFromHash() {
+  const h = location.hash;
+  const m = h.match(/^#\/s\/([A-Za-z0-9]{6})/);
+  if (m) return { role: "benef", code: m[1].toUpperCase() };
+  if (h === "#/beneficiaire") return { role: "benef", code: null };
+  if (h === "#/coach") return { role: "coach" };
+  if (h === "#/fonctionnement") return { role: "how" };
+  if (h === "#/espace") return { role: "espace" };
+  return { role: "home" };
 }
 
-/* Lien direct vers l'espace coach (#/coach) : identification automatique avec le nom d'essai. */
-function isCoachHash() {
-  if (location.hash !== "#/coach") return false;
-  if (!getState().counselor) setCounselor(TRIAL_COACH);
-  return true;
+const go = hash => { if (location.hash === hash) window.scrollTo({ top: 0 }); else location.hash = hash; };
+
+/* « Mon espace » : rouvre le dernier espace utilisé sur cet appareil, sinon propose le choix. */
+function openSpace() {
+  const ls = getState().lastSpace;
+  if (ls?.role === "coach") return go("#/coach");
+  if (ls?.role === "benef" && findParcours(ls.code)) return go(`#/s/${ls.code}`);
+  go("#/espace");
 }
 
 export default function App() {
-  const [role, setRoleState] = useState(() => (codeFromHash() ? "benef" : isCoachHash() ? "coach" : "home"));
-  const [hashCode, setHashCode] = useState(codeFromHash);
+  const s = useStore();
+  const [route, setRoute] = useState(routeFromHash);
   const [modal, setModal] = useState(null); // "lifecycle" | "cgu" | "rgpd" | "emotion" | null
 
   useEffect(() => {
-    const on = () => { const c = codeFromHash(); setHashCode(c); if (c) setRoleState("benef"); else if (isCoachHash()) setRoleState("coach"); };
+    const on = () => { setRoute(routeFromHash()); window.scrollTo({ top: 0 }); };
     window.addEventListener("hashchange", on);
     return () => window.removeEventListener("hashchange", on);
   }, []);
-  const setRole = r => { if (r !== "benef" && location.hash) history.replaceState(null, "", location.pathname); setRoleState(r); window.scrollTo({ top: 0 }); };
+  useEffect(() => { if (route.role === "coach") setLastSpace({ role: "coach" }); }, [route.role]);
+
+  const onCode = code => {
+    if (code) { setLastSpace({ role: "benef", code }); if (location.hash !== `#/s/${code}`) history.replaceState(null, "", `#/s/${code}`); }
+    else if (getState().lastSpace?.role === "benef") { setLastSpace(null); history.replaceState(null, "", "#/beneficiaire"); }
+  };
 
   return (
     <div style={{ minHeight: "100vh", background: T.bg, fontFamily: FB, color: T.ink, display: "flex", flexDirection: "column" }}>
       <GStyle />
-      <Nav role={role} setRole={setRole} setModal={setModal} />
+      <Nav route={route} s={s} />
       <div style={{ flex: 1 }}>
-        {role === "home" && <Landing setRole={setRole} setModal={setModal} />}
-        {role === "benef" && <Beneficiary key={hashCode || "nocode"} initialCode={hashCode} setModal={setModal} />}
-        {role === "coach" && <Counselor setRole={setRole} />}
+        {route.role === "home" && <Home go={go} openSpace={openSpace} />}
+        {route.role === "how" && <HowItWorks go={go} openSpace={openSpace} />}
+        {route.role === "espace" && <Espace />}
+        {route.role === "benef" && <Beneficiary key={route.code || "nocode"} initialCode={route.code} setModal={setModal} onCode={onCode} />}
+        {route.role === "coach" && <Counselor />}
       </div>
       <Footer setModal={setModal} />
       <LegalModal modal={modal} close={() => setModal(null)} />
@@ -47,232 +71,110 @@ export default function App() {
   );
 }
 
-function Nav({ role, setRole, setModal }) {
-  const tabs = [["home", "Présentation"], ["benef", "Bénéficiaire"], ["coach", "Coach"]];
+/* ─── En-tête ─── */
+function Nav({ route, s }) {
+  const inSpace = route.role === "benef" || route.role === "coach";
+  const p = route.role === "benef" ? s.parcours[s.lastSpace?.code] : null;
+  const label = route.role === "coach" ? "Espace coach" : p ? `Espace de ${p.prenom}` : "Espace bénéficiaire";
   return (
-    <header style={{ position: "sticky", top: 0, zIndex: 50, background: "rgba(248,250,252,.82)", backdropFilter: "blur(14px)", borderBottom: `1px solid ${T.line}` }}>
-      <div className="rp-nav" style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px", height: 64, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 18, cursor: "pointer" }} onClick={() => setRole("home")}>
-          <RepetLogo s={17} tagline={false} />
+    <header className="noprint" style={{ position: "sticky", top: 0, zIndex: 50, background: "rgba(248,250,252,.86)", backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)", borderBottom: `1px solid ${T.line}` }}>
+      <div className="rp-nav" style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px", height: 64, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 18, flexShrink: 0 }}>
+          <button onClick={() => go("#/")} aria-label="La Répét', accueil" style={{ background: "none", border: "none", padding: 0, cursor: "pointer", display: "flex" }}>
+            <RepetLogo s={17} tagline={false} />
+          </button>
           <div className="rp-hide-m" style={{ width: 1, height: 30, background: T.line }} />
-          <span className="rp-hide-m"><TSLogo s={10} /></span>
+          <span className="rp-hide-m"><OrgLogo s={10} /></span>
         </div>
-        <nav className="rp-tabs" style={{ display: "flex", gap: 4, background: "#fff", padding: 4, borderRadius: RAD.pill, boxShadow: SH.xs }}>
-          {tabs.map(([k, l]) => (
-            <button key={k} onClick={() => setRole(k)} style={{
-              font: `600 13px ${FB}`, padding: "8px 16px", borderRadius: RAD.pill, border: "none", cursor: "pointer",
-              background: role === k ? T.primary : "transparent", color: role === k ? "#fff" : T.muted, transition: "all .2s",
-            }}>{l}</button>
-          ))}
+        <nav style={{ display: "flex", alignItems: "center", gap: 14 }}>
+          <a href="#/fonctionnement" className={`navlink rp-hide-xs ${inSpace ? "rp-hide-m" : ""} ${route.role === "how" ? "on" : ""}`}>Fonctionnement</a>
+          {inSpace ? (
+            <div style={{ display: "flex", alignItems: "center", gap: 6, background: "#fff", border: `1px solid ${T.line}`, borderRadius: RAD.pill, padding: "4px 4px 4px 12px", boxShadow: SH.xs }}>
+              <Icon d={I.user} s={15} c={T.primary} />
+              <span className="rp-nav-pill-label" style={{ font: `600 13px ${FB}`, color: T.navy, whiteSpace: "nowrap" }}>{label}</span>
+              <button onClick={() => go("#/espace")} aria-label="Changer d'espace" style={{ font: `600 12.5px ${FB}`, color: T.primary, background: `${T.primary}10`, border: "none", borderRadius: RAD.pill, padding: "7px 12px", cursor: "pointer" }}>Changer</button>
+            </div>
+          ) : (
+            <Btn kind="primary" size="sm" onClick={openSpace}><span className="rp-hide-m" style={{ display: "inline-flex" }}><Icon d={I.user} s={16} c="#fff" /></span>Mon espace</Btn>
+          )}
         </nav>
       </div>
     </header>
   );
 }
 
-/* ════════════════════════ LANDING ════════════════════════ */
-
-function Landing({ setRole, setModal }) {
+/* ─── Choix de l'espace ─── */
+function Espace() {
+  const [code, setCode] = useState(TRIAL_CODE);
+  const [err, setErr] = useState("");
+  const submit = e => {
+    e.preventDefault();
+    const p = findParcours(code);
+    if (p) go(`#/s/${p.code}`); else setErr("Ce code n'existe pas ou n'est plus actif. Vérifiez-le auprès de votre coach.");
+  };
   return (
-    <main>
-      <section style={{ position: "relative", overflow: "hidden", background: T.bg }}>
-        {/* aplats bleu clair subtils + formes organiques dégradé */}
-        <Halo style={{ width: 560, height: 560, background: `${T.blue}1A`, top: -180, right: -100 }} />
-        <Halo style={{ width: 420, height: 420, background: `${T.primary}14`, top: 60, left: -180 }} />
-        <Halo style={{ width: 260, height: 260, background: `${T.violet}14`, bottom: -80, right: 200 }} />
-        <div className="rp-hero" style={{ position: "relative", maxWidth: 1200, margin: "0 auto", padding: "84px 24px 76px", display: "grid", gridTemplateColumns: "1.1fr .9fr", gap: 56, alignItems: "center" }}>
-          <div className="up">
-            <div style={{ display: "flex", gap: 8, marginBottom: sp(6) }}>
-              <Tag tone="ai">✨ Coach IA</Tag>
-              <Tag tone="success">Conçu pour l'AI Act et le RGPD</Tag>
-            </div>
-            <h1 className="rp-h1" style={{ font: `800 56px/1.05 ${FD}`, letterSpacing: "-.035em", margin: `0 0 ${sp(5)}px`, color: T.primary }}>
-              Préparez votre entretien,<br /><span style={{ background: GRAD_MAIN, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>sans pression.</span>
-            </h1>
-            <p style={{ font: `400 19px/1.6 ${FB}`, color: T.body, maxWidth: 520, margin: `0 0 ${sp(8)}px` }}>
-              Entraînez-vous à votre rythme, recevez un retour bienveillant qui <strong style={{ color: T.primary }}>décrit sans noter</strong>, puis échangez avec votre coach. Un seul lien, aucun compte à créer.
-            </p>
-            <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-              <Btn kind="objective" size="lg" onClick={() => setRole("benef")}>Commencer l'entraînement&nbsp;<Icon d={I.arrow} s={18} c="#fff" /></Btn>
-              <Btn kind="secondary" size="lg" onClick={() => setRole("coach")}>Espace coach</Btn>
-            </div>
-            <div style={{ font: `500 13px ${FB}`, color: T.muted, marginTop: sp(5) }}>
-              Pour les <strong style={{ color: T.primary }}>organismes d'accompagnement vers l'emploi</strong>
-            </div>
-          </div>
-          <div className="up rp-hide-m" style={{ position: "relative" }}>
-            <HeroVisual />
-          </div>
+    <main className="rp-pad" style={{ maxWidth: 920, margin: "0 auto", padding: "48px 24px 64px" }}>
+      <div className="up">
+        <h1 style={{ font: `800 32px ${FD}`, letterSpacing: "-.03em", color: T.navy, margin: "0 0 6px" }}>Mon espace</h1>
+        <p style={{ font: `400 16px ${FB}`, color: T.body, margin: "0 0 28px" }}>Choisissez votre accès.</p>
+        <div className="rp-stack" style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: 20, alignItems: "stretch" }}>
+          <Card pad={28} topbar style={{ boxShadow: SH.sm }}>
+            <Tag tone="appui">Bénéficiaire</Tag>
+            <h2 style={{ font: `800 21px ${FD}`, color: T.navy, margin: "12px 0 6px" }}>J'ai un code d'entraînement</h2>
+            <p style={{ font: `400 14px/1.6 ${FB}`, color: T.body, margin: "0 0 18px" }}>Saisissez le code de 6 caractères remis par votre coach.</p>
+            <form onSubmit={submit}>
+              <label htmlFor="espace-code" style={{ font: `600 13px ${FB}`, color: T.navy, display: "block", marginBottom: 8 }}>Votre code d'accès</label>
+              <input id="espace-code" value={code} autoComplete="off" maxLength={6} placeholder="6 caractères"
+                onChange={e => { setCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "")); setErr(""); }}
+                style={{ width: "100%", height: 54, padding: "0 18px", borderRadius: RAD.md, border: `1.5px solid ${err ? T.error : T.line}`, font: `700 21px ${FM}`, letterSpacing: ".25em", textAlign: "center", color: T.navy, background: T.bg }} />
+              {err && <div role="alert" style={{ font: `500 13px ${FB}`, color: T.error, marginTop: 8 }}>{err}</div>}
+              <div style={{ marginTop: 16 }}><Btn kind="objective" full disabled={code.length < 6}>Ouvrir mon espace&nbsp;<Icon d={I.arrow} s={17} c="#fff" /></Btn></div>
+            </form>
+          </Card>
+          <Card pad={28} topbar="coach" style={{ boxShadow: SH.sm, display: "flex", flexDirection: "column" }}>
+            <div><Tag tone="primary">Coach</Tag></div>
+            <h2 style={{ font: `800 21px ${FD}`, color: T.navy, margin: "12px 0 6px" }}>Je suis coach</h2>
+            <p style={{ font: `400 14px/1.6 ${FB}`, color: T.body, margin: "0 0 18px", flex: 1 }}>Créez des parcours, transmettez les codes et relisez les prises que l'on vous envoie.</p>
+            <div><Btn kind="secondary" onClick={() => go("#/coach")}>Accéder à l'espace coach&nbsp;<Icon d={I.arrow} s={17} c={T.primary} /></Btn></div>
+          </Card>
         </div>
-      </section>
-
-      <div className="rp-pad" style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px" }}>
-        <Section eyebrow="Le déroulé" title="Un seul lien, du premier essai au débriefing">
-          <Flow />
-        </Section>
-
-        <Section eyebrow="Pour la DSI & le juridique" title="Réalisable et hébergé en interne, sans prestataire">
-          <div className="rp-stack" style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: sp(5) }}>
-            <Proof icon={I.lock} t="Analyse locale, transmission maîtrisée" b="L'analyse de la posture tourne dans le navigateur (MediaPipe). La vidéo n'est transmise et stockée que si le bénéficiaire choisit de la partager à son coach, jamais à son insu." />
-            <Proof icon={I.shield} t="Texte traité en souveraineté" b="La transcription (Whisper) et l'analyse descriptive tournent dans le navigateur. Une reformulation par un modèle hébergé en France (par exemple Mistral) peut être activée ; elle ne reçoit que du texte." />
-            <Proof icon={I.sparkle} t="Conçu pour être hébergé en interne" b="Application développée et opérée par l'organisme d'accompagnement lui-même. Briques standards, maîtrisables par une équipe interne." />
-          </div>
-        </Section>
-
-        <Section eyebrow="Le parti pris" title="Un coach qui rend autonome, pas conforme">
-          <div className="rp-stack" style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: sp(5) }}>
-            <Princ n="01" t="Décrire, jamais noter" d="« Vous regardez vers le bas 40 % du temps » plutôt que « contact visuel insuffisant ». La personne observe, et décide elle-même quoi en faire." />
-            <Princ n="02" t="Des conventions, pas des vérités" d="Chaque repère est une convention de secteur, variable selon le poste et la culture, jamais une qualité personnelle universelle." />
-            <Princ n="03" t="L'humain garde la main" d="Le coach relit les prises que la personne choisit de lui envoyer : il contextualise, nuance et annote avant de renvoyer le rapport." />
-            <Princ n="04" t="On commence en douceur" d="Un échauffement sans analyse ni conservation. Puis, au moment du retour, la personne choisit : un rapport écrit, ou se revoir en vidéo." />
-          </div>
-        </Section>
-
-        <section style={{ padding: `${sp(4)}px 0 ${sp(20)}px` }}>
-          <div className="rp-cta" style={{ position: "relative", borderRadius: RAD.xl, padding: "52px 48px", overflow: "hidden", background: GRAD, boxShadow: SH.lg }}>
-            <Halo style={{ width: 300, height: 300, background: "rgba(255,255,255,.18)", bottom: -120, right: -40 }} />
-            <div style={{ position: "relative", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 24 }}>
-              <div>
-                <h3 className="rp-h3" style={{ font: `800 30px ${FD}`, color: "#fff", margin: "0 0 8px", letterSpacing: "-.02em" }}>Prêt à voir comment ça marche ?</h3>
-                <p style={{ font: `400 17px ${FB}`, color: "rgba(255,255,255,.9)", margin: 0 }}>Créez un parcours côté coach, puis ouvrez le lien côté bénéficiaire.</p>
-              </div>
-              <Btn kind="objective" size="lg" onClick={() => setRole("benef")}>Commencer&nbsp;<Icon d={I.arrow} s={18} c="#fff" /></Btn>
-            </div>
-          </div>
-        </section>
       </div>
     </main>
   );
 }
 
-function HeroVisual() {
-  return (
-    <div style={{ position: "relative", animation: "float 6s ease-in-out infinite" }}>
-      <Card pad={0} style={{ overflow: "hidden", boxShadow: SH.lg, borderRadius: RAD.xl }}>
-        <div style={{ background: GRAD, padding: "18px 22px", display: "flex", alignItems: "center", gap: 10 }}>
-          <RepetMark s={30} />
-          <div style={{ font: `700 15px ${FD}`, color: "#fff", letterSpacing: "-.01em" }}>Votre prise du jour</div>
-          <div style={{ marginLeft: "auto", display: "flex", gap: 5 }}>
-            {[0, 1, 2].map(i => <span key={i} style={{ width: 7, height: 7, borderRadius: "50%", background: "rgba(255,255,255,.5)" }} />)}
-          </div>
-        </div>
-        <div style={{ padding: 22 }}>
-          {[
-            { t: "Ouverture", tone: "appui", txt: "Vous entrez directement dans le sujet." },
-            { t: "Exemples concrets", tone: "appui", txt: "Une expérience précise pour appuyer." },
-            { t: "Mots d'appui", tone: "explorer", txt: "« euh » revient quelques fois." },
-          ].map((r, i) => {
-            const ap = r.tone === "appui", c = ap ? T.orange : T.violet;
-            return (
-            <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, padding: "11px 0", borderBottom: i < 2 ? `1px solid ${T.lineLt}` : "none" }}>
-              <div style={{ width: 34, height: 34, borderRadius: RAD.sm, background: `${c}14`, display: "grid", placeItems: "center" }}>
-                <Icon d={ap ? I.check : I.sparkle} s={16} c={c} />
-              </div>
-              <div style={{ flex: 1 }}>
-                <div style={{ font: `700 13px ${FD}`, color: T.navy }}>{r.t}</div>
-                <div style={{ font: `400 12px ${FB}`, color: T.muted }}>{r.txt}</div>
-              </div>
-              <Tag tone={ap ? "orange" : "ai"}>{ap ? "Appui" : "À explorer"}</Tag>
-            </div>
-          );})}
-        </div>
-      </Card>
-      <div style={{ position: "absolute", bottom: -18, left: -18, background: "#fff", borderRadius: RAD.md, padding: "10px 14px", boxShadow: SH.lg, display: "flex", alignItems: "center", gap: 8 }}>
-        <div style={{ width: 28, height: 28, borderRadius: "50%", background: GRAD_AI, display: "grid", placeItems: "center" }}><Icon d={I.sparkle} s={14} c="#fff" /></div>
-        <div style={{ font: `700 12px ${FM}`, color: T.primary }}>Analyse en 8s</div>
-      </div>
-    </div>
-  );
-}
-
-const Section = ({ eyebrow, title, children }) => (
-  <section className="rp-section" style={{ padding: `${sp(18)}px 0 0` }}>
-    <div style={{ font: `700 12px ${FB}`, letterSpacing: ".1em", textTransform: "uppercase", color: T.primary, marginBottom: sp(2) }}>{eyebrow}</div>
-    <h2 className="rp-h2" style={{ font: `800 34px/1.1 ${FD}`, letterSpacing: "-.03em", margin: 0, color: T.navy }}>{title}</h2>
-    <div style={{ marginTop: sp(8) }}>{children}</div>
-  </section>
-);
-
-const Proof = ({ icon, t, b }) => (
-  <Card hover topbar>
-    <div style={{ position: "relative", width: 48, height: 48, borderRadius: RAD.md, background: `${T.primary}10`, display: "grid", placeItems: "center", marginBottom: sp(4) }}>
-      <Icon d={icon} s={22} c={T.primary} />
-      <span style={{ position: "absolute", top: -3, right: -3, width: 12, height: 12, borderRadius: "50%", background: T.orange, border: "2px solid #fff" }} />
-    </div>
-    <h3 style={{ font: `700 17px/1.3 ${FD}`, margin: "0 0 8px", color: T.navy }}>{t}</h3>
-    <p style={{ font: `400 14px/1.6 ${FB}`, color: T.body, margin: 0 }}>{b}</p>
-  </Card>
-);
-const Princ = ({ n, t, d }) => (
-  <Card hover style={{ display: "flex", gap: sp(4) }}>
-    <div style={{ font: `800 24px ${FM}`, color: T.orange, flexShrink: 0, lineHeight: 1.1 }}>{n}</div>
-    <div>
-      <h3 style={{ font: `700 18px ${FD}`, margin: "0 0 6px", color: T.navy }}>{t}</h3>
-      <p style={{ font: `400 14px/1.6 ${FB}`, color: T.body, margin: 0 }}>{d}</p>
-    </div>
-  </Card>
-);
-
-function Flow() {
-  const steps = [
-    { n: 1, who: "Coach", t: "crée un parcours", d: "et génère un lien", c: T.primary },
-    { n: 2, who: "Bénéficiaire", t: "ouvre le lien", d: "saisit son code", c: T.blue },
-    { n: 3, who: "Bénéficiaire", t: "s'entraîne seul", d: "retour IA bienveillant", c: T.violet },
-    { n: 4, who: "Bénéficiaire", t: "partage sa prise", d: "quand il le décide", c: T.orange },
-    { n: 5, who: "Coach", t: "annote", d: "contextualise, nuance", c: T.primary },
-    { n: 6, who: "Ensemble", t: "débriefing en atelier", d: "en présentiel", c: T.blue },
-    { n: 7, who: "Bénéficiaire", t: "peut recommencer", d: "même après l'atelier", c: T.orange },
-  ];
-  return (
-    <div className="rp-flow" style={{ display: "flex", overflowX: "auto", paddingBottom: sp(2), gap: 0 }}>
-      {steps.map((s, i) => (
-        <React.Fragment key={i}>
-          <div className="rp-flow-step" style={{ flex: "1 0 146px", minWidth: 146 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 9, marginBottom: sp(2) }}>
-              <span style={{ width: 28, height: 28, borderRadius: "50%", background: s.c, color: "#fff", display: "grid", placeItems: "center", font: `700 12px ${FM}`, flexShrink: 0 }}>{s.n}</span>
-              <span style={{ font: `700 10.5px ${FB}`, textTransform: "uppercase", letterSpacing: ".05em", color: s.c }}>{s.who}</span>
-            </div>
-            <div style={{ font: `700 15px ${FD}`, marginBottom: 2, color: T.navy }}>{s.t}</div>
-            <div style={{ font: `400 13px ${FB}`, color: T.body }}>{s.d}</div>
-          </div>
-          {i < steps.length - 1 && <div className="rp-hide-m" style={{ flexShrink: 0, alignSelf: "flex-start", marginTop: 4, color: T.faint, padding: "0 6px" }}><Icon d={I.arrow} s={16} c={T.faint} /></div>}
-        </React.Fragment>
-      ))}
-    </div>
-  );
-}
-
-/* ════════════════════════ BÉNÉFICIAIRE ════════════════════════ */
-
-
-/* ════════════════════════ FOOTER (non collant) ════════════════════════ */
+/* ─── Pied de page (non collant) ─── */
+// « Analyse sur votre appareil » n'est vrai que sans transcription ni reformulation par un serveur.
+const LOCAL_ONLY = !import.meta.env.VITE_STT_ENDPOINT && !import.meta.env.VITE_LLM_ENDPOINT;
 
 function Footer({ setModal }) {
+  const trust = [
+    [I.lock, LOCAL_ONLY ? "Analyse sur votre appareil" : "Vidéo conservée sur votre appareil"],
+    [I.send, "Envoi au coach seulement si vous le décidez"],
+    [I.ban, "Sans note ni classement"],
+    [I.shield, "Aucune émotion déduite"],
+  ];
   const links = [["cgu", "Conditions d'utilisation"], ["rgpd", "Protection des données"], ["lifecycle", "Cycle de vie de la vidéo"]];
+  const lk = { font: `500 12px ${FB}`, color: T.primary, background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline", textUnderlineOffset: 2 };
   return (
-    <footer style={{ borderTop: `1px solid ${T.line}`, background: "#fff", marginTop: sp(10) }}>
+    <footer className="noprint" style={{ borderTop: `1px solid ${T.line}`, background: "#fff", marginTop: sp(10) }}>
       <div className="rp-pad" style={{ maxWidth: 1200, margin: "0 auto", padding: "24px 24px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 18 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 18, flexWrap: "wrap" }}>
           <RepetLogo s={14} tagline={false} />
           <div style={{ width: 1, height: 26, background: T.line }} />
-          <TSLogo s={9} />
+          <OrgLogo s={9} />
+          <span style={{ font: `400 11px ${FB}`, color: T.muted }}>Emplacement du logo de votre organisme</span>
         </div>
-        <div style={{ display: "flex", gap: 16, font: `500 12px ${FB}`, color: T.body, flexWrap: "wrap" }}>
-          <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><Icon d={I.lock} s={14} c={T.success} /> Analyse locale, partage maîtrisé</span>
-          <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><Icon d={I.shield} s={14} c={T.blue} /> Modèle souverain</span>
-          <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>⚖️ Sans inférence émotionnelle</span>
+        <div className="rp-trust" style={{ display: "flex", gap: 18, font: `500 12px ${FB}`, color: T.body, flexWrap: "wrap" }}>
+          {trust.map(([ic, l]) => <span key={l} style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><Icon d={ic} s={14} c={T.primary} /> {l}</span>)}
         </div>
       </div>
       <div style={{ borderTop: `1px solid ${T.lineLt}` }}>
-        <div className="rp-pad" style={{ maxWidth: 1200, margin: "0 auto", padding: "14px 24px 16px", display: "flex", justifyContent: "flex-end", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
-          <div style={{ display: "flex", gap: 18, flexWrap: "wrap" }}>
-            {links.map(([k, l]) => (
-              <button key={k} onClick={() => setModal && setModal(k)} style={{ font: `500 12px ${FB}`, color: T.primary, background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline", textUnderlineOffset: 2 }}>{l}</button>
-            ))}
-          </div>
+        <div className="rp-pad" style={{ maxWidth: 1200, margin: "0 auto", padding: "14px 24px 16px", display: "flex", justifyContent: "flex-end", alignItems: "center", flexWrap: "wrap", gap: 18 }}>
+          <a href="#/fonctionnement" style={{ ...lk, display: "inline-block" }}>Fonctionnement</a>
+          {links.map(([k, l]) => <button key={k} onClick={() => setModal(k)} style={lk}>{l}</button>)}
         </div>
       </div>
     </footer>
   );
 }
-
