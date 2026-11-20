@@ -43,7 +43,7 @@ require("fs").mkdirSync(SC, { recursive: true });
   await p.locator("[title*='Exemples concrets']").first().click().catch(() => {});
   await click("Envoyer à mon coach");
   await p.locator("textarea").fill("Je parle peut-être trop vite ?"); await click("Envoyer"); await shot("08-envoye");
-  await click("Changer d'espace"); await click("Accéder à l'espace coach"); await p.waitForTimeout(300); await shot("09-liste-conseiller");
+  await click("Se déconnecter"); await click("Mon espace"); await click("Accéder à l'espace coach"); await p.waitForTimeout(300); await shot("09-liste-conseiller");
   await click("Relire"); await click("Relire et annoter"); await p.waitForTimeout(800);
   await p.getByPlaceholder(/Mettez la vidéo en pause/).fill("Belle entrée en matière."); await click("Ajouter");
   await p.locator("textarea").fill("Alex, ta présentation est claire. On en parle jeudi.");

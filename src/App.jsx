@@ -5,7 +5,7 @@ import Home from "./Home.jsx";
 import HowItWorks from "./HowItWorks.jsx";
 import Beneficiary from "./Beneficiary.jsx";
 import Counselor from "./Counselor.jsx";
-import { useStore, getState, setLastSpace, findParcours, TRIAL_CODE } from "./lib/store.js";
+import { useStore, getState, setLastSpace, logoutCounselor, findParcours, TRIAL_CODE } from "./lib/store.js";
 
 /* La Répét' : coach IA d'entraînement à l'entretien.
    Routes (dans l'ancre de l'adresse, pour que le bouton Retour du navigateur fonctionne) :
@@ -89,10 +89,13 @@ function Nav({ route, s }) {
         <nav style={{ display: "flex", alignItems: "center", gap: 14 }}>
           <a href="#/fonctionnement" className={`navlink rp-hide-xs ${inSpace ? "rp-hide-m" : ""} ${route.role === "how" ? "on" : ""}`}>Fonctionnement</a>
           {inSpace ? (
-            <div style={{ display: "flex", alignItems: "center", gap: 6, background: "#fff", border: `1px solid ${T.line}`, borderRadius: RAD.pill, padding: "4px 4px 4px 12px", boxShadow: SH.xs }}>
-              <span className="rp-nav-pill-icon" style={{ display: "inline-flex" }}><Icon d={I.user} s={15} c={T.primary} /></span>
-              <span className="rp-nav-pill-label" style={{ font: `600 13px ${FB}`, color: T.navy, whiteSpace: "nowrap" }}>{label}</span>
-              <button onClick={() => go("#/espace")} aria-label="Changer d'espace" style={{ font: `600 12.5px ${FB}`, color: T.primary, background: `${T.primary}10`, border: "none", borderRadius: RAD.pill, padding: "7px 12px", cursor: "pointer", whiteSpace: "nowrap" }}>Changer d'espace</button>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, background: "#fff", border: `1px solid ${T.line}`, borderRadius: RAD.pill, padding: "4px 4px 4px 12px", boxShadow: SH.xs }}>
+              <Icon d={I.user} s={15} c={T.primary} />
+              <span style={{ font: `600 13px ${FB}`, color: T.navy, whiteSpace: "nowrap", maxWidth: 150, overflow: "hidden", textOverflow: "ellipsis" }}>{label}</span>
+              <button onClick={() => logout(route.role)} aria-label="Se déconnecter" title="Se déconnecter"
+                style={{ width: 32, height: 32, borderRadius: "50%", border: "none", background: `${T.primary}10`, display: "grid", placeItems: "center", cursor: "pointer" }}>
+                <Icon d={I.logout} s={15} c={T.primary} />
+              </button>
             </div>
           ) : (
             <Btn kind="primary" size="sm" onClick={openSpace}><span className="rp-hide-m" style={{ display: "inline-flex" }}><Icon d={I.user} s={16} c="#fff" /></span>Mon espace</Btn>
@@ -101,6 +104,14 @@ function Nav({ route, s }) {
       </div>
     </header>
   );
+}
+
+/* Déconnexion : le coach se déconnecte ; le bénéficiaire quitte son espace sur cet appareil
+   (ses données restent enregistrées, il y revient avec son code). */
+function logout(role) {
+  if (role === "coach") logoutCounselor();
+  setLastSpace(null);
+  go("#/");
 }
 
 /* ─── Choix de l'espace ─── */

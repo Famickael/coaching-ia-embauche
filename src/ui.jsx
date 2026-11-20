@@ -172,6 +172,7 @@ const I = {
   pause: <><rect x="6" y="4" width="4" height="16" /><rect x="14" y="4" width="4" height="16" /></>,
   print: <><polyline points="6 9 6 2 18 2 18 9" /><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" /><rect x="6" y="14" width="12" height="8" /></>,
   note: <><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" /></>,
+  logout: <><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></>,
   search: <><circle cx="11" cy="11" r="7" /><line x1="21" y1="21" x2="16.5" y2="16.5" /></>,
   ban: <><circle cx="12" cy="12" r="9" /><line x1="5.6" y1="5.6" x2="18.4" y2="18.4" /></>,
   mic: <><rect x="9" y="2" width="6" height="12" rx="3" /><path d="M5 10a7 7 0 0 0 14 0M12 17v5" /></>,
@@ -267,8 +268,6 @@ const GStyle = () => (
       .sc-step{min-height:60vh;min-height:60svh;justify-content:flex-start;padding-top:20px;opacity:1}
       .sc-scene::after{content:"";position:absolute;left:0;right:0;top:100%;height:24px;background:linear-gradient(${T.bg},transparent);pointer-events:none}
       .rp-trust{display:grid!important;grid-template-columns:1fr 1fr;gap:10px 14px!important;font-size:12px!important}
-      .rp-nav-pill-label{display:none}
-      .rp-nav-pill-icon{display:none}
       .rp-nav nav{gap:8px!important}
       .rp-nav nav .navlink{font-size:13px}
     }
