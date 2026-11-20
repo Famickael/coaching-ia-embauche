@@ -6,6 +6,16 @@
     <meta name="description" content="La Répét' : entraînement autonome à l'entretien d'embauche, avec un retour qui décrit sans noter et un coach qui garde la main." />
     <meta name="theme-color" content="#F8FAFC" />
     <title>La Répét' · S'entraîner à l'entretien d'embauche</title>
+    <script>
+      /* Options d'accessibilité appliquées avant tout affichage (thème, animations) : pas de flash clair en thème sombre.
+         Même clé que src/lib/a11y.js ; le reste des réglages est appliqué par src/main.jsx avant le premier rendu. */
+      try {
+        var a = JSON.parse(localStorage.getItem("larepet.a11y") || "null") || {}, d = document.documentElement, t = a.theme || "auto";
+        d.dataset.theme = t;
+        if (a.motion) d.dataset.motion = "reduce";
+        if (t === "dark" || (t === "auto" && window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches)) d.classList.add("rp-boot-dark");
+      } catch (e) {}
+    </script>
     <style>
       /* Écran de chargement : visible avant le JavaScript, retiré par src/Loader.jsx. */
       html,body{background:#F8FAFC;margin:0}
@@ -20,6 +30,8 @@
       @keyframes rpl-r{from{opacity:0;transform:translate(22px,-10px)}to{opacity:1;transform:none}}
       @keyframes rpl-d{0%,60%,100%{opacity:.35;transform:none}30%{opacity:1;transform:translateY(-5px)}}
       @keyframes rpl-gone{to{opacity:0;visibility:hidden}}
+      html.rp-boot-dark,html.rp-boot-dark body,html.rp-boot-dark #rp-loader{background:#0E141E}
+      html[data-motion=reduce] #rp-loader{transition:none}
       @media (prefers-reduced-motion: reduce){
         #rp-loader{transition:none}
         .rpl-l,.rpl-r,.rpl-d{animation:none}

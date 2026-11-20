@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from "react";
-import { T, ON, TY, RAD, W, GAP, GRAD_NIGHT, Btn, Back, Icon, I } from "./ui.jsx";
+import { T, FIX, ON, TY, RAD, W, GAP, GRAD_NIGHT, Btn, Back, Icon, I } from "./ui.jsx";
 import { startGaze } from "./lib/gaze.js";
 import { PHRASES } from "./content/legal.js";
+import { setRecording, nudgeAssistant } from "./Assistant.jsx";
 
 const MAX_SEC = 180;
 
@@ -14,7 +15,7 @@ function pickMime(audioOnly) {
 
 /* Enregistreur : caméra + micro, ou micro seul.
    onDone({ blob, duration, gaze, audioOnly }) est appelé quand la personne valide sa prise. */
-export default function Recorder({ question, onDone, onCancel, trackGaze = true, setModal, validateLabel = "Garder cette réponse" }) {
+export default function Recorder({ question, onDone, onCancel, trackGaze = true, setModal, validateLabel = "Garder cette réponse", holdStart = false }) {
   const liveRef = useRef(null), streamRef = useRef(null), recRef = useRef(null), chunks = useRef([]);
   const gazeRef = useRef(null), t0 = useRef(0);
   const [phase, setPhase] = useState("idle"); // idle | live | recording | done | error
@@ -23,7 +24,7 @@ export default function Recorder({ question, onDone, onCancel, trackGaze = true,
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
 
-  useEffect(() => () => { stopStream(); if (result?.url) URL.revokeObjectURL(result.url); }, []); // eslint-disable-line
+  useEffect(() => () => { stopStream(); setRecording(false); if (result?.url) URL.revokeObjectURL(result.url); }, []); // eslint-disable-line
 
   function stopStream() { streamRef.current?.getTracks().forEach(t => t.stop()); streamRef.current = null; }
 
@@ -36,6 +37,7 @@ export default function Recorder({ question, onDone, onCancel, trackGaze = true,
       streamRef.current = stream;
       setAudioOnly(audio);
       setPhase("live");
+      setRecording(true); // bouton flottant masqué tant que la caméra ou le micro est ouvert : il ne couvre aucune commande
       setTimeout(() => { if (liveRef.current && !audio) { liveRef.current.srcObject = stream; liveRef.current.play().catch(() => {}); } }, 0);
     } catch (e) {
       setError(e?.name === "NotAllowedError"
@@ -58,6 +60,7 @@ export default function Recorder({ question, onDone, onCancel, trackGaze = true,
       setResult({ blob, duration, gaze, url: URL.createObjectURL(blob) });
       setPhase("done");
       stopStream();
+      nudgeAssistant("record"); // la bulle apparaît quand on quitte l'enregistreur
     };
     rec.start(1000);
     recRef.current = rec;
@@ -65,6 +68,7 @@ export default function Recorder({ question, onDone, onCancel, trackGaze = true,
     setSec(0);
     if (trackGaze && !audioOnly && liveRef.current) gazeRef.current = startGaze(liveRef.current, t0.current);
     setPhase("recording");
+    setRecording(true);
   }
 
   function stop() { if (recRef.current?.state === "recording") recRef.current.stop(); }
@@ -127,7 +131,7 @@ export default function Recorder({ question, onDone, onCancel, trackGaze = true,
           </div>
         )}
         {(phase === "live" || phase === "recording") && (
-          <div style={{ ...pill, right: 12, background: T.successDk, ...TY.tag }}>
+          <div style={{ ...pill, right: 12, background: FIX.successDk, ...TY.tag }}>
             <Icon d={I.lock} s={12} /> Reste sur cet appareil
           </div>
         )}
@@ -142,7 +146,12 @@ export default function Recorder({ question, onDone, onCancel, trackGaze = true,
 
       <div className="rp-actions" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: GAP.actions }}>
         {onCancel ? <Back onClick={() => { stop(); stopStream(); onCancel(); }} /> : <span />}
-        {phase === "live" && <Btn kind="objective" onClick={start} icon={I.rec}>Démarrer l'enregistrement</Btn>}
+        {phase === "live" && (
+          <div style={{ display: "grid", gap: 4, justifyItems: "end" }}>
+            <Btn kind="objective" onClick={start} icon={I.rec} disabled={holdStart}>Démarrer l'enregistrement</Btn>
+            {holdStart && <span role="status" style={{ ...TY.caption, color: T.muted }}>Vous pourrez démarrer quand la question aura été lue.</span>}
+          </div>
+        )}
         {phase === "recording" && <Btn kind="secondary" onClick={stop} icon={I.stop}>Arrêter l'enregistrement</Btn>}
         {phase === "done" && (
           <div className="rp-actions" style={{ display: "flex", gap: GAP.actions, flexWrap: "wrap" }}>

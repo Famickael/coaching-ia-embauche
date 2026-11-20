@@ -1,21 +1,23 @@
 import React, { useEffect, useRef, useState } from "react";
 import {
   T, TY, RAD, SH, PAD, GAP, W, Card, Tag, Btn, Back, Link, IconBtn, IconTile, Icon, I, Rail, GradHead, RepetMark, Txt, Notice, Empty, Confirm,
-  Field, Input, Textarea, CheckTile, Chip,
+  Field, Input, Textarea, CheckTile, Chip, Modal,
 } from "./ui.jsx";
 import Recorder from "./Recorder.jsx";
 import WarmupStage from "./WarmupStage.jsx";
-import Assistant from "./Assistant.jsx";
+import AssistantDock, { openAssistant, nudgeAssistant } from "./Assistant.jsx";
 import { ReportBody } from "./Report.jsx";
-import { useStore, TRIAL_CODE, findParcours, updateParcours, takesOf, createTake, updateTake, unshareTake, deleteTake, saveWarmupDebrief, loadWarmupDebrief, loadVideoUrl } from "./lib/store.js";
+import { useStore, getState, TRIAL_CODE, findParcours, updateParcours, takesOf, createTake, updateTake, unshareTake, deleteTake, saveWarmupDebrief, loadWarmupDebrief, loadVideoUrl } from "./lib/store.js";
 import { PHRASES, SUMMARY, PAGES, LEGAL_VERSION } from "./content/legal.js";
 import { Summary } from "./Legal.jsx";
 import { transcribe } from "./lib/transcribe.js";
 import { analyze } from "./lib/analysis.js";
-import { QUESTIONS, fill, WARMUP_PHRASES, WARMUP_PROMPTS, fillPhrase, randomPhraseIndex, WORK_TOPICS, questionsForTopics } from "./lib/questions.js";
+import { QUESTIONS, fill, WARMUP_PHRASES, WARMUP_PROMPTS, fillPhrase, randomPhraseIndex, WORK_TOPICS, questionsForTopics, fullInterview, FULL_INTRO, FULL_OUTRO, posteLabel } from "./lib/questions.js";
+import RecruiterVoice from "./RecruiterVoice.jsx";
 import { searchJobs, norm } from "./lib/jobs.js";
 import { FEELINGS, feelingAck } from "./lib/assistant.js";
 
+const CODE_ERR = "Ce code ne fonctionne pas. Vérifiez les 6 caractères, ou demandez-le à votre coach.";
 const wrap = w => ({ maxWidth: w, margin: "0 auto", width: "100%" });
 const dateFr = iso => new Date(iso).toLocaleString("fr-FR", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" });
 const stack = (gap = GAP.stack) => ({ display: "grid", gap });
@@ -28,28 +30,31 @@ export default function Beneficiary({ initialCode, setModal, onCode }) {
   const s = useStore();
   const [code, setCode] = useState(() => (initialCode && findParcours(initialCode) ? initialCode.toUpperCase() : null));
   const [view, setView] = useState("home");
+  const [speaking, setSpeaking] = useState(false); // le recruteur lit la question : l'enregistrement attend
   const [ctx, setCtx] = useState({}); // question, recording, takeId, mode ; série : queue (textes), qi (rang), selection, preselect
-  const p0 = code ? s.parcours[code] : null;
+  const p0 = code ? s.parcours[code] || getState().parcours[code] : null; // instantané éventuellement antérieur à la création du parcours d'essai
   const p = p0 && { ...p0, counselor: p0.counselor || s.counselor?.name || "" }; // nom du coach affiché
 
   useEffect(() => { if (p && !p.openedAt) updateParcours(p.code, { openedAt: new Date().toISOString() }); }, [p?.code]);
-  useEffect(() => { if (code && !p) setCode(null); }, [p, code]); // parcours supprimé par le coach
+  useEffect(() => { if (code && !p && !findParcours(code)) setCode(null); }, [p, code]); // parcours supprimé par le coach
   useEffect(() => { onCode && onCode(code); }, [code]); // mémorise l'espace ouvert (bouton « Mon espace »)
 
   if (!p) return <main className="rp-page" style={PAGE}><CodeEntry initial={initialCode} onOk={c => { setCode(c); setView("home"); }} /></main>;
   if (!p.consent) return <main className="rp-page" style={PAGE}><Consent p={p} onBack={() => setCode(null)} /></main>;
 
   const go = (v, patch) => { if (patch) setCtx(c => ({ ...c, ...patch })); setView(v); window.scrollTo({ top: 0 }); };
-  const flowSteps = ["Question", "Entraînement", "Analyse", "Retour"];
+  const flowSteps = ["Questions", "Réponse", "Préparation", "Retour"];
   const flowIdx = { pick: 0, record: 1, processing: 2, choose: 3, report: 3 }[view];
   const take = ctx.takeId ? s.takes[ctx.takeId] : null;
   const total = ctx.queue?.length || 0;
-  const series = total ? { i: ctx.qi || 0, n: total, hasNext: (ctx.qi || 0) < total - 1 } : null;
+  const series = total ? { i: ctx.qi || 0, n: total, hasNext: (ctx.qi || 0) < total - 1, full: !!ctx.full, step: ctx.steps?.[ctx.qi || 0] } : null;
   const nextQuestion = () => go("record", { qi: series.i + 1, question: ctx.queue[series.i + 1], takeId: null, recording: null });
-  const stopSeries = () => go("home", { queue: null, qi: 0 });
+  const stopSeries = () => (series?.full ? go("recap") : go("home", { queue: null, qi: 0 }));
 
+  const asstCtx = { warmup: "warmup", record: "record", processing: "record", choose: "feedback", report: "feedback", share: "feedback" }[view] || "general";
   return (
-    <main className="rp-page" style={PAGE}>
+    <main className="rp-page rp-has-fab" style={PAGE}>
+      <AssistantDock poste={p.poste} context={asstCtx} />
       {flowIdx !== undefined && <div style={{ ...wrap(view === "report" && ctx.mode === "video" ? W.wide : W.read), marginBottom: GAP.block }} className="noprint"><Rail step={flowIdx} steps={flowSteps} /></div>}
       <div key={view} className="up">
         {view === "home" && <Home p={p} takes={takesOf(p.code, s)} go={go} counselor={p.counselor} />}
@@ -57,14 +62,15 @@ export default function Beneficiary({ initialCode, setModal, onCode }) {
         {view === "pick" && <Pick p={p} ctx={ctx} go={go} />}
         {view === "record" && (
           <Card pad="lg" level={2} style={{ ...wrap(W.read), ...stack(16) }}>
-            <div><Tag tone="primary">{series && series.n > 1 ? `Entraînement · question ${series.i + 1} sur ${series.n}` : "Entraînement"}</Tag></div>
+            <div><Tag tone="primary">{series?.full ? `Entraînement complet · question ${series.i + 1} sur ${series.n}` : series && series.n > 1 ? `Entraînement · question ${series.i + 1} sur ${series.n}` : "Entraînement"}</Tag></div>
             <div style={stack(8)}>
-              <Txt v="h1" as="h1" color={T.navy}>À vous. Reprenez autant que vous voulez.</Txt>
-              <Txt v="body" color={T.body}>Aucun signal ne vous interrompt pendant l'enregistrement. Le retour vient après, et c'est vous qui décidez de le partager.</Txt>
+              <Txt v="h1" as="h1" color={T.navy}>À vous de répondre</Txt>
+              <Txt v="body" color={T.body}>Rien ne vous interrompt pendant que vous parlez. Vous pouvez recommencer autant de fois que vous voulez.</Txt>
             </div>
             <EmotionNote setModal={setModal} />
-            <Recorder question={ctx.question} setModal={setModal} onCancel={() => go("pick")}
-              trackGaze={!!p.consent.ai} validateLabel={p.consent.ai ? "Voir mon retour" : "Enregistrer ma réponse"}
+            <RecruiterVoice key={`${ctx.qi || 0}-${ctx.question}`} label={series?.full ? `Le recruteur · ${series.step}` : "Question du recruteur"} text={series?.full && series.i === 0 ? `${FULL_INTRO} ${ctx.question}` : ctx.question} onSpeaking={setSpeaking} />
+            <Recorder question={null} holdStart={speaking} setModal={setModal} onCancel={() => go("pick")}
+              trackGaze={!!p.consent.ai} validateLabel={p.consent.ai ? "Voir mon retour" : "Garder cette réponse"}
               onDone={rec => go("processing", { recording: rec })} />
           </Card>
         )}
@@ -73,6 +79,7 @@ export default function Beneficiary({ initialCode, setModal, onCode }) {
         {view === "report" && take && <TakeReport p={p} take={take} mode={ctx.mode} go={go} series={series} nextQuestion={nextQuestion} stopSeries={stopSeries} />}
         {view === "share" && take && <Share p={p} take={take} go={go} setModal={setModal} />}
         {view === "sent" && <Sent p={p} go={go} series={series} nextQuestion={nextQuestion} />}
+        {view === "recap" && <Recap p={p} ctx={ctx} s={s} go={go} />}
       </div>
     </main>
   );
@@ -81,18 +88,18 @@ export default function Beneficiary({ initialCode, setModal, onCode }) {
 /* ─── Saisie du code ─── */
 function CodeEntry({ initial, onOk }) {
   const [code, setCode] = useState((initial || TRIAL_CODE).toUpperCase());
-  const [err, setErr] = useState(initial ? "Ce code n'existe pas ou n'est plus actif." : "");
+  const [err, setErr] = useState(initial ? CODE_ERR : "");
   const submit = e => {
     e?.preventDefault();
     const p = findParcours(code);
-    if (p) onOk(p.code); else setErr("Ce code n'existe pas ou n'est plus actif. Vérifiez-le auprès de votre coach.");
+    if (p) onOk(p.code); else setErr(CODE_ERR);
   };
   return (
     <div style={{ ...wrap(W.narrow), textAlign: "center", display: "grid", gap: GAP.grid, justifyItems: "center" }}>
       <RepetMark s={56} />
       <div style={stack(12)}>
         <Txt v="h1" as="h1" color={T.navy}>Bienvenue sur La Répét'</Txt>
-        <Txt v="bodyLg" color={T.body}>Saisissez le code transmis par votre coach, ou ouvrez directement le lien qu'il vous a envoyé.</Txt>
+        <Txt v="bodyLg" color={T.body}>Écrivez le code d'accès que votre coach vous a donné.</Txt>
       </div>
       <Card pad="lg" level={2} style={{ width: "100%", textAlign: "left" }}>
         <form onSubmit={submit} style={stack(GAP.grid)}>
@@ -100,10 +107,10 @@ function CodeEntry({ initial, onOk }) {
             <Input id="code" variant="code" error={err} value={code} autoComplete="off" maxLength={6} placeholder="6 caractères"
               onChange={e => { setCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "")); setErr(""); }} />
           </Field>
-          <Btn kind="objective" size="lg" full disabled={code.length < 6} iconRight={I.arrow}>Accéder à mon espace</Btn>
+          <Btn kind="objective" size="lg" full disabled={code.length < 6} iconRight={I.arrow}>Ouvrir mon espace</Btn>
         </form>
       </Card>
-      <Txt v="caption" color={T.muted}>Aucun compte à créer. Ce code vous est personnel.</Txt>
+      <Txt v="caption" color={T.muted}>Ce code est à vous. Ne le donnez à personne. {PHRASES.code}</Txt>
     </div>
   );
 }
@@ -159,21 +166,21 @@ function Home({ p, takes, go, counselor }) {
     <div style={{ ...wrap(W.read), ...stack(GAP.block) }}>
       <Card pad="none" level={2}>
         <GradHead tag={counselor ? `Accompagnement avec ${counselor}` : "Votre espace"} title={`Bonjour ${p.prenom}`}
-          sub="Choisissez le métier que vous visez, puis démarrez votre entraînement : les questions s'adaptent à ce métier. Vous pouvez d'abord vous échauffer pour vous mettre en voix." />
+          sub="Indiquez le métier que vous visez. Puis choisissez : un échauffement ou un entraînement." />
         <div className="rp-pad-md" style={{ padding: PAD.md, ...stack(GAP.grid) }}>
           <JobField p={p} />
           <div className="rp-stack" style={{ gap: GAP.stack }}>
             <ChoiceTile icon={I.mic} title="Échauffement" tipLabel="En savoir plus sur l'échauffement" tipId="tip-warmup"
-              tip="L'échauffement n'est ni enregistré ni analysé. Il sert à vous mettre en voix : vous dites une phrase à voix haute, plusieurs fois, avec des astuces et des relances. Rien n'est gardé quand vous quittez l'écran."
-              text="Quelques minutes pour vous mettre en voix, une phrase à la fois. Ni enregistré, ni analysé.">
-              <Btn kind="secondary" onClick={() => go("warmup")}>Commencer par un échauffement</Btn>
+              tip="L'échauffement sert à vous lancer. Vous dites une phrase à voix haute, plusieurs fois, en suivant une consigne. Rien n'est enregistré ni gardé."
+              text="Quelques minutes pour vous lancer, une phrase à la fois. Rien n'est enregistré.">
+              <Btn kind="secondary" onClick={() => go("warmup")}>M'échauffer</Btn>
             </ChoiceTile>
             <ChoiceTile icon={I.play} title="Entraînement" tipLabel="En savoir plus sur l'entraînement" tipId="tip-training"
               tip={p.consent.ai
-                ? "L'entraînement est enregistré sur votre appareil et reçoit un retour de l'assistant, qui décrit des faits sans noter. Vous décidez ensuite, réponse par réponse, de l'envoyer ou non à votre coach."
-                : "L'entraînement est enregistré sur votre appareil pour que vous puissiez vous revoir. Le retour de l'assistant est désactivé à votre demande. Vous décidez, réponse par réponse, de l'envoyer ou non à votre coach."}
-              text="Vous choisissez une ou plusieurs questions et vous vous enregistrez sur cet appareil. L'assistant vous fait un retour.">
-              <Btn kind="objective" onClick={() => go("pick", { queue: null, selection: null, preselect: null })} iconRight={I.arrow}>Démarrer l'entraînement</Btn>
+                ? "Vos réponses sont enregistrées sur votre appareil. L'assistant les décrit, sans les noter. Vous décidez ensuite, réponse par réponse, de les envoyer ou non à votre coach."
+                : "Vos réponses sont enregistrées sur votre appareil, pour que vous puissiez vous revoir. Vous avez choisi de ne pas recevoir le retour de l'assistant. Vous décidez, réponse par réponse, de les envoyer ou non à votre coach."}
+              text={p.consent.ai ? "Vous choisissez vos questions et vous enregistrez vos réponses. L'assistant décrit ensuite chaque réponse." : "Vous choisissez vos questions et vous enregistrez vos réponses."}>
+              <Btn kind="objective" onClick={() => go("pick", { queue: null, selection: null, preselect: null })} iconRight={I.arrow}>Commencer l'entraînement</Btn>
             </ChoiceTile>
           </div>
         </div>
@@ -181,17 +188,17 @@ function Home({ p, takes, go, counselor }) {
 
       {reports.length > 0 && (
         <Notice tone="success">
-          {counselor || "Votre coach"} vous a envoyé {reports.length > 1 ? `${reports.length} rapports` : "un rapport"}. Ouvrez l'entraînement concerné pour le lire.
+          {counselor || "Votre coach"} vous a envoyé {reports.length > 1 ? `${reports.length} rapports` : "un rapport"}. Ouvrez la réponse marquée « Rapport reçu » pour le lire.
         </Notice>
       )}
 
       <section style={stack(16)}>
-        <Txt v="h2" as="h2" color={T.navy}>Mes entraînements</Txt>
-        {takes.length === 0 && <Empty icon={I.play} text="Vous n'avez pas encore d'entraînement enregistré. Lancez-vous quand vous êtes prêt·e." />}
+        <Txt v="h2" as="h2" color={T.navy}>Mes réponses</Txt>
+        {takes.length === 0 && <Empty icon={I.play} text="Vous n'avez pas encore de réponse enregistrée. Commencez quand vous voulez." />}
         {takes.length > 0 && (
           <div style={stack(GAP.stack)}>
             {takes.map(t => {
-              const st = t.report ? ["Rapport reçu", "success"] : t.shared ? ["Envoyé, en attente de relecture", "primary"] : ["Sur cet appareil uniquement", "muted"];
+              const st = t.report ? ["Rapport reçu", "success"] : t.shared ? ["Envoyée à votre coach", "primary"] : ["Gardée sur cet appareil", "muted"];
               return (
                 <Card key={t.id} pad="sm" hover style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
                   <IconTile icon={t.hasVideo && !t.mime?.startsWith("audio") ? I.play : I.mic} />
@@ -277,7 +284,7 @@ function JobField({ p }) {
     setOpen(false); setActive(-1);
     if (!t) { setVal(p.poste || ""); return; }
     setVal(t);
-    if (t !== p.poste) { updateParcours(p.code, { poste: t }); setStatus(`Métier enregistré : ${t}. Les questions s'adaptent à ce métier.`); }
+    if (t !== p.poste) { updateParcours(p.code, { poste: t }); setStatus(`Métier enregistré : ${t}. Les questions en tiennent compte.`); }
   };
   const onKey = e => {
     if (e.key === "ArrowDown") { e.preventDefault(); setOpen(true); setActive(a => (items.length ? (a + 1) % items.length : -1)); }
@@ -288,7 +295,7 @@ function JobField({ p }) {
 
   return (
     <div style={{ position: "relative", ...stack(8) }}>
-      <Field id="job" label="Métier visé" hint="Commencez à taper puis choisissez dans la liste, ou écrivez librement votre métier.">
+      <Field id="job" label="Métier visé" hint={`Écrivez votre métier. Vous pouvez aussi le choisir dans la liste. ${PHRASES.job}`}>
         <div style={{ position: "relative" }}>
           <Input id="job" icon={I.search} hint role="combobox" aria-autocomplete="list" aria-expanded={open && items.length > 0} aria-controls="job-list"
             aria-activedescendant={open && active >= 0 ? `job-opt-${active}` : undefined}
@@ -329,7 +336,7 @@ const WARMUP_TIPS = [
   ["Articulez les fins de phrase", "C'est là que les mots se perdent le plus souvent."],
   ["Regardez la caméra, pas votre image", "L'objectif donne à votre interlocuteur l'impression que vous le regardez."],
   ["Sourire n'est pas obligatoire", "Parlez simplement, avec votre façon d'être. Il n'y a pas d'attitude attendue."],
-  ["Installez-vous", "Assis·e bien droit·e ou debout, les pieds à plat : la respiration est plus libre et la voix porte mieux."],
+  ["Installez-vous", "Le dos droit, assis ou debout, les pieds à plat. La respiration est plus libre et la voix porte mieux."],
   ["Si vous butez sur un mot, continuez", "Tout le monde hésite à l'oral. Reprendre simplement la phrase suffit."],
   ["Gardez un verre d'eau à portée de main", "Boire une gorgée laisse aussi un instant pour réfléchir."],
 ];
@@ -338,6 +345,7 @@ function Warmup({ p, go, setModal }) {
   const [stage, setStage] = useState("practice"); // practice | debrief
   const [pi, setPi] = useState(() => randomPhraseIndex());
   const [prompt, setPrompt] = useState(0);
+  const [tips, setTips] = useState(false);
   const phrase = fillPhrase(WARMUP_PHRASES[pi], p);
   const shuffle = () => { setPi(i => randomPhraseIndex(i)); setPrompt(0); };
   const finish = () => { updateParcours(p.code, { warmupDone: true }); setStage("debrief"); window.scrollTo({ top: 0 }); };
@@ -345,16 +353,17 @@ function Warmup({ p, go, setModal }) {
   if (stage === "debrief") return <WarmupDebrief p={p} go={go} again={() => { setStage("practice"); shuffle(); window.scrollTo({ top: 0 }); }} />;
 
   return (
-    <div style={{ ...wrap(W.wide), ...stack(GAP.grid) }}>
+    <div style={{ ...wrap(W.read), ...stack(GAP.grid) }}>
       <Card pad="lg" level={2} style={stack(16)}>
-        <div><Tag tone="primary">Échauffement · ni enregistré, ni analysé</Tag></div>
+        <div><Tag tone="primary">Échauffement · rien n'est enregistré</Tag></div>
         <div style={stack(8)}>
-          <Txt v="h1" as="h1" color={T.navy}>Mettez-vous en voix</Txt>
+          <Txt v="h1" as="h1" color={T.navy}>Échauffez votre voix</Txt>
           <Txt v="body" color={T.body} style={{ maxWidth: W.form }}>
-            Quelques minutes pour vous habituer à parler à voix haute avant l'entraînement. L'exercice se concentre sur <strong style={{ color: T.navy }}>une seule phrase à la fois</strong> : dites-la, redites-la en suivant la relance, puis changez de phrase quand vous voulez. Rien n'est enregistré ni analysé.
+            Dites la phrase à voix haute. Redites-la en suivant la consigne. Changez de phrase quand vous voulez.
           </Txt>
         </div>
 
+        <div><Link onClick={() => setTips(true)} style={{ display: "inline-flex", alignItems: "center", gap: 8, minHeight: 44 }}><Icon d={I.bulb} s={16} />Voir les astuces pour bien démarrer</Link></div>
         <div style={{ background: T.primaryBg, borderRadius: RAD.md, padding: "16px 20px", ...stack(12) }}>
           <div style={{ ...TY.overline, color: T.primary }}>Votre phrase</div>
           <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
@@ -363,37 +372,31 @@ function Warmup({ p, go, setModal }) {
           </div>
           <div style={{ paddingTop: 12, borderTop: `1px solid ${T.line}`, display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
             <div style={{ flex: 1, minWidth: 200, ...TY.small, color: T.navy }} aria-live="polite">
-              <strong>Relance {prompt + 1}/{WARMUP_PROMPTS.length} :</strong> {WARMUP_PROMPTS[prompt]}
+              <strong>Consigne {prompt + 1} sur {WARMUP_PROMPTS.length} :</strong> {WARMUP_PROMPTS[prompt]}
             </div>
-            <Btn kind="ghost" size="sm" onClick={() => setPrompt(i => (i + 1) % WARMUP_PROMPTS.length)} icon={I.redo}>Relance suivante</Btn>
+            <Btn kind="ghost" size="sm" onClick={() => setPrompt(i => (i + 1) % WARMUP_PROMPTS.length)} icon={I.redo}>Consigne suivante</Btn>
           </div>
         </div>
 
         <WarmupStage setModal={setModal} />
       </Card>
 
-      <div className="rp-split">
-        <Card style={stack(12)}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <Icon d={I.bulb} s={20} c={T.primary} />
-            <h2 style={{ ...TY.h3, color: T.navy, margin: 0 }}>Astuces pour bien démarrer</h2>
-          </div>
+      {tips && (
+        <Modal close={() => setTips(false)} title="Astuces pour bien démarrer" icon={I.bulb} footer={<div style={{ display: "flex", justifyContent: "flex-end" }}><Btn kind="primary" size="sm" onClick={() => setTips(false)}>Fermer</Btn></div>}>
           <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "grid", gap: 12 }}>
             {WARMUP_TIPS.map(([t, d]) => (
               <li key={t} style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
-                <span style={{ marginTop: 2, display: "inline-flex" }}><Icon d={I.check} s={16} c={T.primary} /></span>
-                <span style={{ ...TY.small, color: T.body }}><strong style={{ color: T.navy }}>{t}.</strong> {d}</span>
+                <span style={{ marginTop: 2, display: "inline-flex", color: T.primary }}><Icon d={I.check} s={16} /></span>
+                <span style={{ ...TY.body, color: T.body }}><strong style={{ color: T.navy }}>{t}.</strong> {d}</span>
               </li>
             ))}
           </ul>
-        </Card>
-        <Assistant context="warmup" poste={p.poste} id="asst-warmup"
-          intro="Bonjour ! Une question sur l'échauffement, le site ou la préparation de votre entretien ? Posez-la ici, vous pouvez ensuite me demander un exemple ou plus de détails." />
-      </div>
+        </Modal>
+      )}
 
       <div className="rp-actions" style={actions}>
         <Back onClick={() => go("home")} />
-        <Btn kind="objective" onClick={finish} iconRight={I.arrow}>J'ai terminé l'échauffement</Btn>
+        <Btn kind="objective" onClick={finish} iconRight={I.arrow}>Terminer l'échauffement</Btn>
       </div>
     </div>
   );
@@ -412,6 +415,7 @@ function WarmupDebrief({ p, go, again }) {
   const toggleWork = id => setWork(w => (w.includes(id) ? w.filter(x => x !== id) : [...w, id]));
   const q = (n, t, id) => <h2 id={id} style={{ ...TY.h3, color: T.navy, margin: 0 }}>{n}. {t}</h2>;
   const pre = questionsForTopics(work);
+  useEffect(() => { nudgeAssistant("warmup"); }, []);
 
   return (
     <div style={wrap(W.read)}>
@@ -419,11 +423,11 @@ function WarmupDebrief({ p, go, again }) {
         <div style={stack(12)}>
           <div><Tag tone="success">Échauffement terminé</Tag></div>
           <Txt v="h1" as="h1" color={T.navy}>Quatre questions rapides</Txt>
-          <Txt v="body" color={T.body}>Vos réponses restent sur cet appareil : elles ne sont pas envoyées à votre coach. Toutes les questions sont facultatives.</Txt>
+          <Txt v="body" color={T.body}>Répondez si vous voulez. Vos réponses restent sur cet appareil : votre coach ne les voit pas.</Txt>
         </div>
 
         <section style={stack(12)}>
-          {q(1, "Comment vous êtes-vous senti·e ?", "dq1")}
+          {q(1, "Comment vous sentez-vous après cet échauffement ?", "dq1")}
           <div role="radiogroup" aria-labelledby="dq1" className="rs-chips">
             {FEELINGS.map(f => <Chip key={f.id} role="radio" on={feeling === f.id} onClick={() => setFeeling(v => (v === f.id ? null : f.id))}>{f.label}</Chip>)}
           </div>
@@ -447,13 +451,13 @@ function WarmupDebrief({ p, go, again }) {
             {WORK_TOPICS.map(t => <Chip key={t.id} role="checkbox" on={work.includes(t.id)} onClick={() => toggleWork(t.id)}>{t.label}</Chip>)}
           </div>
           <p style={{ ...TY.caption, color: T.muted, margin: 0 }}>
-            {pre.length ? `${pre.length} question${pre.length > 1 ? "s" : ""} seront présélectionnées pour votre entraînement. Vous pourrez modifier ce choix.` : "Vos choix présélectionneront des questions pour votre entraînement."}
+            {pre.length ? `${pre.length > 1 ? `${pre.length} questions seront déjà choisies` : "1 question sera déjà choisie"} pour votre entraînement. Vous pourrez changer.` : "Vos choix serviront à vous proposer des questions pour l'entraînement."}
           </p>
         </section>
 
-        <section>
-          <Assistant context="debrief" poste={p.poste} id="asst-debrief" title="4. Avez-vous une question ?" maxHeight={320}
-            placeholder="Par exemple : comment parler de mes qualités ?" />
+        <section style={stack(8)}>
+          <h2 style={{ ...TY.h3, color: T.navy, margin: 0 }}>4. Avez-vous une question ?</h2>
+          <div><Btn kind="secondary" size="sm" icon={I.chat} onClick={() => openAssistant("debrief")}>Poser ma question à l'assistant</Btn></div>
         </section>
 
         <div className="rp-actions" style={actions}>
@@ -490,7 +494,11 @@ function Pick({ p, ctx, go }) {
   const n = sel.length;
   const start = () => {
     const queue = sel.map(k => all.find(x => x.key === k)?.text).filter(Boolean);
-    if (queue.length) go("record", { queue, qi: 0, question: queue[0], selection: { sel, custom }, takeId: null, preselect: null });
+    if (queue.length) go("record", { queue, qi: 0, question: queue[0], selection: { sel, custom }, takeId: null, preselect: null, full: false, steps: null, seriesTakes: {} });
+  };
+  const startFull = () => {
+    const plan = fullInterview(p.poste);
+    go("record", { queue: plan.map(x => x.text), steps: plan.map(x => x.step), full: true, qi: 0, question: plan[0].text, selection: null, takeId: null, preselect: null, seriesTakes: {} });
   };
 
   const qcard = (q, removable) => {
@@ -508,11 +516,22 @@ function Pick({ p, ctx, go }) {
     <div style={{ ...wrap(W.read), ...stack(GAP.grid) }}>
       <div style={stack(8)}>
         <Txt v="h1" as="h1" color={T.navy}>Sur quelles questions voulez-vous vous entraîner ?</Txt>
-        <Txt v="bodyLg" color={T.body}>Sélectionnez une ou plusieurs questions, dans l'ordre où vous voulez y répondre. Vous pouvez aussi ajouter les vôtres.</Txt>
+        <Txt v="bodyLg" color={T.body}>Choisissez une ou plusieurs questions. Vous y répondrez dans l'ordre où vous les choisissez. Vous pouvez ajouter les vôtres.</Txt>
         {!ctx.selection && ctx.preselect?.length > 0 && (
-          <p style={{ ...TY.small, color: T.primary, margin: 0, display: "flex", alignItems: "center", gap: 8 }}><Icon d={I.check} s={16} /> Présélection d'après votre échauffement : vous pouvez la modifier.</p>
+          <p style={{ ...TY.small, color: T.primary, margin: 0, display: "flex", alignItems: "center", gap: 8 }}><Icon d={I.check} s={16} /> Questions choisies d'après vos réponses à l'échauffement. Vous pouvez changer.</p>
         )}
       </div>
+      <Card topbar style={{ display: "grid", gap: 12 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <IconTile icon={I.users} />
+          <h2 style={{ ...TY.h3, color: T.navy, margin: 0, flex: 1 }}>Faire un entraînement complet</h2>
+        </div>
+        <p style={{ ...TY.body, color: T.body, margin: 0 }}>
+          Une simulation d'entretien, dans l'ordre réel : accueil, présentation, motivation, expériences, qualités, mise en situation, vos questions. 7 questions liées au métier {posteLabel(p.poste) ? `de ${posteLabel(p.poste)}` : "que vous visez"}. Le recruteur lit chaque question à voix haute.
+        </p>
+        <div className="rp-wide-m"><Btn kind="secondary" icon={I.play} onClick={startFull}>Faire un entraînement complet</Btn></div>
+      </Card>
+      <h2 style={{ ...TY.h3, color: T.navy, margin: 0 }}>Ou choisissez vos questions</h2>
       <div role="group" aria-label="Questions proposées" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(min(100%,240px),1fr))", gap: GAP.stack }}>
         {qs.map(q => qcard(q))}
       </div>
@@ -535,10 +554,10 @@ function Pick({ p, ctx, go }) {
 
       <div className="rp-sel" style={{ background: T.surface, border: `1px solid ${T.line}`, borderRadius: RAD.md, boxShadow: SH.lg, padding: "12px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
         <div aria-live="polite" style={{ ...TY.label, color: n ? T.navy : T.muted }}>
-          {n ? `${n} question${n > 1 ? "s" : ""} sélectionnée${n > 1 ? "s" : ""}` : "Aucune question sélectionnée"}
+          {n ? `${n} question${n > 1 ? "s" : ""} choisie${n > 1 ? "s" : ""}` : "Aucune question choisie"}
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
-          {n > 0 && <Btn kind="ghost" size="sm" onClick={() => setSel([])}>Tout désélectionner</Btn>}
+          {n > 0 && <Btn kind="ghost" size="sm" onClick={() => setSel([])}>Tout retirer</Btn>}
           <Btn kind="objective" disabled={!n} onClick={start} iconRight={I.arrow}>{n ? `Commencer (${n} question${n > 1 ? "s" : ""})` : "Commencer"}</Btn>
         </div>
       </div>
@@ -561,21 +580,21 @@ function Processing({ p, ctx, go }) {
         setErr(null);
         let segments = [], transcript = "", analysis = null;
         if (p.consent.ai) {
-          setStage("Transcription de votre discours sur cet appareil…");
+          setStage("Votre appareil met votre réponse par écrit…");
           const tr = await transcribe(rec.blob, pr => {
             if (!alive) return;
-            if (pr.stage === "model") setStage(`Préparation du modèle de transcription (${pr.value} %). Ce téléchargement n'a lieu qu'une fois.`);
-            else setStage("Transcription de votre discours sur cet appareil…");
+            if (pr.stage === "model") setStage(`Téléchargement de l'outil d'écriture (${pr.value} %). C'est seulement la première fois.`);
+            else setStage("Votre appareil met votre réponse par écrit…");
           });
           segments = tr.segments; transcript = tr.text;
           setStage("Préparation de votre retour…");
           analysis = await analyze({ segments, duration: rec.duration, gaze: rec.gaze, poste: p.poste, question: ctx.question });
         } else {
-          analysis = { synthese: "Le retour de l'assistant est désactivé à votre demande. Vous pouvez revoir votre réponse et la partager à votre coach.", dimensions: [], source: "none" };
+          analysis = { synthese: "Vous avez choisi de ne pas recevoir le retour de l'assistant. Vous pouvez revoir votre réponse et l'envoyer à votre coach.", dimensions: [], source: "none" };
         }
         if (!alive) return;
         const id = await createTake({ code: p.code, question: ctx.question, duration: rec.duration, blob: rec.blob, transcript, segments, gaze: rec.gaze, analysis });
-        if (alive) go("choose", { takeId: id, recording: null });
+        if (alive) go("choose", { takeId: id, recording: null, seriesTakes: ctx.queue ? { ...(ctx.seriesTakes || {}), [ctx.qi || 0]: id } : null });
       } catch (e) {
         console.error(e);
         if (alive) setErr(String(e?.message || e));
@@ -595,11 +614,11 @@ function Processing({ p, ctx, go }) {
         <Txt v="body" color={T.body}>Tout se passe sur votre appareil. Cela peut prendre un moment.</Txt>
         <Txt v="caption" color={T.muted}>{PHRASES.download}</Txt>
       </>) : (<>
-        <Txt v="h2" as="h1" color={T.navy}>La transcription n'a pas pu aboutir</Txt>
-        <Txt v="body" color={T.body}>Vérifiez votre connexion (le modèle se télécharge au premier usage) puis réessayez.</Txt>
+        <Txt v="h2" as="h1" color={T.navy}>Votre réponse n'a pas pu être mise par écrit</Txt>
+        <Txt v="body" color={T.body}>Vérifiez votre connexion à Internet, puis réessayez.</Txt>
         <p style={{ ...TY.mono, color: T.muted, margin: 0 }}>{err}</p>
         <div className="rp-actions" style={{ display: "flex", gap: GAP.actions, justifyContent: "center", flexWrap: "wrap", marginTop: 8 }}>
-          <Btn kind="secondary" onClick={() => go("record")}>Refaire l'enregistrement</Btn>
+          <Btn kind="secondary" onClick={() => go("record")}>Recommencer ma réponse</Btn>
           <Btn kind="ai" onClick={() => setAttempt(a => a + 1)}>Réessayer</Btn>
         </div>
       </>)}
@@ -609,24 +628,24 @@ function Processing({ p, ctx, go }) {
 
 /* ─── Choix du mode de restitution ─── */
 function Choose({ take, go, series }) {
-  const opt = (mode, title, sub, body, ai) => (
+  const opt = (mode, title, sub, body, btn, ai) => (
     <Card hover onClick={() => go("report", { mode })} style={{ display: "flex", flexDirection: "column", gap: 8 }}>
       <span style={{ ...TY.h2, color: T.navy }}>{title}</span>
       <span style={{ ...TY.label, color: ai ? T.violet : T.primary }}>{sub}</span>
       <span style={{ ...TY.body, color: T.body, flex: 1, marginBottom: 8 }}>{body}</span>
-      <Btn as="span" kind={ai ? "ai" : "secondary"} full size="sm">Choisir</Btn>
+      <Btn as="span" kind={ai ? "ai" : "secondary"} full size="sm">{btn}</Btn>
     </Card>
   );
   return (
     <div style={{ ...wrap(W.read), ...stack(GAP.grid) }}>
       <div style={{ textAlign: "center", display: "grid", gap: 12, justifyItems: "center" }}>
         <Tag tone="success">{series && series.n > 1 ? `Question ${series.i + 1} sur ${series.n} · votre retour est prêt` : "Votre retour est prêt"}</Tag>
-        <Txt v="h1" as="h1" color={T.navy}>Comment préférez-vous le découvrir ?</Txt>
+        <Txt v="h1" as="h1" color={T.navy}>Comment voulez-vous voir votre retour ?</Txt>
         <Txt v="bodyLg" color={T.body}>Les deux contiennent le même retour. Vous pourrez changer d'avis.</Txt>
       </div>
       <div className="rp-stack" style={{ alignItems: "stretch" }}>
-        {opt("simple", "Un rapport écrit", "Sans me revoir", "Vous lisez les observations tranquillement, sous forme de texte. Idéal si vous n'aimez pas vous revoir.")}
-        {opt("video", "Me revoir en vidéo", "Avec les repères au bon moment", "Chaque observation est placée sur la barre de lecture. Cliquez un repère ou une observation : la lecture s'y place.", true)}
+        {opt("simple", "Lire mon retour", "Sans me revoir", "Vous lisez ce que l'assistant a remarqué. Pratique si vous n'aimez pas vous revoir.", "Lire")}
+        {opt("video", "Me revoir en vidéo", "Avec les repères au bon moment", "Vous revoyez votre réponse. Chaque repère est placé au bon moment : touchez-le pour y aller.", "Me revoir", true)}
       </div>
       <div><Back onClick={() => go("home")} /></div>
     </div>
@@ -635,7 +654,7 @@ function Choose({ take, go, series }) {
 
 /* ─── Rapport + actions ─── */
 function TakeReport({ p, take, mode, go, series, nextQuestion, stopSeries }) {
-  const [ask, setAsk] = useState(false);
+  useEffect(() => { if (series && !series.hasNext && !series.full) nudgeAssistant("training"); }, []); // eslint-disable-line
   const del = async () => {
     if (!window.confirm("Supprimer définitivement cette réponse et son retour ?")) return;
     await deleteTake(take.id);
@@ -649,18 +668,19 @@ function TakeReport({ p, take, mode, go, series, nextQuestion, stopSeries }) {
           sub={`${dateFr(take.createdAt)} · ${dur(take.duration)}. ${PHRASES.feedback}${take.analysis?.source === "llm" ? ` ${PHRASES.feedbackLlm}` : ""}`}
           action={take.hasVideo && (
             <Btn kind="ghostDark" size="sm" className="noprint" onClick={() => go("report", { mode: mode === "video" ? "simple" : "video" })}>
-              {mode === "video" ? "Plutôt un rapport écrit" : "Plutôt me revoir en vidéo"}
+              {mode === "video" ? "Lire mon retour" : "Me revoir en vidéo"}
             </Btn>)} />
       </Card>
       <ReportBody take={take} mode={mode} counselorName={p.counselor} />
       {series && (
         <Card style={{ ...actions, gap: 16 }} className="noprint">
-          {head(series.hasNext ? `Question ${series.i + 1} sur ${series.n} terminée` : series.n > 1 ? "C'était la dernière question de votre sélection" : "Entraînement terminé",
-            series.hasNext ? "Prenez le temps de lire ce retour, puis passez à la suite quand vous êtes prêt·e." : "Vous retrouvez tous vos retours dans votre espace, et vous pouvez recommencer quand vous voulez.")}
+          {head(series.hasNext ? `Question ${series.i + 1} sur ${series.n} terminée` : series.full ? "C'était la dernière question de l'entretien" : series.n > 1 ? "C'était la dernière question de votre sélection" : "Entraînement terminé",
+            series.hasNext ? "Prenez le temps de lire ce retour. Passez à la suite quand vous voulez." : "Vous retrouvez tous vos retours dans votre espace, et vous pouvez recommencer quand vous voulez.")}
           <div className="rp-actions" style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
             {series.hasNext && <Btn kind="ghost" size="sm" onClick={stopSeries}>Arrêter ici</Btn>}
             {series.hasNext
-              ? <Btn kind="objective" onClick={nextQuestion} iconRight={I.arrow}>Question suivante ({series.i + 2}/{series.n})</Btn>
+              ? <Btn kind="objective" onClick={nextQuestion} iconRight={I.arrow}>Question suivante ({series.i + 2} sur {series.n})</Btn>
+              : series.full ? <Btn kind="objective" onClick={() => go("recap")} iconRight={I.arrow}>Voir le récapitulatif</Btn>
               : <Btn kind="secondary" size="sm" onClick={stopSeries}>Revenir à mon espace</Btn>}
           </div>
         </Card>
@@ -668,7 +688,7 @@ function TakeReport({ p, take, mode, go, series, nextQuestion, stopSeries }) {
       <Card style={{ ...actions, gap: 16 }} className="noprint">
         <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
           {take.shared && <span style={{ color: T.successDk, display: "inline-flex", marginTop: 2 }}><Icon d={I.check} s={20} /></span>}
-          {head(take.report ? "Rapport reçu" : take.shared ? "Réponse envoyée à votre coach" : `Prêt·e à en parler avec ${p.counselor || "votre coach"} ?`,
+          {head(take.report ? "Rapport reçu" : take.shared ? "Réponse envoyée à votre coach" : `Envie d'en parler avec ${p.counselor || "votre coach"} ?`,
             take.shared ? (take.report ? "Vous pouvez continuer à vous entraîner et envoyer une nouvelle réponse à tout moment." : `Vous pouvez continuer à vous entraîner. ${PHRASES.sent}`) : "Cette réponse reste sur votre appareil tant que vous ne l'envoyez pas.")}
         </div>
         <div className="rp-actions" style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
@@ -677,13 +697,11 @@ function TakeReport({ p, take, mode, go, series, nextQuestion, stopSeries }) {
           {take.hasVideo && <Btn kind="ghost" size="sm" onClick={() => downloadTake(take)} icon={I.arrow}>{take.mime?.startsWith("audio") ? "Télécharger ma voix" : "Télécharger ma vidéo"}</Btn>}
           <Btn kind="ghost" size="sm" onClick={() => window.print()} icon={I.print}>Imprimer</Btn>
           {!series?.hasNext && <Btn kind="secondary" size="sm" onClick={() => go("pick", { queue: null, selection: null, preselect: null })} icon={I.redo}>M'entraîner encore</Btn>}
-          {!take.shared && <Btn kind={series?.hasNext ? "secondary" : "objective"} size="sm" onClick={() => go("share")} icon={I.send}>Envoyer à mon coach</Btn>}
+          {!take.shared && <Btn kind={series?.hasNext || series?.full ? "secondary" : "objective"} size="sm" onClick={() => go("share")} icon={I.send}>Envoyer à mon coach</Btn>}
         </div>
       </Card>
       <div className="noprint">
-        {ask
-          ? <Assistant context="feedback" poste={p.poste} id="asst-feedback" title="Une question sur ce retour ?" intro="Je peux vous expliquer un repère du retour ou vous donner des conseils pour votre prochain essai. Je ne vois pas votre vidéo." />
-          : <Chip tone="ai" check={false} onClick={() => setAsk(true)}><Icon d={I.chat} s={16} /> Une question sur ce retour ? Demandez à l'assistant</Chip>}
+        <Chip tone="ai" check={false} onClick={() => openAssistant("feedback")}><Icon d={I.chat} s={16} /> Une question sur ce retour ? Demandez à l'assistant</Chip>
       </div>
       <div className="noprint"><Back onClick={() => go("home", { queue: null })} /></div>
     </div>
@@ -710,7 +728,7 @@ function Share({ p, take, go, setModal }) {
         <Txt v="body" color={T.body}>{PHRASES.share}</Txt>
       </div>
       <Summary items={SUMMARY.envoi} style={{ gap: 8 }} />
-      <Notice tone="info" icon={I.monitor}>{PHRASES.sameDevice} <Link onClick={() => setModal("video")}>Que devient ma vidéo ?</Link></Notice>
+      <div><Link onClick={() => setModal("video")}>Que devient ma vidéo ?</Link></div>
       <Field id="note" label="Un message pour votre coach (facultatif)">
         <Textarea id="note" value={note} onChange={e => setNote(e.target.value)} placeholder="Par exemple : j'ai l'impression de parler trop vite, qu'en pensez-vous ?" />
       </Field>
@@ -726,11 +744,49 @@ function Sent({ p, go, series, nextQuestion }) {
   return (
     <Confirm title="Réponse envoyée" actions={<>
       <Btn kind="secondary" onClick={() => go("home", { queue: null })}>Revenir à mon espace</Btn>
-      {series?.hasNext
-        ? <Btn kind="objective" onClick={nextQuestion} iconRight={I.arrow}>Question suivante ({series.i + 2}/{series.n})</Btn>
-        : <Btn kind="objective" onClick={() => go("pick", { queue: null, selection: null, preselect: null })} icon={I.redo}>M'entraîner à nouveau</Btn>}
+      {series?.full && !series.hasNext
+        ? <Btn kind="objective" onClick={() => go("recap")} iconRight={I.arrow}>Voir le récapitulatif</Btn>
+        : series?.hasNext
+        ? <Btn kind="objective" onClick={nextQuestion} iconRight={I.arrow}>Question suivante ({series.i + 2} sur {series.n})</Btn>
+        : <Btn kind="objective" onClick={() => go("pick", { queue: null, selection: null, preselect: null })} icon={I.redo}>M'entraîner encore</Btn>}
     </>}>
       {p.counselor || "Votre coach"} va regarder votre réponse et ajouter ses remarques. Son rapport arrivera dans votre espace. Vous y revenez avec le même code. {PHRASES.sent}
     </Confirm>
+  );
+}
+
+/* Récapitulatif de l'entraînement complet : les réponses dans l'ordre de l'entretien, sans aucun score. */
+function Recap({ p, ctx, s, go }) {
+  useEffect(() => { nudgeAssistant("training"); }, []);
+  const steps = ctx.steps || [], qs = ctx.queue || [], ids = ctx.seriesTakes || {};
+  return (
+    <div style={{ ...wrap(W.read), ...stack(GAP.grid) }}>
+      <Card pad="none" level={2}>
+        <GradHead tag="Entraînement complet" title="Récapitulatif de votre entretien" sub="Vos réponses, dans l'ordre de l'entretien. Ouvrez chaque retour quand vous voulez, et envoyez à votre coach celles que vous choisissez." />
+      </Card>
+      <RecruiterVoice label="Fin de l'entretien" text={FULL_OUTRO} />
+      <ol style={{ listStyle: "none", margin: 0, padding: 0, ...stack(GAP.stack) }} aria-label="Vos réponses">
+        {qs.map((q, i) => {
+          const t = ids[i] ? s.takes[ids[i]] : null;
+          return (
+            <li key={i}>
+              <Card pad="sm" style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
+                <span aria-hidden style={{ ...TY.time, width: 28, height: 28, borderRadius: "50%", background: t ? T.successDk : T.surface, color: t ? T.surface : T.muted, border: t ? "none" : `1.5px solid ${T.lineStrong}`, display: "grid", placeItems: "center", flexShrink: 0 }}>{i + 1}</span>
+                <div style={{ flex: 1, minWidth: 200, ...stack(4) }}>
+                  <div style={{ ...TY.overline, color: T.primary }}>{steps[i]}</div>
+                  <div style={{ ...TY.h4, color: T.navy }}>{q}</div>
+                  <div style={{ ...TY.caption, color: T.muted }}>{t ? `${dur(t.duration)} · ${t.shared ? "envoyée à votre coach" : "gardée sur cet appareil"}` : "Pas de réponse enregistrée"}</div>
+                </div>
+                {t && <Btn kind="secondary" size="sm" onClick={() => go(t.hasVideo ? "choose" : "report", { takeId: t.id, mode: "simple", queue: null })}>Ouvrir mon retour</Btn>}
+              </Card>
+            </li>
+          );
+        })}
+      </ol>
+      <div className="rp-actions" style={actions}>
+        <Btn kind="ghost" size="sm" onClick={() => go("home", { queue: null, full: false })}>Revenir à mon espace</Btn>
+        <Btn kind="objective" icon={I.redo} onClick={() => go("pick", { queue: null, full: false, selection: null, preselect: null })}>M'entraîner encore</Btn>
+      </div>
+    </div>
   );
 }

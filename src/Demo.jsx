@@ -1,29 +1,31 @@
 import React, { useRef, useState } from "react";
-import { T, RAD, SH, Btn, Icon, I, TY, W, SI, PageHero, IconTile, Field, Input, Textarea, Select, Link } from "./ui.jsx";
+import { T, RAD, SH, Btn, Icon, I, TY, W, PageHero, IconTile, Field, Input, Textarea, Select, Link, Toggle } from "./ui.jsx";
 import { PHRASES } from "./content/legal.js";
 
-/* Page « Demander une démo » : formulaire sans serveur. Rien n'est envoyé ni conservé par le site.
-   Si VITE_CONTACT_EMAIL est défini, la demande s'ouvre dans le logiciel de messagerie (mailto:). */
+/* Page « Demander une prise en main » : une personne demande une présentation et une première
+   prise en main accompagnée par un coach. Si VITE_CONTACT_EMAIL est défini, la demande s'ouvre
+   dans la messagerie de la personne (mailto:) ; le branchement à un serveur se fait ici en production. */
 
 const CONTACT = import.meta.env.VITE_CONTACT_EMAIL || "";
-const ROLES = ["Direction", "Coach, conseiller ou conseillère", "Responsable de formation ou d'atelier", "DSI ou équipe technique", "Juridique ou DPO", "Autre"];
-const VOLUMES = ["Moins de 100", "De 100 à 500", "De 500 à 2 000", "Plus de 2 000", "Je ne sais pas encore"];
-const EMPTY = { prenom: "", nom: "", organisme: "", fonction: "", email: "", volume: "", message: "" };
-const ORDER = ["prenom", "nom", "organisme", "email"];
+const MEANS = [["tel", "Téléphone"], ["mail", "Courriel"], ["coach", "Par mon coach"]];
+const SLOTS = ["En semaine, le matin", "En semaine, l'après-midi", "En semaine, en fin de journée", "Le samedi", "Je m'adapte"];
+const NEEDS = ["Découvrir La Répét'", "Préparer un entretien bientôt", "Être aidé pour utiliser la caméra ou le micro", "Autre besoin"];
+const EMPTY = { prenom: "", moyen: "tel", contact: "", dispo: "", besoin: "", message: "" };
+const ORDER = ["prenom", "contact", "dispo"];
 
 function validate(f) {
   const e = {};
   if (!f.prenom.trim()) e.prenom = "Indiquez votre prénom.";
-  if (!f.nom.trim()) e.nom = "Indiquez votre nom.";
-  if (!f.organisme.trim()) e.organisme = "Indiquez le nom de votre organisme.";
-  if (!f.email.trim()) e.email = "Indiquez votre adresse électronique professionnelle.";
-  else if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(f.email.trim())) e.email = "Vérifiez l'adresse : elle doit ressembler à prenom.nom@organisme.fr.";
+  if (f.moyen === "tel" && !/^[+\d][\d .-]{7,}$/.test(f.contact.trim())) e.contact = "Indiquez un numéro de téléphone, par exemple 06 12 34 56 78.";
+  if (f.moyen === "mail" && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(f.contact.trim())) e.contact = "Vérifiez l'adresse : elle doit ressembler à prenom@exemple.fr.";
+  if (!f.dispo) e.dispo = "Choisissez un moment, ou « Je m'adapte ».";
   return e;
 }
 
+const meansLabel = k => MEANS.find(m => m[0] === k)?.[1] || "";
 const summary = f => [
-  `Prénom : ${f.prenom}`, `Nom : ${f.nom}`, `Organisme : ${f.organisme}`, f.fonction && `Fonction : ${f.fonction}`,
-  `Adresse électronique : ${f.email}`, f.volume && `Personnes accompagnées par an : ${f.volume}`, f.message && `Message : ${f.message}`,
+  `Prénom : ${f.prenom}`, `Me contacter : ${meansLabel(f.moyen)}${f.moyen !== "coach" && f.contact ? ` (${f.contact})` : ""}`,
+  `Disponibilités : ${f.dispo}`, f.besoin && `Besoin : ${f.besoin}`, f.message && `Message : ${f.message}`,
 ].filter(Boolean).join("\n");
 
 export default function Demo({ go }) {
@@ -42,7 +44,7 @@ export default function Demo({ go }) {
     if (first) { document.getElementById(`demo-${first}`)?.focus(); return; }
     let mailto = "";
     if (CONTACT) {
-      mailto = `mailto:${CONTACT}?subject=${encodeURIComponent(`Demande de démonstration La Répét' · ${f.organisme}`)}&body=${encodeURIComponent(summary(f))}`;
+      mailto = `mailto:${CONTACT}?subject=${encodeURIComponent(`Demande de prise en main La Répét' · ${f.prenom}`)}&body=${encodeURIComponent(summary(f))}`;
       window.location.href = mailto;
     }
     setSent({ ...f, mailto });
@@ -51,53 +53,58 @@ export default function Demo({ go }) {
 
   if (sent) return <Done f={sent} go={go} reset={() => { setF(EMPTY); setSent(null); }} />;
 
+  const contactLabel = f.moyen === "tel" ? "Votre numéro de téléphone" : "Votre adresse électronique";
   return (
     <main>
-      <PageHero eyebrow="Demander une démo" title="Voir La Répét' avec votre équipe"
-        lead="Une démonstration de 45 minutes environ. Nous montrons l'entraînement d'une personne, puis la relecture par le coach. Nous répondons ensuite à vos questions sur le déploiement, l'hébergement et le cadre juridique." />
+      <PageHero eyebrow="Prise en main" title="Découvrir La Répét' avec un coach"
+        lead="Un coach vous montre l'outil et fait avec vous un premier entraînement. Vous repartez en sachant vous en servir seul." />
       <div className="rs-pad" style={{ maxWidth: W.page, margin: "0 auto", padding: "48px 24px 0" }}>
         <div className="rs-split" style={{ alignItems: "start" }}>
           <form ref={form} noValidate onSubmit={submit} aria-labelledby="demo-title"
             style={{ background: T.surface, border: `1px solid ${T.line}`, borderRadius: RAD.lg, boxShadow: SH.sm, padding: 32, display: "grid", gap: 20 }} className="rs-form">
             <div style={{ display: "grid", gap: 8 }}>
-              <h2 id="demo-title" style={{ ...TY.h2, color: T.navy, margin: 0 }}>Vos coordonnées</h2>
-              <p style={{ ...TY.small, color: T.muted, margin: 0 }}>Le prénom, le nom, l'organisme et l'adresse électronique sont obligatoires. Les autres champs sont facultatifs.</p>
+              <h2 id="demo-title" style={{ ...TY.h2, color: T.navy, margin: 0 }}>Votre demande</h2>
+              <p style={{ ...TY.small, color: T.muted, margin: 0 }}>Le prénom, le moyen de contact et les disponibilités sont obligatoires.</p>
             </div>
             {Object.values(err).some(Boolean) && (
               <div role="alert" style={{ background: T.errorBg, color: T.errorDk, borderRadius: RAD.md, padding: "12px 16px", ...TY.small, display: "flex", gap: 12 }}>
                 <Icon d={I.ban} s={16} c={T.errorDk} /> Certains champs sont à compléter. Ils sont signalés ci-dessous.
               </div>
             )}
-            <div className="rs-g2" style={{ gap: 20 }}>
-              <Field id="demo-prenom" label="Prénom" error={err.prenom}><Input id="demo-prenom" autoComplete="given-name" value={f.prenom} onChange={ev("prenom")} error={err.prenom} /></Field>
-              <Field id="demo-nom" label="Nom" error={err.nom}><Input id="demo-nom" autoComplete="family-name" value={f.nom} onChange={ev("nom")} error={err.nom} /></Field>
+            <Field id="demo-prenom" label="Prénom" error={err.prenom}><Input id="demo-prenom" autoComplete="given-name" value={f.prenom} onChange={ev("prenom")} error={err.prenom} /></Field>
+            <div style={{ display: "grid", gap: 8 }}>
+              <span id="demo-moyen" style={{ ...TY.label, color: T.navy }}>Comment préférez-vous être contacté ?</span>
+              <div role="radiogroup" aria-labelledby="demo-moyen" style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                {MEANS.map(([k, l]) => <Toggle key={k} on={f.moyen === k} onClick={() => { set("moyen")(k); setErr(x => ({ ...x, contact: undefined })); }}>{l}</Toggle>)}
+              </div>
             </div>
-            <Field id="demo-organisme" label="Organisme" error={err.organisme}><Input id="demo-organisme" autoComplete="organization" value={f.organisme} onChange={ev("organisme")} error={err.organisme} /></Field>
+            {f.moyen !== "coach" ? (
+              <Field id="demo-contact" label={contactLabel} error={err.contact}>
+                <Input id="demo-contact" type={f.moyen === "tel" ? "tel" : "email"} inputMode={f.moyen === "tel" ? "tel" : "email"} autoComplete={f.moyen === "tel" ? "tel" : "email"} value={f.contact} onChange={ev("contact")} error={err.contact} />
+              </Field>
+            ) : <p style={{ ...TY.small, color: T.body, margin: 0 }}>Votre coach vous transmet la date du rendez-vous.</p>}
             <div className="rs-g2" style={{ gap: 20 }}>
-              <Field id="demo-fonction" label="Fonction (facultatif)"><Select id="demo-fonction" value={f.fonction} onChange={ev("fonction")} options={ROLES} placeholder="Choisir" /></Field>
-              <Field id="demo-volume" label="Personnes accompagnées par an (facultatif)"><Select id="demo-volume" value={f.volume} onChange={ev("volume")} options={VOLUMES} placeholder="Choisir une fourchette" /></Field>
+              <Field id="demo-dispo" label="Vos disponibilités" error={err.dispo}><Select id="demo-dispo" value={f.dispo} onChange={ev("dispo")} options={SLOTS} placeholder="Choisir" error={err.dispo} /></Field>
+              <Field id="demo-besoin" label="Votre besoin (facultatif)"><Select id="demo-besoin" value={f.besoin} onChange={ev("besoin")} options={NEEDS} placeholder="Choisir" /></Field>
             </div>
-            <Field id="demo-email" label="Adresse électronique professionnelle" hint="Celle de votre organisme, pour vous proposer un créneau." error={err.email}>
-              <Input id="demo-email" type="email" inputMode="email" autoComplete="email" value={f.email} onChange={ev("email")} hint="1" error={err.email} />
-            </Field>
-            <Field id="demo-message" label="Message (facultatif)" hint="Vos publics, vos ateliers, vos questions sur l'hébergement ou le cadre juridique.">
-              <Textarea id="demo-message" rows={5} value={f.message} onChange={ev("message")} hint="1" />
+            <Field id="demo-message" label="Message (facultatif)" hint="Par exemple : la date de votre entretien, ou ce qui vous aiderait.">
+              <Textarea id="demo-message" rows={4} value={f.message} onChange={ev("message")} hint="1" />
             </Field>
             <div style={{ display: "grid", gap: 8, marginTop: 4 }}>
-              <div className="rp-wide-m"><Btn kind="objective" size="md" icon={I.send}>Préparer ma demande</Btn></div>
+              <div className="rp-wide-m"><Btn kind="objective" size="md" icon={I.send}>Envoyer ma demande</Btn></div>
               <span style={{ ...TY.caption, color: T.muted, display: "flex", gap: 8, alignItems: "flex-start" }}>
-                <Icon d={CONTACT ? I.send : I.lock} s={16} />
-                <span>{CONTACT ? PHRASES.demoMail : PHRASES.demoInactive} {PHRASES.demoInfo} <Link href="#/vos-donnees/notice">Vos données</Link></span>
+                <Icon d={I.lock} s={16} />
+                <span>{PHRASES.contactInfo} <Link href="#/vos-donnees/notice">Vos données</Link></span>
               </span>
             </div>
           </form>
 
-          <aside style={{ display: "grid", gap: 24 }} aria-label="Déroulé de la démonstration">
-            <h2 style={{ ...TY.h2, color: T.navy, margin: 0 }}>Ce que nous verrons ensemble</h2>
-            {[[I.user, "Le parcours de la personne accompagnée", "Code d'accès, échauffement, réponse enregistrée, retour de l'assistant, envoi au coach."],
-              [I.note, "La relecture côté coach", "Remarques dans la vidéo, commentaires sur les repères, rapport et débriefing."],
-              [SI.server, "Le déploiement chez vous", "Hébergement, modèles auto-hébergés, travail restant pour la production."],
-              [SI.scale, "Le cadre juridique", "AI Act, RGPD, analyse d'impact, textes d'information à valider."]].map(([ic, t, d]) => (
+          <aside style={{ display: "grid", gap: 24 }} aria-label="Déroulé de la prise en main">
+            <h2 style={{ ...TY.h2, color: T.navy, margin: 0 }}>Comment se passe le rendez-vous</h2>
+            {[[I.user, "Un coach à vos côtés", "Il vous montre comment ouvrir votre espace avec votre code d'accès."],
+              [I.video, "Un premier entraînement", "Vous répondez à une question, avec la caméra ou en voix seule."],
+              [I.sparkle, "Le retour de l'assistant", "Vous découvrez ensemble ce que l'assistant décrit, sans note."],
+              [I.lock, "Vos choix", "Vous voyez comment garder une réponse pour vous ou l'envoyer à votre coach."]].map(([ic, t, d]) => (
               <div key={t} style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
                 <IconTile icon={ic} />
                 <div style={{ display: "grid", gap: 4 }}>
@@ -106,9 +113,7 @@ export default function Demo({ go }) {
                 </div>
               </div>
             ))}
-            <div style={{ background: T.primaryBg, borderRadius: RAD.md, padding: "12px 16px", display: "flex", gap: 12, ...TY.small, color: T.navy }}>
-              <Icon d={I.lock} s={16} c={T.primary} /> <span>Envie d'essayer d'abord ? Le code d'essai est déjà rempli dans <Link onClick={() => go("#/espace")}>Mon espace</Link>.</span>
-            </div>
+            <p style={{ ...TY.small, color: T.muted, margin: 0 }}>Vous représentez un organisme ? <Link href="#/solutions/organismes">Voir le déploiement</Link></p>
           </aside>
         </div>
       </div>
@@ -117,22 +122,17 @@ export default function Demo({ go }) {
 }
 
 function Done({ f, go, reset }) {
-  const [copied, setCopied] = useState(false);
-  const copy = async () => { try { await navigator.clipboard.writeText(summary(f)); setCopied(true); } catch { setCopied(false); } };
   return (
     <main className="rs-pad" style={{ maxWidth: W.form, margin: "0 auto", padding: "64px 24px 0" }}>
       <div role="status" className="up" style={{ background: T.surface, border: `1px solid ${T.line}`, borderRadius: RAD.lg, boxShadow: SH.sm, padding: 32, display: "grid", gap: 16, justifyItems: "center", textAlign: "center" }}>
         <div style={{ width: 56, height: 56, borderRadius: "50%", background: T.successBg, display: "grid", placeItems: "center" }}><Icon d={I.check} s={28} c={T.successDk} /></div>
-        <h1 className="ty-h1" style={{ ...TY.h1, color: T.navy, margin: 0 }}>Merci {f.prenom}, votre demande est prête</h1>
-        {f.mailto ? (
-          <p style={{ ...TY.bodyLg, color: T.body, margin: 0 }}>Votre logiciel de messagerie s'est ouvert avec votre demande. Il vous reste à l'envoyer. S'il ne s'est pas ouvert, utilisez le lien ci-dessous.</p>
-        ) : (
-          <p style={{ ...TY.bodyLg, color: T.body, margin: 0 }}>L'envoi en ligne des demandes n'est pas encore activé sur ce site : aucune donnée n'a été transmise ni conservée. Pour organiser la démonstration, contactez l'équipe qui déploie La Répét' dans votre organisme, en lui transmettant votre demande.</p>
-        )}
+        <h1 className="ty-h1" style={{ ...TY.h1, color: T.navy, margin: 0 }}>Merci {f.prenom}, votre demande est enregistrée</h1>
+        <p style={{ ...TY.bodyLg, color: T.body, margin: 0 }}>
+          {f.mailto ? PHRASES.contactMail : "L'équipe d'accompagnement vous recontacte pour fixer le rendez-vous."} {PHRASES.contactInfo}
+        </p>
         <pre style={{ ...TY.mono, color: T.navy, background: T.bg, borderRadius: RAD.sm, padding: 16, margin: 0, textAlign: "left", whiteSpace: "pre-wrap", wordBreak: "break-word", width: "100%" }}>{summary(f)}</pre>
         <div className="rp-wide-m" style={{ display: "flex", gap: 12, flexWrap: "wrap", justifyContent: "center" }}>
-          {f.mailto ? <a href={f.mailto} className="rs-link" style={{ ...TY.bodyStrong, padding: "12px 0" }}>Rouvrir ma messagerie</a>
-            : <Btn kind="secondary" onClick={copy}>{copied ? "Demande copiée" : "Copier ma demande"}</Btn>}
+          {f.mailto && <a href={f.mailto} className="rs-link" style={{ ...TY.bodyStrong, padding: "12px 0" }}>Rouvrir ma messagerie</a>}
           <Btn kind="primary" onClick={() => go("#/")}>Revenir à l'accueil</Btn>
         </div>
         <Link onClick={reset}>Faire une autre demande</Link>

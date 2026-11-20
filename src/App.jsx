@@ -10,6 +10,7 @@ import Resources from "./Resources.jsx";
 import Demo from "./Demo.jsx";
 import Beneficiary from "./Beneficiary.jsx";
 import Counselor from "./Counselor.jsx";
+import A11yLayer, { openA11y } from "./A11y.jsx";
 import { useStore, getState, setLastSpace, setCounselor, logoutCounselor, findParcours, withdrawConsent, clearWarmupDebrief, TRIAL_CODE, TRIAL_LOGIN } from "./lib/store.js";
 
 /* La Répét' : entraînement à l'entretien d'embauche, avec un assistant IA et votre coach.
@@ -21,7 +22,7 @@ import { useStore, getState, setLastSpace, setCounselor, logoutCounselor, findPa
      #/ressources               centre de ressources (catégories, articles mis en avant, recherche)
      #/ressources/c/CATEGORIE   liste des ressources d'une catégorie
      #/ressources/SLUG          article
-     #/demo                     demande de démonstration
+     #/demo                     demande de prise en main accompagnée
      #/espace                   « Mon espace » : code d'accès ou connexion coach
      #/s/CODE                   espace bénéficiaire
      #/beneficiaire             saisie du code
@@ -55,7 +56,7 @@ function routeFromHash() {
 }
 
 /* Titre du document à chaque route (RGAA 8.6). */
-const TITLES = { home: "S'entraîner à l'entretien d'embauche", about: "À propos", solutions: "Solutions", resources: "Ressources", demo: "Demander une démo", espace: "Mon espace", benef: "Mon espace", coach: "Espace coach" };
+const TITLES = { home: "S'entraîner à l'entretien d'embauche", about: "À propos", solutions: "Solutions", resources: "Ressources", demo: "Demander une prise en main", espace: "Mon espace", benef: "Mon espace", coach: "Espace coach" };
 const titleOf = (route, counselor) => route.role === "legal" ? PAGES[route.page].title : route.role === "coach" && !counselor ? TITLES.espace : TITLES[route.role] || TITLES.home;
 
 const go = hash => { if (location.hash === hash) window.scrollTo({ top: 0 }); else location.hash = hash; };
@@ -106,6 +107,7 @@ export default function App() {
       </div>
       <Footer />
       <LegalModal modal={modal} close={() => setModal(null)} />
+      <A11yLayer />
     </div>
   );
 }
@@ -159,9 +161,11 @@ function Nav({ route, s }) {
             <a href={route.role === "coach" ? "#/vos-donnees/coachs" : "#/vos-donnees"} aria-label="Vos données" className="navlink rp-datalink" style={{ display: "inline-flex", alignItems: "center", gap: 8, minHeight: 44 }}>
               <Icon d={I.shield} s={16} /><span className="rp-hide-m">Vos données</span>
             </a>
+            <IconBtn icon={I.a11y} label="Options d'accessibilité" onClick={openA11y} />
             <SettingsMenu route={route} s={s} />
           </>) : (<>
-            <span className="rs-demo"><Btn kind="secondary" size="sm" onClick={() => go("#/demo")}>Demander une démo</Btn></span>
+            <span className="rs-demo"><Btn kind="secondary" size="sm" onClick={() => go("#/demo")}>Demander une prise en main</Btn></span>
+            <IconBtn icon={I.a11y} label="Options d'accessibilité" onClick={openA11y} />
             <Btn kind="primary" size="sm" onClick={openSpace}><span className="rp-hide-m" style={{ display: "inline-flex" }}><Icon d={I.user} s={16} /></span>Mon espace</Btn>
             <IconBtn ref={burger} variant="outline" className="rs-burger" aria-expanded={menu} aria-controls="rs-menu" label={menu ? "Fermer le menu" : "Ouvrir le menu"} icon={menu ? I.close : I.menu} onClick={() => setMenu(m => !m)} />
           </>)}
@@ -178,7 +182,8 @@ function Nav({ route, s }) {
             ))}
           </nav>
           <div style={{ display: "grid", gap: 12, marginTop: 24 }}>
-            <Btn kind="secondary" full onClick={() => { setMenu(false); go("#/demo"); }}>Demander une démo</Btn>
+            <Btn kind="secondary" full onClick={() => { setMenu(false); go("#/demo"); }}>Demander une prise en main</Btn>
+            <Btn kind="ghost" full icon={I.a11y} onClick={() => { setMenu(false); openA11y(); }}>Options d'accessibilité</Btn>
           </div>
           <nav aria-label="Vos données" onClick={() => setMenu(false)} style={{ marginTop: 24, display: "grid", gap: 4 }}>
             <div style={{ ...TY.overline, color: T.muted }}>Vos données</div>
@@ -197,8 +202,8 @@ function SettingsMenu({ route, s }) {
   const coach = route.role === "coach";
   const code = route.code;
   const items = coach
-    ? [["data", "Vos données", I.shield], ["logout", "Se déconnecter", I.logout]]
-    : [["data", "Vos données", I.shield], ["code", "Changer de code", I.redo], ["withdraw", "Retirer mon consentement", I.trash], ["logout", "Se déconnecter", I.logout]];
+    ? [["data", "Vos données", I.shield], ["a11y", "Options d'accessibilité", I.a11y], ["logout", "Se déconnecter", I.logout]]
+    : [["data", "Vos données", I.shield], ["a11y", "Options d'accessibilité", I.a11y], ["code", "Changer de code", I.redo], ["withdraw", "Retirer mon consentement", I.trash], ["logout", "Se déconnecter", I.logout]];
   const focusItem = i => { const el = list.current?.querySelectorAll("[role=menuitem]")[i]; el?.focus(); };
   useEffect(() => {
     if (!open) return;
@@ -209,7 +214,8 @@ function SettingsMenu({ route, s }) {
   }, [open]);
   const close = (refocus = true) => { setOpen(false); if (refocus) btn.current?.focus(); };
   const act = k => {
-    close(k !== "withdraw");
+    close(k !== "withdraw" && k !== "a11y");
+    if (k === "a11y") openA11y();
     if (k === "data") go(coach ? "#/vos-donnees/coachs" : "#/vos-donnees");
     if (k === "code") { setLastSpace(null); go("#/beneficiaire"); }
     if (k === "withdraw") setConfirm(true);
@@ -304,7 +310,6 @@ function Espace() {
             <div><Tag tone="primary">Coach</Tag></div>
             <Txt v="h2" as="h2" color={T.navy}>Je suis coach</Txt>
             <Txt v="body" color={T.body}>Créez des parcours, transmettez les codes d'accès et relisez les réponses que l'on vous envoie.</Txt>
-            <Notice tone="warning" role="">Connexion de démonstration : aucun mot de passe n'est vérifié.</Notice>
             <form onSubmit={login} style={{ display: "grid", gap: GAP.field, marginTop: 8 }}>
               <Field id="login-email" label="Adresse électronique professionnelle">
                 <Input id="login-email" type="email" inputMode="email" autoCapitalize="none" autoCorrect="off" autoComplete="username" value={email} onChange={e => setEmail(e.target.value)} />
@@ -340,7 +345,7 @@ function Footer() {
   ];
   const groups = [
     ["Vos données", [["#/vos-donnees", "Vos données"], ["#/vos-donnees/video", "Que devient ma vidéo ?"], ["#/vos-donnees/assistant", "L'assistant et l'IA"], ["#/vos-donnees/droits", "Vos droits"]]],
-    ["Le site", [["#/a-propos", "À propos"], ["#/solutions", "Solutions"], ["#/ressources", "Ressources"], ["#/a-propos/faq", "Questions fréquentes"], ["#/demo", "Demander une démo"]]],
+    ["Le site", [["#/a-propos", "À propos"], ["#/solutions", "Solutions"], ["#/ressources", "Ressources"], ["#/a-propos/faq", "Questions fréquentes"], ["#/demo", "Demander une prise en main"]]],
     ["Informations légales", [["#/conditions", "Conditions d'utilisation"], ["#/mentions-legales", "Mentions légales"], ["#/accessibilite", "Accessibilité : non conforme"]]],
   ];
   const lk = { ...TY.caption, ...TY.link, minHeight: 44, display: "inline-flex", alignItems: "center" };

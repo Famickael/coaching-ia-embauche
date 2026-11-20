@@ -8,7 +8,7 @@
      correspondance par mots-clés normalisés et gestion des relances (« un exemple ? », « pourquoi ? »,
      « et pour… ? », « plus de détails », « merci »).
 
-   Règles : périmètre limité au fonctionnement de La Répét' et à la préparation d'entretien ;
+   Règles : périmètre limité à la préparation d'entretien (questions sur le site : renvoi vers la FAQ) ;
    vouvoiement ; aucune note ; aucune déduction d'émotion ou de trait de personnalité
    (AI Act, art. 5(1)(f)) ; aucune donnée personnelle demandée ; renvoi vers le coach au-delà. */
 
@@ -23,7 +23,7 @@ export const KB = [
   {
     id: "fonctionnement", q: "Comment fonctionne La Répét' ?",
     keys: ["fonctionne", "fonctionnement", "comment ca marche", "marche comment", "utiliser le site", "a quoi sert", "sert a quoi le site", "repet", "mode d emploi", "comment on fait"],
-    answer: "La Répét' vous permet de vous entraîner seul·e à l'entretien, à votre rythme. Vous choisissez une ou plusieurs questions, vous vous enregistrez, puis l'assistant vous fait un retour qui décrit des faits (rythme, pauses, exemples, structure). Vous décidez ensuite, réponse par réponse, de l'envoyer ou non à votre coach.",
+    answer: "La Répét' vous permet de vous entraîner seul à l'entretien, à votre rythme. Vous choisissez une ou plusieurs questions, vous vous enregistrez, puis l'assistant vous fait un retour qui décrit des faits (rythme, pauses, exemples, structure). Vous décidez ensuite, réponse par réponse, de l'envoyer ou non à votre coach.",
     more: "Le déroulé type : un échauffement facultatif pour vous mettre en voix, puis un entraînement sur les questions de votre choix. Après chaque réponse, vous choisissez de lire un rapport écrit ou de vous revoir en vidéo avec des repères. Vous pouvez recommencer autant de fois que vous le souhaitez.",
     example: "Par exemple : vous sélectionnez « Pouvez-vous vous présenter ? » et « Pourquoi ce poste ? », vous répondez à la première, vous lisez le retour, puis vous passez à la seconde. À la fin, vous envoyez à votre coach seulement la réponse qui vous semble la plus utile à travailler ensemble.",
     related: ["echauffement", "entrainement", "confidentialite"],
@@ -56,7 +56,7 @@ export const KB = [
   {
     id: "retour-assistant", q: "Que contient le retour de l'assistant ?",
     keys: ["retour", "analyse", "feedback", "rapport de l assistant", "que regarde", "qu est ce qui est analyse", "observation", "point d appui", "a explorer"],
-    answer: "Le retour décrit des faits observables : votre rythme de parole, les pauses, les mots d'appui, la présence d'exemples concrets, la structure de la réponse et, si la caméra est active, la direction du regard. Il commence par vos points d'appui, puis propose des pistes à explorer.",
+    answer: "Le retour décrit des faits observables : votre rythme de parole, les pauses, les petits mots répétés, la présence d'exemples concrets, la structure de la réponse et, si la caméra est active, la direction du regard. Il commence par vos points d'appui, puis propose des pistes à explorer.",
     more: "Chaque observation est accompagnée d'un conseil pratique, présenté comme une convention qui varie selon les secteurs. Le retour ne note pas et ne déduit rien sur ce que vous ressentez. Votre coach peut le compléter, le nuancer ou le contredire.",
     example: "Par exemple : « Environ 140 mots par minute : ce rythme laisse à l'interlocuteur le temps de suivre » ou « Aucune situation datée n'a été repérée : vous pouvez ajouter un exemple vécu ».",
     related: ["pas-de-note", "rapport-ecrit-video", "debit"],
@@ -66,21 +66,21 @@ export const KB = [
     keys: ["note", "noter", "score", "evaluation", "evalue", "juge", "jugement", "classement", "suis je bon", "est ce que c etait bien", "c etait bien", "bonne reponse"],
     answer: "La Répét' décrit sans noter. Une note dit peu de choses sur ce que vous pouvez faire concrètement, alors qu'une observation précise vous donne une piste. Les repères sont des conventions, pas des règles : ce qui fonctionne dépend du poste et du recruteur.",
     more: "C'est un choix pédagogique et réglementaire : l'outil ne produit ni note chiffrée, ni classement, ni jauge. Votre coach, lui, peut vous dire ce qui lui semble prioritaire pour votre projet.",
-    example: "Plutôt que « 12 sur 20 », vous lirez par exemple : « Vous appuyez votre propos sur un élément précis : deux ans en magasin. Les exemples chiffrés rendent une réponse facile à retenir. »",
+    example: "Plutôt que « 12 sur 20 », vous lirez par exemple : « Vous citez un élément précis : deux ans en magasin. Les exemples chiffrés rendent une réponse facile à retenir. »",
     related: ["retour-assistant", "emotions", "coach-partage"],
   },
   {
-    id: "emotions", q: "L'assistant voit-il si je suis tendu·e ?",
+    id: "emotions", q: "L'assistant voit-il si je suis tendu ?",
     keys: ["emotion", "stress", "stresse", "nerveux", "nerveuse", "tendu", "angoisse", "detecte", "lire mon visage", "visage", "expression", "air", "avais l air", "sentiment", "ressens", "je me sens", "sourire"],
     answer: "Non. L'assistant ne cherche pas à deviner ce que vous ressentez et ne commente pas votre attitude : c'est interdit par le règlement européen sur l'IA, et ce ne serait pas fiable. Il décrit uniquement des faits, comme le rythme ou les pauses.",
     more: "Le suivi du visage sert seulement à savoir si votre regard est tourné vers l'écran, vers le bas ou sur le côté. Les expressions du visage ne sont jamais lues. Si vous souhaitez parler de votre ressenti, votre coach est là pour cela.",
-    example: "Par exemple, l'assistant peut écrire « 3 pauses de plus de 2 secondes », mais jamais « vous aviez l'air tendu·e ».",
+    example: "Par exemple, l'assistant peut écrire « 3 pauses de plus de 2 secondes », mais jamais « vous aviez l'air tendu ».",
     related: ["respiration", "pas-de-note", "confidentialite"],
   },
   {
     id: "confidentialite", q: "Qui peut voir mes enregistrements ?",
     keys: ["confidentialite", "confidentiel", "donnees", "donnee", "qui voit", "qui peut voir", "prive", "vie privee", "rgpd", "securite", "partage", "stocke", "stockage", "ou sont"],
-    answer: "Personne d'autre que vous, tant que vous ne décidez pas de partager. Vos enregistrements restent sur votre appareil. Vous seul·e choisissez, réponse par réponse, ce qui est envoyé à votre coach.",
+    answer: "Personne d'autre que vous, tant que vous ne décidez pas d'envoyer. Vos enregistrements restent sur votre appareil. C'est vous qui choisissez, réponse par réponse, ce qui est envoyé à votre coach.",
     more: "Seul le texte de votre réponse peut être utilisé pour préparer le retour ; la vidéo ne quitte pas l'appareil sans envoi explicite. Vous pouvez supprimer une réponse, ou retirer votre consentement et effacer toutes vos données depuis votre espace.",
     example: "Par exemple, si vous enregistrez cinq réponses et n'en envoyez qu'une, votre coach ne verra que celle-là. Les quatre autres restent sur votre appareil.",
     related: ["video-devenir", "supprimer", "coach-partage"],
@@ -97,7 +97,7 @@ export const KB = [
     id: "coach-partage", q: "Comment envoyer une réponse à mon coach ?",
     keys: ["envoyer", "coach", "partager", "conseiller", "conseillere", "transmettre", "accompagnateur", "referent"],
     answer: "Après le retour de l'assistant, appuyez sur « Envoyer à mon coach ». Vous pouvez ajouter un petit mot, par exemple ce sur quoi vous aimeriez son avis. Seule cette réponse est envoyée.",
-    more: "Votre coach relit la réponse, peut ajouter des remarques à des moments précis de la vidéo et commenter les observations de l'assistant. Son rapport apparaît ensuite dans votre espace, avec le même code.",
+    more: "Votre coach relit la réponse, peut ajouter des remarques à des moments précis de la vidéo et commenter les repères de l'assistant. Son rapport apparaît ensuite dans votre espace, avec le même code.",
     example: "Par exemple, un mot comme : « J'ai l'impression de parler vite au début, qu'en pensez-vous ? » aide votre coach à cibler sa relecture.",
     related: ["coach-rapport", "confidentialite", "hors-sujet"],
   },
@@ -184,10 +184,10 @@ export const KB = [
   {
     id: "assistant", q: "Qui êtes-vous ?",
     keys: ["qui es tu", "qui etes vous", "tu es qui", "vous etes qui", "assistant", "robot", "humain", "intelligence artificielle", "ia", "chatgpt"],
-    answer: "Je suis l'assistant de La Répét'. Je réponds à vos questions sur le fonctionnement du site et sur la préparation d'un entretien d'embauche. Je ne remplace pas votre coach, qui connaît votre parcours.",
+    answer: "Je suis l'assistant de préparation d'entretien de La Répét'. Je suis un programme, pas une personne. Je réponds à vos questions pour préparer un entretien d'embauche. Je ne remplace pas votre coach, qui connaît votre parcours.",
     more: "Je ne note rien, je ne cherche pas à deviner ce que vous ressentez et je ne vous demande aucune information personnelle. Pour une question sur votre situation, votre contrat ou vos démarches, votre coach est la bonne personne.",
     example: "Vous pouvez par exemple me demander comment vous présenter, comment parler d'un trou dans votre CV ou quelles questions poser au recruteur.",
-    related: ["fonctionnement", "se-presenter", "hors-sujet"],
+    related: ["se-presenter", "reussir", "hors-sujet"],
   },
   {
     id: "hors-sujet", q: "Pour quelles questions voir mon coach ?",
@@ -219,11 +219,11 @@ export const KB = [
   },
   {
     id: "mots-appui", q: "Comment dire moins de « euh » ?",
-    keys: ["euh", "mots d appui", "mot d appui", "tic de langage", "tics", "du coup", "en fait", "voila", "genre", "hesitation", "heu"],
-    answer: "Les mots d'appui (« euh », « du coup », « en fait ») sont très courants à l'oral. Le plus efficace est de les remplacer par un court silence, surtout en début de phrase.",
+    keys: ["euh", "petits mots", "mots repetes", "mots d appui", "mot d appui", "tic de langage", "tics", "du coup", "en fait", "voila", "genre", "hesitation", "heu"],
+    answer: "Les petits mots répétés (« euh », « du coup », « en fait ») sont très courants à l'oral. Le plus efficace est de les remplacer par un court silence, surtout en début de phrase.",
     more: "Repérez le mot qui revient le plus chez vous en vous réécoutant, sans chercher à tout supprimer. Ralentir légèrement et préparer la première phrase de chaque réponse réduit beaucoup les hésitations.",
     example: "Au lieu de « Euh, du coup, j'ai travaillé chez… », essayez : « (silence d'une seconde) J'ai travaillé chez… ».",
-    why: "Quelques mots d'appui ne gênent pas. Quand ils deviennent fréquents, ils détournent l'attention de ce que vous dites, alors qu'un silence met au contraire votre propos en valeur.",
+    why: "Quelques petits mots répétés ne gênent pas. Quand ils deviennent fréquents, ils détournent l'attention de ce que vous dites, alors qu'un silence met au contraire votre propos en valeur.",
     related: ["debit", "pauses"],
   },
   {
@@ -282,7 +282,7 @@ export const KB = [
   {
     id: "qualites", q: "Comment parler de mes qualités ?",
     keys: ["qualite", "qualites", "point fort", "points forts", "atout", "atouts", "competence", "competences", "savoir etre", "trois qualites"],
-    answer: "Choisissez deux ou trois qualités utiles pour le poste et appuyez chacune sur un exemple vécu. Une qualité prouvée par une situation est bien plus convaincante qu'une liste d'adjectifs.",
+    answer: "Choisissez deux ou trois qualités utiles pour le poste et illustrez chacune par un exemple vécu. Une qualité prouvée par une situation est bien plus convaincante qu'une liste d'adjectifs.",
     more: "Regardez l'offre d'emploi : les qualités demandées y sont souvent écrites. Pour un poste de {poste}, demandez-vous ce qui est attendu au quotidien (ponctualité, sens du contact, rigueur, travail en équipe…) et ce que vous avez déjà montré.",
     example: "« Je suis ponctuelle : pendant mes deux ans en restauration, je n'ai jamais manqué une ouverture du matin, et c'est souvent moi qui préparais la salle. »",
     related: ["points-a-travailler", "exemples", "experiences"],
@@ -299,10 +299,10 @@ export const KB = [
   {
     id: "trous-cv", q: "Comment expliquer un trou dans mon CV ?",
     keys: ["trou", "trou dans mon cv", "trous dans le cv", "periode sans emploi", "periode d inactivite", "inactivite", "chomage long", "arret", "pause dans ma carriere", "longtemps sans travailler", "chomage", "cv", "parcours"],
-    answer: "Restez simple et honnête : une phrase pour expliquer la période, sans entrer dans les détails personnels, puis ce que vous avez fait ou appris pendant ce temps, et pourquoi vous êtes prêt·e aujourd'hui.",
+    answer: "Restez simple et honnête : une phrase pour expliquer la période, sans entrer dans les détails personnels, puis ce que vous avez fait ou appris pendant ce temps, et pourquoi ce poste vous convient aujourd'hui.",
     more: "Vous n'avez pas à justifier votre vie privée. « Pour des raisons familiales » ou « pour raisons de santé, aujourd'hui derrière moi » suffit. Mettez l'accent sur la suite : formation, bénévolat, démarches, projet clarifié avec votre accompagnement.",
     example: "« Entre 2022 et 2024, je me suis occupée de ma famille. Pendant cette période, j'ai suivi une formation en ligne en bureautique, et aujourd'hui je suis pleinement disponible pour reprendre un poste. »",
-    why: "Le recruteur veut surtout savoir si vous êtes disponible et prêt·e. Une réponse courte et tournée vers l'avenir le rassure davantage qu'une longue justification.",
+    why: "Le recruteur veut surtout savoir si vous êtes disponible. Une réponse courte et tournée vers l'avenir le rassure davantage qu'une longue justification.",
     related: ["reconversion", "experiences", "questions-personnelles"],
   },
   {
@@ -454,7 +454,7 @@ export const KB = [
   {
     id: "recommencer-courage", q: "Je n'y arrive pas, que faire ?",
     keys: ["nul", "nulle", "n arrive pas", "j y arrive pas", "y arrive pas", "decourage", "rate", "echec", "echoue", "pas a la hauteur", "pas capable", "trop dur", "difficile pour moi", "honte"],
-    answer: "S'entraîner, c'est justement essayer, se tromper et recommencer : rien n'est noté et rien n'est partagé sans votre accord. Reprenez une question courte, par exemple la présentation, et faites-la deux ou trois fois.",
+    answer: "S'entraîner, c'est justement essayer, se tromper et recommencer : rien n'est noté et rien n'est envoyé sans votre accord. Reprenez une question courte, par exemple la présentation, et faites-la deux ou trois fois.",
     more: "Choisissez un seul point à travailler à la fois : une première phrase claire, ou un exemple concret. Votre coach peut aussi vous aider à choisir par où commencer.",
     example: "Par exemple : un premier essai pour trouver vos idées, un deuxième en ajoutant un exemple, un troisième en soignant la dernière phrase.",
     related: ["refaire", "echauffement", "coach-partage"],
@@ -504,18 +504,25 @@ function scoreAll(toks, lastId) {
 const fillText = (t, poste) => t.replace(/\{poste\}/g, poste || "le poste visé");
 
 /* ─── Suggestions par contexte ─── */
+/* Suggestions : uniquement la préparation d'entretien (les questions sur le site renvoient vers la FAQ). */
 export const CONTEXT_SUGGESTIONS = {
-  warmup: ["Quelle différence entre l'échauffement et l'entraînement ?", "Comment gérer le trac avant un entretien ?", "Comment me présenter en entretien ?", "Que devient ma vidéo ?"],
-  debrief: ["Comment me présenter en entretien ?", "Comment expliquer un trou dans mon CV ?", "Quelles questions poser au recruteur ?", "Comment se passe un entraînement ?"],
-  feedback: ["Que contient le retour de l'assistant ?", "Je parle trop vite, que faire ?", "Comment dire moins de « euh » ?", "Comment donner un exemple concret ?"],
+  general: ["Comment bien préparer mon entretien ?", "Comment me présenter en entretien ?", "Quelles questions pose-t-on souvent en entretien ?", "Comment gérer le trac avant un entretien ?"],
+  warmup: ["Comment gérer le trac avant un entretien ?", "Comment me présenter en entretien ?", "Comment bien structurer une réponse ?", "Je parle trop vite, que faire ?"],
+  debrief: ["Comment me présenter en entretien ?", "Comment expliquer un trou dans mon CV ?", "Quelles questions poser au recruteur ?", "Comment expliquer ma motivation pour le poste ?"],
+  record: ["Comment donner un exemple concret ?", "Comment bien structurer une réponse ?", "Que faire si je ne sais pas répondre ?", "Faut-il regarder la caméra ou l'écran ?"],
+  feedback: ["Je parle trop vite, que faire ?", "Comment dire moins de « euh » ?", "Comment donner un exemple concret ?", "Les silences, est-ce grave ?"],
 };
+
+/* Sujets sur le fonctionnement du site : réponse courte, puis renvoi vers les questions fréquentes. */
+export const SITE_TOPICS = new Set(["fonctionnement", "echauffement", "entrainement", "questions-perso", "retour-assistant", "confidentialite", "video-devenir", "coach-partage", "coach-rapport", "rapport-ecrit-video", "camera", "voix-seule", "fond-video", "supprimer", "refaire", "duree", "metier", "transcription"]);
+export const FAQ_HINT = "Pour les autres questions sur le site, consultez les questions fréquentes (page À propos).";
 
 function topicSuggestions(e, given) {
   const out = [];
   if (e.example && !given.includes("example")) out.push("Un exemple ?");
   if (e.more && !given.includes("more")) out.push("Plus de détails");
   else if (e.why && !given.includes("why")) out.push("Pourquoi ?");
-  for (const r of e.related) if (out.length < 3 && byId[r]) out.push(byId[r].q);
+  for (const r of e.related) if (out.length < 3 && byId[r] && !SITE_TOPICS.has(r)) out.push(byId[r].q);
   return out.slice(0, 3);
 }
 
@@ -540,20 +547,20 @@ export function localReply(input, memory = {}, { context = "warmup", poste } = {
   const last = memory.topic ? byId[memory.topic] : null;
   const given = memory.given || [];
   const out = (text, e, g) => ({
-    text: fillText(text, poste),
+    text: fillText(e && SITE_TOPICS.has(e.id) && g && g.length === 1 ? `${text} ${FAQ_HINT}` : text, poste),
     topic: e ? e.id : memory.topic || null,
     memory: e ? { topic: e.id, given: g } : memory,
-    suggestions: e ? topicSuggestions(e, g) : CONTEXT_SUGGESTIONS[context] ? CONTEXT_SUGGESTIONS[context].slice(0, 3) : [],
+    suggestions: e ? topicSuggestions(e, g) : (CONTEXT_SUGGESTIONS[context] || CONTEXT_SUGGESTIONS.general).slice(0, 3),
   });
 
-  if (!n) return out("Je vous écoute. Posez votre question sur l'entraînement ou sur la préparation d'un entretien.", null);
+  if (!n) return out("Je vous écoute. Posez votre question sur la préparation de votre entretien.", null);
 
   // Salutations et remerciements courts
-  if (RX.greet.test(n) && content.length <= 1) return out("Bonjour ! Je réponds à vos questions sur La Répét' et sur la préparation d'un entretien. Que souhaitez-vous savoir ?", null);
+  if (RX.greet.test(n) && content.length <= 1) return out("Bonjour ! Je réponds à vos questions pour préparer votre entretien d'embauche. Que souhaitez-vous savoir ?", null);
   if (RX.no.test(n)) return out("Très bien. Je reste disponible si une autre question vous vient.", null);
   if (RX.thanks.test(n) && content.length <= 1) {
     const r = last ? `Avec plaisir. Si vous le souhaitez, nous pouvons aussi parler de : « ${byId[last.related[0]]?.q} »` : "Avec plaisir. N'hésitez pas si une autre question vous vient.";
-    return { ...out(r, null), suggestions: last ? last.related.map(r => byId[r]?.q).filter(Boolean).slice(0, 3) : CONTEXT_SUGGESTIONS[context].slice(0, 3) };
+    return { ...out(r, null), suggestions: last ? last.related.filter(r => !SITE_TOPICS.has(r)).map(r => byId[r]?.q).filter(Boolean).slice(0, 3) : (CONTEXT_SUGGESTIONS[context] || CONTEXT_SUGGESTIONS.general).slice(0, 3) };
   }
 
   // Relances sur le sujet précédent
@@ -589,9 +596,9 @@ export function localReply(input, memory = {}, { context = "warmup", poste } = {
   }
 
   // Repli honnête
-  const sugg = (CONTEXT_SUGGESTIONS[context] || CONTEXT_SUGGESTIONS.warmup).slice(0, 3);
+  const sugg = (CONTEXT_SUGGESTIONS[context] || CONTEXT_SUGGESTIONS.general).slice(0, 3);
   return {
-    text: "Je n'ai pas de réponse précise à cette question. Je peux vous aider sur le fonctionnement de La Répét' et sur la préparation d'un entretien ; pour votre situation personnelle, votre coach est la bonne personne. Vous pouvez par exemple me demander :",
+    text: "Je n'ai pas de réponse à cette question. Je peux vous aider à préparer un entretien. Pour une question sur le site, consultez les questions fréquentes. Pour votre situation personnelle, votre coach est la bonne personne. Vous pouvez par exemple me demander :",
     topic: memory.topic || null, memory, suggestions: sugg, fallback: true,
   };
 }
@@ -600,9 +607,9 @@ export function localReply(input, memory = {}, { context = "warmup", poste } = {
    Pas de commentaire ni de diagnostic : un accusé de réception et des conseils pratiques. */
 export const FEELINGS = [
   { id: "bien", label: "Bien" },
-  { id: "pret", label: "Prêt·e à continuer" },
-  { id: "mitige", label: "Mitigé·e" },
-  { id: "tendu", label: "Un peu tendu·e" },
+  { id: "pret", label: "Envie de continuer" },
+  { id: "mitige", label: "Entre les deux" },
+  { id: "tendu", label: "Un peu de tension" },
   { id: "nsp", label: "Je ne sais pas" },
 ];
 export function feelingAck(id) {
@@ -619,13 +626,14 @@ export function feelingAck(id) {
 
 /* ─── Modèle de langage facultatif ─── */
 const SYSTEM_PROMPT = `Tu es l'assistant de « La Répét' », un outil d'entraînement à l'entretien d'embauche utilisé dans des prestations d'accompagnement vers l'emploi en France.
-Périmètre : le fonctionnement de La Répét' (échauffement ni enregistré ni analysé ; entraînement enregistré sur l'appareil avec un retour descriptif de l'assistant ; choix entre rapport écrit et relecture vidéo ; envoi volontaire de chaque réponse au coach ; suppression des données à tout moment ; la vidéo ne quitte jamais l'appareil sans envoi explicite) et la préparation d'un entretien d'embauche (présentation, expériences, qualités, points à travailler, trous dans le CV, questions au recruteur, préparation pratique, tenue, ponctualité, visio, téléphone, salaire, disponibilité).
+Périmètre : la préparation d'un entretien d'embauche (présentation, expériences, qualités, points à travailler, trous dans le CV, questions au recruteur, préparation pratique, tenue, ponctualité, visio, téléphone, salaire, disponibilité).
 Règles strictes :
 - Réponds en français, au vouvoiement, avec un ton positif, simple et non évaluatif, en 2 à 5 phrases courtes. N'utilise pas de tiret cadratin.
 - Ne donne aucune note, aucun score, aucun classement.
 - Ne déduis et ne commentes jamais l'état émotionnel, l'attitude ou la personnalité de la personne (interdit par l'article 5(1)(f) du règlement européen sur l'IA). Si la personne évoque son ressenti, donne seulement des conseils pratiques (respiration, préparation), sans diagnostic.
 - Ne demande aucune donnée personnelle (nom, adresse, téléphone, situation).
-- Pour ce qui dépasse ce périmètre (droits, démarches, contrat, situation personnelle), renvoie poliment vers le coach.
+- Pour une question sur le fonctionnement du site, renvoie vers la page « Questions fréquentes » (À propos). Pour ce qui dépasse ce périmètre (droits, démarches, contrat, situation personnelle), renvoie poliment vers le coach.
+- Rappelle si on te le demande que tu es un programme, pas une personne.
 - Appuie-toi sur l'historique de la conversation pour répondre aux relances (« un exemple ? », « pourquoi ? », « et pour… ? »).`;
 
 /* history : [{ role: "user" | "assistant", content }] (dernier message = question de la personne). */

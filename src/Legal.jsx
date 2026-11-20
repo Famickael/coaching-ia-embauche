@@ -1,22 +1,17 @@
 import React from "react";
 import { T, TY, GAP, W, RAD, PAD, Card, Btn, Link, Icon, IconTile, I, Notice, PageHero, Modal, Txt } from "./ui.jsx";
 import { PAGES, SUMMARY, FULL, LEADS, HUB_CARDS, PHRASES, LEGAL_DATE } from "./content/legal.js";
-import { TODO } from "./content/organisme.js";
 import { getState, findParcours } from "./lib/store.js";
 
 /* Pages « Vos données », conditions, mentions légales et accessibilité (niveau 3),
    et fenêtre de résumé (niveau 2). Tous les textes viennent de src/content/legal.js. */
 
-/* Texte avec **gras** ; les mentions « À compléter par l'organisme » sont signalées. */
+/* Texte avec **gras**. */
 export function Rich({ text }) {
   const parts = String(text).split(/(\*\*[^*]+\*\*)/g);
-  return parts.map((s, i) => {
-    if (/^\*\*.*\*\*$/.test(s)) return <strong key={i} style={{ ...TY.strong, color: T.navy }}>{s.slice(2, -2)}</strong>;
-    if (!s.includes(TODO)) return <React.Fragment key={i}>{s}</React.Fragment>;
-    return s.split(TODO).map((x, k, a) => (
-      <React.Fragment key={`${i}-${k}`}>{x}{k < a.length - 1 && <mark className="rp-todo" style={{ background: T.warningBg, color: T.warningDk, ...TY.strong, borderRadius: 4, padding: "0 4px" }}>{TODO}</mark>}</React.Fragment>
-    ));
-  });
+  return parts.map((s, i) => /^\*\*.*\*\*$/.test(s)
+    ? <strong key={i} style={{ ...TY.strong, color: T.navy }}>{s.slice(2, -2)}</strong>
+    : <React.Fragment key={i}>{s}</React.Fragment>);
 }
 
 /* Résumé en puces (niveau 2). */
@@ -81,7 +76,7 @@ export default function LegalPage({ page = "hub" }) {
           )}
           <div style={{ display: "grid", gap: GAP.block }}><Blocks blocks={FULL[page] || []} /></div>
         </>)}
-        <Txt v="caption" color={T.muted}>Textes en vigueur le {LEGAL_DATE}. Version prototype, à valider par le DPO et le juridique de l'organisme.</Txt>
+        <Txt v="caption" color={T.muted}>Textes en vigueur le {LEGAL_DATE}.</Txt>
         <div className="noprint" style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
           <Btn kind="ghost" size="sm" icon={I.print} onClick={() => window.print()}>Imprimer cette page</Btn>
         </div>

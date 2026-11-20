@@ -4,14 +4,18 @@ import React, { useEffect, useRef, useState } from "react";
 
 const hasIO = () => typeof window !== "undefined" && "IntersectionObserver" in window;
 
+/* Mouvement réduit : réglage du système, option « Réduire les animations » ou « Mode concentration »
+   (qui arrête aussi les défilements automatiques et les cartes animées). */
+const reducedNow = () => typeof window !== "undefined" && ((!!window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches)
+  || document.documentElement.dataset.motion === "reduce" || document.documentElement.dataset.focusmode === "on");
 export function useReducedMotion() {
-  const q = "(prefers-reduced-motion: reduce)";
-  const [r, setR] = useState(() => typeof window !== "undefined" && !!window.matchMedia && window.matchMedia(q).matches);
+  const [r, setR] = useState(reducedNow);
   useEffect(() => {
-    if (!window.matchMedia) return;
-    const m = window.matchMedia(q), on = () => setR(m.matches);
-    m.addEventListener ? m.addEventListener("change", on) : m.addListener(on);
-    return () => (m.removeEventListener ? m.removeEventListener("change", on) : m.removeListener(on));
+    const on = () => setR(reducedNow());
+    const m = window.matchMedia ? window.matchMedia("(prefers-reduced-motion: reduce)") : null;
+    m && (m.addEventListener ? m.addEventListener("change", on) : m.addListener(on));
+    window.addEventListener("rp-a11y", on);
+    return () => { m && (m.removeEventListener ? m.removeEventListener("change", on) : m.removeListener(on)); window.removeEventListener("rp-a11y", on); };
   }, []);
   return r || !hasIO();
 }

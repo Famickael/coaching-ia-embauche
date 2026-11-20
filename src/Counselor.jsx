@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { T, TY, RAD, PAD, GAP, W, Card, Tag, Btn, Back, Link, IconBtn, Icon, I, ORG_NAME, Txt, Notice, Empty, Confirm, ConfirmMark, Field, Input, Textarea, Toggle, Modal, TimeChip, Bare } from "./ui.jsx";
+import { T, TY, RAD, PAD, GAP, W, Card, Tag, Btn, Back, Link, IconBtn, Icon, I, Txt, Notice, Empty, Confirm, ConfirmMark, Field, Input, Textarea, Toggle, Modal, TimeChip, Bare } from "./ui.jsx";
 import { useStore, createParcours, deleteParcours, takesOf, updateTake, parcoursStatus } from "./lib/store.js";
 import { Player, DimCard, markersOf, useVideoUrl } from "./Report.jsx";
 import { fmt } from "./lib/analysis.js";
@@ -21,11 +21,11 @@ export default function Counselor() {
       <div style={{ ...actions, alignItems: "flex-end" }} className="noprint">
         <div style={stack(4)}>
           <Txt v="h1" as="h1" color={T.navy}>Espace coach · {s.counselor.name}</Txt>
-          <Txt v="body" color={T.body}>Les personnes que vous accompagnez dans le module entretien</Txt>
+          <Txt v="body" color={T.body}>Vos parcours et les réponses que l'on vous a envoyées</Txt>
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <Btn kind={view.name === "list" ? "primary" : "secondary"} size="sm" onClick={() => setView({ name: "list" })} aria-current={view.name === "list" ? "page" : undefined}>Mes bénéficiaires</Btn>
-          <Btn kind="secondary" size="sm" onClick={() => setModal({ step: "create" })} icon={I.plus}>Nouveau parcours</Btn>
+          <Btn kind={view.name === "list" ? "primary" : "secondary"} size="sm" onClick={() => setView({ name: "list" })} aria-current={view.name === "list" ? "page" : undefined}>Mes parcours</Btn>
+          <Btn kind="secondary" size="sm" onClick={() => setModal({ step: "create" })} icon={I.plus}>Créer un parcours</Btn>
         </div>
       </div>
       <div key={view.name + (view.code || "") + (view.takeId || "")} className="up">
@@ -34,7 +34,7 @@ export default function Counselor() {
         {view.name === "review" && s.takes[view.takeId] && <Review s={s} p={s.parcours[view.code]} take={s.takes[view.takeId]} back={() => setView({ name: "parcours", code: view.code })} />}
       </div>
       {modal?.step === "create" && (
-        <Modal close={() => setModal(null)} title="Créer un parcours pour une personne accompagnée" sub="Un code personnel est généré. La personne n'a aucun compte à créer.">
+        <Modal close={() => setModal(null)} title="Créer un parcours" sub="Vous obtenez un code d'accès à transmettre. La personne n'a pas de compte à créer.">
           <Create done={code => setModal({ step: "created", code })} cancel={() => setModal(null)} />
         </Modal>
       )}
@@ -71,17 +71,17 @@ function List({ s, open, create }) {
     <div style={stack(GAP.grid)}>
       <div style={stack(12)}>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(200px,1fr))", gap: GAP.stack }}>
-          <Stat n={rows.filter(r => r.st.key === "toreview").length} l="Prises à relire" c={T.accent} />
-          <Stat n={rows.length} l="Parcours ouverts" />
+          <Stat n={rows.filter(r => r.st.key === "toreview").length} l="Réponses à relire" c={T.accent} />
+          <Stat n={rows.length} l="Parcours en cours" />
           <Stat n={reviewed.length} l="Rapports envoyés" c={T.successDk} />
-          <Stat n={benefWithTakes ? `${Math.round((retrain / benefWithTakes) * 100)} %` : "–"} l="Bénéficiaires qui se réentraînent" />
+          <Stat n={benefWithTakes ? `${Math.round((retrain / benefWithTakes) * 100)} %` : <span style={{ ...TY.h4, color: T.muted }}>Aucune donnée</span>} l="Personnes qui se réentraînent" />
         </div>
         <Txt v="caption" color={T.muted}>
-          Indicateurs agrégés uniquement, sans mesure de performance individuelle.{avgDelay != null && ` Délai moyen de relecture : ${avgDelay} h.`}
+          Ces chiffres portent sur l'ensemble de vos parcours. Aucun ne mesure une personne.{avgDelay != null && ` Délai moyen de relecture : ${avgDelay} h.`}
         </Txt>
       </div>
       {rows.length === 0 ? (
-        <Empty icon={I.users} title="Aucun parcours pour l'instant" text="Créez un parcours pour générer le code et le lien à transmettre à la personne accompagnée."
+        <Empty icon={I.users} title="Aucun parcours pour l'instant" text="Créez un parcours pour obtenir le code d'accès et le lien à transmettre à la personne accompagnée."
           action={<Btn kind="primary" onClick={create} icon={I.plus}>Créer un parcours</Btn>} />
       ) : (
         <Card pad="none" level={2}>
@@ -90,7 +90,7 @@ function List({ s, open, create }) {
               <div aria-hidden style={{ width: 40, height: 40, borderRadius: "50%", background: T.primaryBg, display: "grid", placeItems: "center", ...TY.h4, color: T.primary, flexShrink: 0 }}>{p.prenom[0]?.toUpperCase()}</div>
               <div style={{ flex: 1, minWidth: 200, ...stack(4) }}>
                 <div style={{ display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}><span style={{ ...TY.h4, color: T.navy }}>{p.prenom}</span><span style={{ ...TY.mono, color: T.muted }}>{p.code}</span></div>
-                <div style={{ ...TY.small, color: T.body }}>{p.poste || "Poste non précisé"} · {takes.length} prise{takes.length > 1 ? "s" : ""} · créé le {dateFr(p.createdAt)}</div>
+                <div style={{ ...TY.small, color: T.body }}>{p.poste || "Poste non précisé"} · {takes.length} réponse{takes.length > 1 ? "s" : ""} · créé le {dateFr(p.createdAt)}</div>
               </div>
               <Tag tone={st.tone}>{st.label}</Tag>
               <Btn kind={st.key === "toreview" ? "objective" : "secondary"} size="sm" onClick={() => open(p.code)}>{st.key === "toreview" ? "Relire" : "Ouvrir"}</Btn>
@@ -106,22 +106,22 @@ function Create({ done, cancel }) {
   const [prenom, setPrenom] = useState(""), [poste, setPoste] = useState(""), [warmup, setWarmup] = useState(true);
   return (
     <form onSubmit={e => { e.preventDefault(); if (prenom.trim()) done(createParcours({ prenom, poste, warmup })); }} style={stack(GAP.field)}>
-      <Field id="new-prenom" label="Prénom et initiale" hint="Seul identifiant affiché. Ni numéro d'identifiant, ni adresse électronique.">
+      <Field id="new-prenom" label="Prénom et initiale" hint="Par exemple : Alex D. N'indiquez ni nom complet, ni numéro de dossier, ni adresse électronique.">
         <Input id="new-prenom" hint value={prenom} onChange={e => setPrenom(e.target.value)} placeholder="Prénom et initiale" />
       </Field>
-      <Field id="new-poste" label="Poste ou secteur visé" hint="Sert à contextualiser les questions, jamais à fixer une norme.">
+      <Field id="new-poste" label="Métier visé" hint="Les questions en tiennent compte. La personne peut le modifier.">
         <Input id="new-poste" hint value={poste} onChange={e => setPoste(e.target.value)} placeholder="Par exemple : agent d'accueil" />
       </Field>
       <div style={stack(8)}>
-        <span id="new-first" style={{ ...TY.label, color: T.navy }}>Première session</span>
+        <span id="new-first" style={{ ...TY.label, color: T.navy }}>Pour commencer</span>
         <div role="radiogroup" aria-labelledby="new-first" style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <Toggle on={warmup} onClick={() => setWarmup(true)}>Proposer un échauffement sans analyse</Toggle>
-          <Toggle on={!warmup} onClick={() => setWarmup(false)}>Directement l'entraînement</Toggle>
+          <Toggle on={warmup} onClick={() => setWarmup(true)}>Proposer d'abord un échauffement</Toggle>
+          <Toggle on={!warmup} onClick={() => setWarmup(false)}>Aller directement à l'entraînement</Toggle>
         </div>
       </div>
       <div className="rp-actions" style={{ ...actions, marginTop: 4 }}>
         <Back onClick={cancel}>Annuler</Back>
-        <Btn kind="objective" disabled={!prenom.trim()} iconRight={I.arrow}>Générer le code</Btn>
+        <Btn kind="objective" disabled={!prenom.trim()} iconRight={I.arrow}>Créer le parcours</Btn>
       </div>
     </form>
   );
@@ -140,7 +140,7 @@ function Created({ p, back, openAsBenef }) {
       <ConfirmMark />
       <div style={stack(8)}>
         <h2 style={{ ...TY.h2, color: T.navy, margin: 0 }}>Le parcours de {p.prenom} est prêt</h2>
-        <Txt v="body" color={T.body}>Transmettez le code ou le lien. Il sert à tout : s'entraîner, partager une prise, recevoir le rapport.</Txt>
+        <Txt v="body" color={T.body}>{`Transmettez le code d'accès ou le lien à ${p.prenom}. Il lui sert à s'entraîner, à vous envoyer une réponse et à lire votre rapport.`}</Txt>
       </div>
       <div style={{ background: T.primaryBg, borderRadius: RAD.md, padding: PAD.sm, width: "100%", ...stack(8) }}>
         <div style={{ ...TY.overline, color: T.body }}>Code d'accès</div>
@@ -154,7 +154,7 @@ function Created({ p, back, openAsBenef }) {
       </div>
       <div className="rp-actions" style={{ display: "flex", gap: GAP.actions, justifyContent: "center", flexWrap: "wrap", marginTop: 8 }}>
         <Btn kind="ghost" size="sm" onClick={back}>Retour à la liste</Btn>
-        <Btn kind="primary" size="sm" onClick={openAsBenef}>Ouvrir l'espace bénéficiaire sur cet appareil</Btn>
+        <Btn kind="primary" size="sm" onClick={openAsBenef}>Ouvrir son espace sur cet appareil</Btn>
       </div>
     </div>
   );
@@ -163,7 +163,7 @@ function Created({ p, back, openAsBenef }) {
 function Parcours({ s, p, back, review }) {
   const takes = takesOf(p.code, s);
   const shared = takes.filter(t => t.shared);
-  const del = async () => { if (window.confirm(`Supprimer le parcours de ${p.prenom}, ses prises et ses rapports ?`)) { await deleteParcours(p.code); back(); } };
+  const del = async () => { if (window.confirm(`Supprimer le parcours de ${p.prenom}, ses réponses et ses rapports ? C'est définitif.`)) { await deleteParcours(p.code); back(); } };
   const priv = takes.length - shared.length;
   return (
     <div style={stack(GAP.block)}>
@@ -171,7 +171,7 @@ function Parcours({ s, p, back, review }) {
         <div style={stack(4)}>
           <div style={{ display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}><span style={{ ...TY.h2, color: T.navy }}>{p.prenom}</span><span style={{ ...TY.mono, color: T.muted }}>{p.code}</span></div>
           <div style={{ ...TY.small, color: T.body }}>
-            {p.poste || "Poste non précisé"} · {p.consent ? `consentement recueilli le ${dateFr(p.consent.at)}${p.consent.ai ? "" : ", sans retour de l'assistant"}` : p.openedAt ? "lien ouvert, consentement non recueilli" : "lien pas encore ouvert"}
+            {p.poste || "Poste non précisé"} · {p.consent ? `accord donné le ${dateFr(p.consent.at)}${p.consent.ai ? "" : ", sans retour de l'assistant"}` : p.openedAt ? "espace ouvert, accord pas encore donné" : "espace pas encore ouvert"}
           </div>
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
@@ -181,12 +181,12 @@ function Parcours({ s, p, back, review }) {
       </Card>
       <section style={stack(16)}>
         <div style={stack(4)}>
-          <Txt v="h2" as="h2" color={T.navy}>Prises partagées</Txt>
+          <Txt v="h2" as="h2" color={T.navy}>Réponses reçues</Txt>
           <Txt v="small" color={T.muted}>
-            {priv > 0 ? `${priv} autre${priv > 1 ? "s" : ""} prise${priv > 1 ? "s" : ""} reste${priv > 1 ? "nt" : ""} privée${priv > 1 ? "s" : ""} : vous n'y avez pas accès.` : "Seules les prises que la personne a choisi d'envoyer apparaissent ici."}
+            {priv > 0 ? (priv > 1 ? `${priv} autres réponses n'ont pas été envoyées : vous ne les voyez pas.` : "1 autre réponse n'a pas été envoyée : vous ne la voyez pas.") : "Vous voyez ici seulement les réponses que la personne vous a envoyées."}
           </Txt>
         </div>
-        {shared.length === 0 && <Empty icon={I.send} text="Aucune prise partagée pour le moment." />}
+        {shared.length === 0 && <Empty icon={I.send} text="Aucune réponse reçue pour le moment." />}
         {shared.length > 0 && (
           <div style={stack(GAP.stack)}>
             {shared.map(t => (
@@ -196,7 +196,7 @@ function Parcours({ s, p, back, review }) {
                   <div style={{ ...TY.caption, color: T.muted }}>Envoyée le {dateFr(t.sharedAt)} · {Math.round(t.duration)} s{t.report ? ` · rapport envoyé le ${dateFr(t.report.sentAt)}` : ""}</div>
                 </div>
                 <Tag tone={t.report ? "success" : "warning"}>{t.report ? "Rapport envoyé" : "À relire"}</Tag>
-                <Btn kind={t.report ? "secondary" : "objective"} size="sm" onClick={() => review(t.id)}>{t.report ? "Revoir" : "Relire et annoter"}</Btn>
+                <Btn kind={t.report ? "secondary" : "objective"} size="sm" onClick={() => review(t.id)}>{t.report ? "Modifier le rapport" : "Relire et annoter"}</Btn>
               </Card>
             ))}
           </div>
@@ -237,7 +237,7 @@ function Review({ s, p, take, back }) {
 
   if (sent) return (
     <Confirm as="h2" title={`Rapport envoyé à ${p.prenom}`} actions={<Btn kind="primary" onClick={back}>Retour au parcours</Btn>}>
-      {p.prenom} le retrouve dans son espace, avec son code. Vos remarques apparaissent à côté de chaque observation.
+      {p.prenom} le retrouve dans son espace, avec son code. Vos remarques apparaissent à côté de chaque repère.
     </Confirm>
   );
 
@@ -251,7 +251,7 @@ function Review({ s, p, take, back }) {
         <div style={stack(GAP.stack)}>
           <Player take={virtualTake} url={url} markers={markersOf(virtualTake)} active={active} onActive={setActive} playerRef={playerRef} />
           <Card style={stack(8)}>
-            <label htmlFor="review-note" style={{ ...TY.h4, color: T.navy }}>Ajouter une note au moment en cours de lecture</label>
+            <label htmlFor="review-note" style={{ ...TY.h4, color: T.navy }}>Ajouter une remarque à ce moment de la vidéo</label>
             <div style={{ display: "flex", gap: 8 }}>
               <Input id="review-note" value={noteText} onChange={e => setNoteText(e.target.value)} onKeyDown={e => e.key === "Enter" && addNote()} placeholder="Mettez la vidéo en pause au bon moment, puis écrivez votre remarque" style={{ flex: 1, minWidth: 0 }} />
               <Btn kind="primary" onClick={addNote} disabled={!noteText.trim()}>Ajouter</Btn>
@@ -262,7 +262,7 @@ function Review({ s, p, take, back }) {
                   <div key={n.id} style={{ display: "flex", gap: 8, alignItems: "center", borderTop: `1px solid ${T.lineLt}` }}>
                     <TimeChip t={n.t} tone="primary" onClick={() => seek(n.t, n.id)} label={`Aller à ${fmt(n.t)}`} />
                     <span style={{ flex: 1, ...TY.small, color: T.navy }}>{n.text}</span>
-                    <IconBtn icon={I.trash} label="Supprimer la note" tone="muted" size={16} onClick={() => { const next = notes.filter(x => x.id !== n.id); setNotes(next); saveDraft({ notes: next }); }} />
+                    <IconBtn icon={I.trash} label="Supprimer la remarque" tone="muted" size={16} onClick={() => { const next = notes.filter(x => x.id !== n.id); setNotes(next); saveDraft({ notes: next }); }} />
                   </div>
                 ))}
               </div>
@@ -270,13 +270,13 @@ function Review({ s, p, take, back }) {
           </Card>
           {take.note && (
             <Card style={stack(8)}>
-              <div style={{ ...TY.label, color: T.body }}>Le mot de {p.prenom} à l'envoi</div>
+              <div style={{ ...TY.label, color: T.body }}>Le message de {p.prenom}</div>
               <p style={{ ...TY.body, color: T.navy, margin: 0, fontStyle: "italic" }}>« {take.note} »</p>
             </Card>
           )}
           {take.transcript && (
             <details>
-              <summary style={{ ...TY.label, color: T.primary, cursor: "pointer", minHeight: 44, display: "flex", alignItems: "center" }}>Afficher la transcription</summary>
+              <summary style={{ ...TY.label, color: T.primary, cursor: "pointer", minHeight: 44, display: "flex", alignItems: "center" }}>Afficher le texte de la réponse</summary>
               <Card style={{ marginTop: 8 }}>
                 {take.segments.map((sg, i) => (
                   <Bare key={i} onClick={() => seek(sg.start)} style={{ display: "flex", gap: 12, padding: "4px 0", width: "100%", textAlign: "left" }}>
@@ -293,17 +293,17 @@ function Review({ s, p, take, back }) {
           <Card style={stack(8)}>
             <label htmlFor="review-intro" style={{ ...TY.h3, color: T.navy }}>Votre mot d'introduction</label>
             <Txt v="caption" color={T.muted} id="review-intro-h">La première chose que {p.prenom} lira. Adressez-vous directement à la personne.</Txt>
-            <Textarea id="review-intro" aria-describedby="review-intro-h" value={intro} onChange={e => setIntro(e.target.value)} onBlur={() => saveDraft()} placeholder={`${p.prenom}, j'ai regardé ta prise…`} />
+            <Textarea id="review-intro" aria-describedby="review-intro-h" value={intro} onChange={e => setIntro(e.target.value)} onBlur={() => saveDraft()} placeholder={`${p.prenom}, j'ai regardé votre réponse…`} />
           </Card>
           <div style={{ ...stack(4), marginTop: 8 }}>
-            <h3 style={{ ...TY.h4, color: T.navy, margin: 0 }}>Observations de l'assistant</h3>
+            <h3 style={{ ...TY.h4, color: T.navy, margin: 0 }}>Repères de l'assistant</h3>
             <Txt v="caption" color={T.muted}>Nuancez, contextualisez ou contredisez : votre lecture prime sur celle de l'assistant.</Txt>
           </div>
-          {A.dimensions.length === 0 && <Card><Txt v="small" color={T.body}>{A.synthese || "Pas d'observation automatique pour cette prise."}</Txt></Card>}
+          {A.dimensions.length === 0 && <Card><Txt v="small" color={T.body}>{A.synthese || "L'assistant n'a pas de repère pour cette réponse."}</Txt></Card>}
           {A.dimensions.map(d => (
             <div key={d.id} style={stack(8)}>
               <DimCard d={d} active={active === d.id} onClick={() => seek(d.t, d.id)} />
-              <Input value={comments[d.id] || ""} onChange={e => setComments(c => ({ ...c, [d.id]: e.target.value }))} onBlur={() => saveDraft()} placeholder="Votre remarque sur cette observation (facultatif)" aria-label={`Votre remarque sur l'observation : ${d.titre}`} />
+              <Input value={comments[d.id] || ""} onChange={e => setComments(c => ({ ...c, [d.id]: e.target.value }))} onBlur={() => saveDraft()} placeholder="Votre remarque sur ce repère (facultatif)" aria-label={`Votre remarque sur le repère : ${d.titre}`} />
             </div>
           ))}
           <Btn kind="objective" full onClick={send} icon={I.send}>{take.report ? "Renvoyer le rapport" : "Envoyer le rapport"}</Btn>

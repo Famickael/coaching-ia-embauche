@@ -41,6 +41,14 @@ async function run(b, vw, vh, opts = {}) {
     await p.unroute(/\/assets\/index-.*\.js$/);
   }
 
+  // Code d'essai ouvert par lien sur un navigateur neuf (localStorage vide) : écran d'accord de Camille
+  await p.goto(BASE + "#/"); await p.evaluate(() => { localStorage.clear(); });
+  await p.goto(BASE + "?neuf=1#/s/REPETE"); await p.waitForTimeout(600); // nouveau chargement de page, stockage vide
+  check(await p.getByRole("heading", { name: "Avant de commencer" }).count() === 1 && await p.getByText("Bonjour Camille").count() > 0, `[${tag}] #/s/REPETE sur un navigateur neuf : écran d'accord de Camille absent`);
+  check(await p.getByText(/Ce code ne fonctionne pas|n'existe pas/).count() === 0, `[${tag}] #/s/REPETE sur un navigateur neuf : message d'erreur de code affiché`);
+  await shot("00b-repete-accord", false);
+  await p.evaluate(() => { localStorage.clear(); });
+
   // Accueil
   await visit("#/", "accueil");
   check(await p.locator("#rp-loader").count() === 0, `[${tag}] écran de chargement encore présent`);
@@ -75,7 +83,7 @@ async function run(b, vw, vh, opts = {}) {
       seen.push(await p.locator(".rs-vis.on").count());
       const label = mobile ? await p.locator(".rs-tabs-m span").filter({ hasText: /^Étape/ }).first().textContent()
         : await p.locator(".rs-step.on").textContent();
-      check(label.includes(["S'entraîner", "Recevoir un retour", "Partager", "Débriefer"][i - 1]), `[${tag}] strate : étape ${i} attendue, lu « ${label.slice(0, 40)} »`);
+      check(label.includes(["S'entraîner", "Recevoir un retour", "Envoyer", "En parler"][i - 1]), `[${tag}] strate : étape ${i} attendue, lu « ${label.slice(0, 40)} »`);
       await shot(`03-strate-etape${i}`, false);
     }
     // Cartes animées (défilement horizontal sur mobile, sans débordement de page)
@@ -106,7 +114,7 @@ async function run(b, vw, vh, opts = {}) {
     await visit("#/", "nav");
     await p.getByRole("navigation", { name: "Navigation principale" }).getByRole("link", { name: "Ressources" }).click(); await p.waitForTimeout(300);
     check(p.url().endsWith("#/ressources"), `[${tag}] lien Ressources de l'en-tête`);
-    check(await p.getByRole("button", { name: "Demander une démo" }).first().isVisible(), `[${tag}] bouton Demander une démo absent`);
+    check(await p.getByRole("button", { name: "Demander une prise en main" }).first().isVisible(), `[${tag}] bouton « Demander une prise en main » absent`);
   }
 
   // Redirection de l'ancienne adresse
@@ -135,9 +143,22 @@ async function run(b, vw, vh, opts = {}) {
 
   // Ressources : hub, recherche, filtre, catégorie, articles
   await visit("#/ressources"); await shot("09-ressources");
-  await p.getByRole("searchbox", { name: "Rechercher une ressource" }).fill("visio"); await p.waitForTimeout(200);
+  check(await p.getByText("Les mots de La Répét'").count() === 0, `[${tag}] ressources : le glossaire doit être retiré`);
+  check(await p.getByRole("heading", { name: "Par thème" }).count() === 0, `[${tag}] ressources : le titre « Par thème » doit être retiré`);
+  const sb = p.getByRole("combobox", { name: "Rechercher une ressource" });
+  await sb.fill("visio"); await p.waitForTimeout(200);
   check(await p.getByRole("link", { name: /Réussir un entretien en visio/ }).count() > 0, `[${tag}] recherche « visio » sans résultat`);
-  await p.getByRole("searchbox", { name: "Rechercher une ressource" }).fill("");
+  // Suggestions : sans accents, flèches, Échap, Entrée ouvre l'article
+  await sb.fill("presenter"); await p.waitForTimeout(200);
+  const opt = p.getByRole("listbox", { name: "Ressources suggérées" }).getByRole("option");
+  check(await opt.count() > 0, `[${tag}] recherche : aucune suggestion pour « presenter »`);
+  await shot("09b-suggestions", false);
+  await sb.press("Escape");
+  check(await p.getByRole("listbox", { name: "Ressources suggérées" }).count() === 0, `[${tag}] recherche : Échap ne ferme pas les suggestions`);
+  await sb.press("ArrowDown"); await sb.press("Enter"); await p.waitForTimeout(400);
+  check(/#\/ressources\/[a-z0-9-]+$/.test(p.url()) && !p.url().includes("/c/"), `[${tag}] recherche : Entrée sur une suggestion n'ouvre pas l'article (${p.url()})`);
+  await visit("#/ressources");
+  await sb.fill("");
   await p.getByRole("group", { name: "Filtrer par thème" }).getByRole("button", { name: "Pour les coachs" }).click();
   check((await p.locator("#toutes a.rs-card-btn").count()) >= 1, `[${tag}] filtre par thème sans résultat`);
   await p.goto(BASE + "#/ressources/c/coachs"); await p.waitForTimeout(400);
@@ -154,18 +175,18 @@ async function run(b, vw, vh, opts = {}) {
   await visit("#/ressources/inexistant");
   check(await p.getByRole("heading", { name: "Cette ressource est introuvable" }).count() === 1, `[${tag}] article inconnu : message absent`);
 
-  // Demander une démo
+  // Demander une prise en main (formulaire destiné aux personnes accompagnées)
   await visit("#/demo"); await shot("13-demo");
-  await p.getByRole("button", { name: "Préparer ma demande" }).click();
-  check(await p.locator("[role=alert]").count() > 3, `[${tag}] formulaire : erreurs non signalées`);
-  await shot("13b-demo-erreurs", false);
-  await p.getByLabel("Prénom").fill("Alex"); await p.getByLabel("Nom", { exact: true }).fill("Martin");
-  await p.getByLabel("Organisme").fill("Organisme test");
-  await p.getByLabel("Fonction (facultatif)").selectOption({ index: 1 });
-  await p.getByLabel("Adresse électronique professionnelle").fill("alex.martin@exemple.fr");
   check(await p.getByRole("checkbox").count() === 0, `[${tag}] formulaire : aucune case de recontact ne doit être obligatoire`);
-  await p.getByRole("button", { name: "Préparer ma demande" }).click(); await p.waitForTimeout(300);
-  check(await p.getByRole("heading", { name: /votre demande est prête/ }).count() === 1, `[${tag}] formulaire : écran de confirmation absent`);
+  check(await p.getByLabel(/Fonction/).count() === 0, `[${tag}] formulaire : le champ « Fonction » (organismes) doit être retiré`);
+  await p.getByRole("button", { name: "Envoyer ma demande" }).click();
+  check(await p.locator("[role=alert]").count() >= 3, `[${tag}] formulaire : erreurs non signalées`);
+  await shot("13b-demo-erreurs", false);
+  await p.getByLabel("Prénom").fill("Alex");
+  await p.getByLabel("Votre numéro de téléphone").fill("06 12 34 56 78");
+  await p.getByLabel("Vos disponibilités").selectOption({ index: 1 });
+  await p.getByRole("button", { name: "Envoyer ma demande" }).click(); await p.waitForTimeout(300);
+  check(await p.getByRole("heading", { name: /votre demande est enregistrée/ }).count() === 1, `[${tag}] formulaire : écran de confirmation absent`);
   await shot("14-demo-confirmation");
 
   // Pied de page : liens vers les questions fréquentes et les pages « Vos données »
@@ -186,13 +207,44 @@ async function run(b, vw, vh, opts = {}) {
     check(h1.trim() === t, `[${tag}] ${h} : titre « ${t} » attendu, lu « ${h1.trim()} »`);
     check((await p.title()).startsWith(t), `[${tag}] ${h} : titre du document non mis à jour (${await p.title()})`);
     await overflow(h);
+    const body = await p.locator("main").innerText();
+    check(!/prototype|à compléter|version d'essai/i.test(body), `[${tag}] ${h} : mention de prototype ou de champ à compléter visible`);
   }
   await visit("#/vos-donnees"); await shot("15-vos-donnees");
   await visit("#/vos-donnees/notice"); await shot("16-notice");
-  check(await p.getByText("À compléter par l'organisme").count() > 0, `[${tag}] notice : emplacements « À compléter par l'organisme » absents`);
+  check(await p.getByText("À compléter").count() === 0, `[${tag}] notice : « À compléter » ne doit jamais s'afficher`);
   await visit("#/accessibilite");
   check(await p.getByText(/non conforme/).count() > 0, `[${tag}] déclaration d'accessibilité : mention « non conforme » absente`);
   await shot("17-accessibilite");
+
+  // Options d'accessibilité : thème sombre et grande taille de texte, sans débordement, mémorisées sans flash
+  if (!opts.reduced) {
+    await visit("#/");
+    await p.getByRole("button", { name: "Options d'accessibilité" }).first().click();
+    const dlg = p.getByRole("dialog", { name: "Options d'accessibilité" });
+    await dlg.waitFor();
+    await dlg.getByRole("radio", { name: "Sombre" }).click();
+    await dlg.getByRole("radio", { name: mobile ? "Très grande" : "Maximale" }).click();
+    await shot("18-options-accessibilite", false);
+    await p.keyboard.press("Escape");
+    check(await p.evaluate(() => document.documentElement.dataset.theme) === "dark", `[${tag}] accessibilité : thème sombre non appliqué`);
+    const bg = await p.evaluate(() => getComputedStyle(document.body).backgroundColor);
+    check(bg === "rgb(14, 20, 30)", `[${tag}] accessibilité : fond sombre attendu, lu ${bg}`);
+    for (const h of ["#/", "#/a-propos", "#/solutions", "#/ressources", "#/vos-donnees", "#/demo", "#/espace", "#/accessibilite"]) {
+      await visit(h); await overflow(`sombre et grand texte ${h}`);
+    }
+    await visit("#/"); await shot("19-accueil-sombre");
+    await visit("#/espace"); await shot("20-mon-espace-sombre");
+    await visit("#/vos-donnees"); await shot("21-vos-donnees-sombre");
+    await p.goto(BASE + "?sombre=1#/a-propos", { waitUntil: "commit" });
+    await p.waitForFunction(() => document.documentElement.dataset.theme !== undefined);
+    check(await p.evaluate(() => document.documentElement.dataset.theme === "dark" && document.documentElement.classList.contains("rp-boot-dark")), `[${tag}] accessibilité : thème non appliqué avant l'affichage au rechargement`);
+    await p.waitForTimeout(500);
+    await p.getByRole("button", { name: "Options d'accessibilité" }).first().click();
+    await p.getByRole("button", { name: "Réinitialiser" }).click();
+    check(await p.evaluate(() => document.documentElement.dataset.theme) === "auto", `[${tag}] accessibilité : « Réinitialiser » ne remet pas le thème automatique`);
+    await p.keyboard.press("Escape");
+  }
 
   errors.forEach(e => problems.push(`[${tag}] ${e}`));
   await ctx.close();

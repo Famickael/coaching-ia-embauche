@@ -392,6 +392,10 @@ Le commentaire du coach est un cas nommé (`Quote`) : fond `primaryBg`, filet ga
 
 `Card pad="lg"`, contenu centré : pastille d'icône 48 (`primaryBg`, icône 24 `primary`), titre `TY.h3`, une phrase `TY.body` (ce qui apparaîtra ici et comment), une action au plus. Même gabarit pour « Aucun parcours », « Aucune prise partagée », « Pas encore de prise ».
 
+### 5.9 bis Assistant de préparation d'entretien (`AssistantDock`, `src/Assistant.jsx`)
+
+Panneau latéral non modal (`role="dialog"`, `aria-modal="false"`), ouvert depuis le bouton flottant `Fab` (56 × 56, `GRAD_AI`, en bas à droite) ou par `openAssistant(contexte)` depuis un écran. Ordinateur : à droite, sous l'en-tête, largeur 400 au plus. Mobile (≤ 760) : feuille en bas de 62 % de la hauteur, la page reçoit un espace équivalent en bas pour que rien ne reste caché dessous. Bordure de 2 px en dégradé `GRAD_AI_BORDER` (bleu vers violet), animée une fois à l'apparition (neutralisée par « réduire les animations »). En-tête sans icône : titre « Assistant de préparation d'entretien », mention « Assistant automatique · ce n'est pas une personne ». Focus envoyé dans le champ à l'ouverture, rendu au bouton flottant à la fermeture, Échap ferme, réponses dans un `role="log"` `aria-live="polite"`. Bouton flottant et bulle masqués tant que la caméra ou le micro de l'enregistreur est ouvert. Bulle d'invitation (« Une question pour préparer votre entretien ? ») : à l'ouverture de la page, à la fin d'un enregistrement ou d'un entraînement, une fois par raison et par session ; « Fermer la bulle » la coupe pour la session.
+
 ### 5.10 Autres éléments normalisés
 
 | Élément | Règle |
@@ -437,15 +441,15 @@ Remplace 1000, 920, 820, 720, 680, 640, 580, 560, 460.
 | `MO.slow` (v3.1) | 900 ms | Fin d'accroche qui change, étapes et visuels de la strate épinglée |
 | `MO.fade` (v3.1) | 1,1 s | Fondu entre deux scènes du héros |
 | `MO.soft` (v3.1) | `cubic-bezier(.45,0,.55,1)` | Courbe douce (ease-in-out) des transitions lentes ci-dessus |
-| `PACE.scene` (v3.1) | 7 000 ms | Durée d'une scène du héros |
-| `PACE.accroche` (v3.1) | 3 600 ms | Durée de chaque fin d'accroche |
+| `PACE.scene` (v3.2) | 11 500 ms | Durée d'une scène du héros (laisse le temps de lire la scène à côté du titre). Pause au survol, au focus et par le bouton pause |
+| `PACE.accroche` (v3.2) | 5 000 ms | Durée de chaque fin d'accroche |
 | Écran de chargement (v3.1) | 1,9 s minimum, fondu de sortie 0,6 s | Durée comptée depuis le début de la navigation, pour jouer une fois l'animation complète (bulles qui se rejoignent, puis trois points). « Réduire les animations » : écran statique, 0,6 s. Navigateur piloté : retrait immédiat. Retrait de secours en CSS à 10 s (`index.html`, `src/Loader.jsx`) |
 
 Les pages publiques (accueil, à propos, solutions, ressources) utilisent les durées lentes ; l'application (espaces bénéficiaire et coach) garde `MO.fast`, `MO.base` et `MO.enter` pour rester réactive.
 
 - `transition: all` est interdit : on nomme les propriétés (`background-color`, `border-color`, `box-shadow`, `transform`, `opacity`).
 - Amplitudes : bouton 1 px vers le haut, carte cliquable 2 px, apparition 12 px. On n'anime que `transform` et `opacity`.
-- Animations en boucle limitées à deux : point d'enregistrement (`blink`) et indicateur de chargement (`spin`).
+- Animations en boucle limitées à trois : point d'enregistrement (`blink`), indicateur de chargement (`spin`) et indicateur du recruteur oral pendant la lecture (`rpVoice`, barres qui pulsent, immobiles dès que la voix se tait).
 - `prefers-reduced-motion: reduce` neutralise toutes les animations et transitions (règle globale de `GStyle`, à conserver). Le contenu doit rester complet sans animation : rien n'est révélé uniquement par le mouvement.
 - Aucune animation pendant l'enregistrement autre que le point rouge.
 
@@ -466,6 +470,32 @@ Les pages publiques (accueil, à propos, solutions, ressources) utilisent les du
 | Messages d'état | `role="status"` pour une confirmation, `role="alert"` pour une erreur |
 | Zoom | La page reste utilisable à 200 % ; tailles en px mais aucun conteneur à hauteur fixe pour du texte |
 | Langue et ton | Français, vouvoiement, écriture inclusive au point médian déjà en place, pas de tiret cadratin, pas d'emoji en guise d'icône |
+
+### 8 bis. Options d'accessibilité et thèmes
+
+**Où.** Bouton icône « Options d'accessibilité » (`I.a11y`, `IconBtn`) dans l'en-tête, à côté de « Mon espace » ou de « Mes paramètres » ; entrée « Options d'accessibilité » dans le menu mobile et dans « Mes paramètres ». Il ouvre une `Modal` (`src/A11y.jsx`).
+
+**Réglages** (mémorisés dans `localStorage`, clé `larepet.a11y`, lecture et écriture sous `try/catch` ; `src/lib/a11y.js`) :
+
+| Réglage | Effet | Mise en œuvre |
+|---|---|---|
+| Taille du texte | 4 niveaux : 100, 112,5, 125, 150 % | variable `--fs` : chaque taille de `TY` vaut `calc(Npx * var(--fs, 1))` |
+| Thème | Automatique (suit le système), clair, sombre | `html[data-theme]` ; variables `--c-*` |
+| Contraste renforcé | Textes secondaires et bordures plus marqués | `html[data-contrast=more]` ; palettes `HC_LIGHT`, `HC_DARK` |
+| Police lisible | Atkinson Hyperlegible (auto-hébergée) pour titres et texte | `html[data-font=lisible]` change `--ff-d` et `--ff-b` |
+| Texte espacé | Lettres 0,12 em, mots 0,16 em, lignes 1,8, texte aligné à gauche (WCAG 1.4.12) | `html[data-spacing=on]` |
+| Réduire les animations | Mêmes règles que `prefers-reduced-motion` | `html[data-motion=reduce]`, `useReducedMotion()` |
+| Mode concentration | Masque halos (`.rp-deco`), cartes animées (`.rs-fvis`), arrête les défilements automatiques | `html[data-focusmode=on]` |
+| Règle de lecture | Bande de 48 px qui suit le pointeur, le doigt ou le focus ; le reste est voilé (`T.overlay`) | `.rp-ruler` |
+| Liens toujours soulignés | Tous les liens et la navigation | `html[data-links=on]` |
+| Focus renforcé | Contour 3 px `navy`, décalage 3 px, halo `SH.ring` | `html[data-focusring=on]` |
+| Réinitialiser | Revient aux réglages par défaut et aux préférences du système | `resetA11y()` |
+
+**Sans flash.** Un script en ligne d'`index.html` pose `data-theme` (et la classe `rp-boot-dark` pour l'écran de chargement) avant tout affichage ; `src/main.jsx` injecte la feuille des variables (`themeCSS()`) et applique tous les réglages avant le premier rendu React. Au premier passage : thème automatique, contraste renforcé si `prefers-contrast: more`, animations selon `prefers-reduced-motion`.
+
+**Couleurs en variables.** Les valeurs ne sont définies qu'une fois dans `src/tokens.js` : `LIGHT` (référence de la section 1), `DARK`, `HC_LIGHT`, `HC_DARK`. `T.x` vaut `var(--c-x)` ; les écrans n'utilisent que `T`. `FIX` (valeurs claires, fixes) sert seulement aux éléments posés sur une vidéo ou sur un dégradé de marque sombre (`GRAD`, `GRAD_AI`, `GRAD_NIGHT`, pastilles sur la vidéo), dont le texte reste blanc dans les deux thèmes. La règle A1 de `test:design` vérifie chaque paire de `PAIRS` dans les quatre thèmes (clair, sombre, et leurs versions à contraste renforcé). Seule exception déclarée : `accentLt` sur `navy`, vérifiée en thème clair uniquement (`navy` y est un fond sombre, il devient une couleur de texte en thème sombre).
+
+Palette sombre (rôles identiques à la section 1.1) : `bg` `#0E141E`, `surface` `#161F2E`, `navy` (titres) `#E8EEF8`, `body` `#C5CEDC`, `muted` `#9DA9BB`, `primary` `#8DB4EA`, `accent` `#4ECBC1`, `violet` `#B4A9F5`, `successDk` `#6FD69B`, `warningDk` `#F3C46C`, `errorDk` `#FF8D9E`, fonds teintés de `#1D2A3F` à `#3A1B23`. Sur un fond plein coloré, le texte reste `T.surface` : il devient foncé en thème sombre, avec un contraste vérifié.
 
 ---
 
@@ -505,7 +535,7 @@ Décrire, ne jamais noter. Formulation positive, appui avant exploration. Un bou
 | C3 | une opacité est concaténée à un jeton | `\$\{[^}]+\}[0-9a-fA-F]{2}(?![0-9a-zA-Z])` | aucune |
 | C4 | un nom de couleur CSS est utilisé | `:\s*"(white\|black\|red\|green\|blue\|gray\|grey)"` | `"transparent"`, `"currentColor"`, `"inherit"`, `"none"` |
 | T1 | une propriété typographique est écrite | `\b(font\|fontSize\|fontWeight\|fontFamily\|lineHeight\|letterSpacing)\s*:` dans un objet de style | `fontStyle`, `font: "inherit"` |
-| T2 | une famille est nommée | `Manrope\|Inter\|JetBrains\|Segoe\|sans-serif\|monospace` | aucune |
+| T2 | une famille est nommée | `Manrope\|Inter\|JetBrains\|Segoe\|sans-serif\|monospace` | textes de contenu de `src/content/` (mentions légales qui citent les polices) |
 | S1 | `padding*`, `margin*`, `gap`, `rowGap`, `columnGap` contient un nombre de px hors de l'échelle `SPACE` | tout nombre, isolé ou dans une chaîne `"12px 16px"` ; signe négatif admis | `auto`, `%`, `vh`, `svh`, `em`, `calc()` ; les valeurs `PAD.*`, `GAP.*`, `sp(n)` |
 | S2 | `sp(n)` est appelé avec un `n` tel que `4n` est hors échelle | `sp\(([\d.]+)\)` | aucune |
 | S3 | `<Card pad=` reçoit autre chose que `"none"`, `"sm"`, `"md"`, `"lg"` | `<Card[^>]*\bpad=\{` | aucune |
@@ -644,5 +674,18 @@ Dégradés : `GRAD` et `GRAD_AI` recomposés selon 1.3, `GRAD_NIGHT` ajouté, `G
 | 2026-11-20 | « Se connecter » (coach) et « Générer le code » en `objective` ; « Échauffement · ni enregistré, ni analysé » et « Partage · vous décidez » en étiquette `primary` (contexte), « Rapport reçu » en `success` | Rôles des couleurs (1.1, 5.4) |
 | 2026-11-20 | Page « Mon espace » ramenée à `W.read` ; liste déroulante des métiers : seule dérogation (K4, option de combobox ARIA) | Largeurs et sémantique |
 | 2026-11-20 | Écran de chargement : 1,9 s minimum, fondu 0,6 s ; 0,6 s si « réduire les animations » | Demande du propriétaire : laisser voir l'animation |
+
+| 2026-11-20 | Polices auto-hébergées (`public/fonts/`, `@font-face` générés dans `GStyle`), plus aucun appel à Google Fonts ; Atkinson Hyperlegible ajoutée pour l'option « police lisible » | Conformité (docs/conformite.md, T1) |
+| 2026-11-20 | Règle T2 : exception pour `src/content/` (textes qui citent une police) | Mentions légales |
+| 2026-11-20 | `PACE.scene` 11 500 ms, `PACE.accroche` 5 000 ms | Demande du propriétaire : laisser le temps de lire les scènes |
+| 2026-11-20 | En-tête des espaces : lien « Vos données » et menu « Mes paramètres » (bouton `aria-expanded`, `role="menu"`, flèches, Début, Fin, Échap) à la place de la pastille d'espace | Conformité et demande du propriétaire |
+| 2026-11-20 | Pied de page en trois groupes de liens (Vos données, Le site, Informations légales) ; engagements cliquables | docs/conformite.md, 4.3 |
+
+| 2026-11-20 | Assistant en panneau latéral (5.9 bis), composant `Fab`, jeton `GRAD_AI_BORDER` ; plus d'encart d'assistant dans les écrans | Demande du propriétaire |
+| 2026-11-20 | Astuces de l'échauffement dans une fenêtre `Modal`, ouverte par un lien au-dessus de la phrase | Demande du propriétaire |
+
+| 2026-11-20 | Entraînement complet (7 questions dans l'ordre réel, mise en situation selon le métier) et écran récapitulatif sans score ; recruteur oral sans visage (`RecruiterVoice` : synthèse vocale de l'appareil, sous-titre mot à mot, « Réécouter », « Couper le son », enregistrement possible seulement quand la voix a fini) | Demandes du propriétaire |
+
+| 2026-11-20 | Couleurs en variables CSS (`T` → `var(--c-*)`), palettes `LIGHT`, `DARK`, `HC_LIGHT`, `HC_DARK`, `FIX` ; tailles de texte multipliées par `--fs` ; familles en variables (`--ff-d`, `--ff-b`) ; règle A1 étendue aux quatre thèmes ; options d'accessibilité (8 bis) | Demande du propriétaire : thème sombre, contraste, police lisible, taille du texte |
 
 Ajouter une ligne à chaque évolution d'une règle ou d'une échelle.

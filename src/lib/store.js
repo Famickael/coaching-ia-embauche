@@ -50,6 +50,7 @@ export function useStore() {
   const [s, setS] = useState(state);
   useEffect(() => {
     listeners.add(setS);
+    setS(state); // rattrape une écriture faite avant l'abonnement (parcours d'essai créé pendant le premier rendu)
     const onStorage = e => { if (e.key === KEY) { state = read(); listeners.forEach(fn => fn(state)); } };
     window.addEventListener("storage", onStorage); // synchronise deux onglets (bénéficiaire / coach)
     return () => { listeners.delete(setS); window.removeEventListener("storage", onStorage); };

@@ -198,18 +198,25 @@ docFiles.forEach(f => readFileSync(join(ROOT, f), "utf8").split("\n").forEach((l
   if (l.includes("\u2014")) violations.push(`${f}:${i + 1}  L1  ${excerpt(l)}  → remplacer le tiret cadratin`);
 }));
 
-/* A1 : contrastes déclarés dans PAIRS */
+/* A1 : contrastes déclarés dans PAIRS, recalculés dans chaque thème (clair, sombre, contraste renforcé) */
 const lum = hex => {
   const h = hex.replace("#", "");
   const [r, g, b] = [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16) / 255).map(v => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4));
   return 0.2126 * r + 0.7152 * g + 0.0722 * b;
 };
-for (const [fg, bg, min] of PAIRS) {
-  const [a, b] = [lum(fg), lum(bg)].sort((x, y) => y - x);
-  const ratio = (a + 0.05) / (b + 0.05);
-  if (ratio < min) violations.push(`src/tokens.js  A1  ${fg} sur ${bg} : ${ratio.toFixed(2)}:1  → au moins ${min}:1`);
+const THEMES = tokens.THEMES || { clair: tokens.T };
+let pairChecks = 0;
+for (const [name, pal] of Object.entries(THEMES)) {
+  for (const [fgK, bgK, min, only] of PAIRS) {
+    if (only && !name.startsWith(only)) continue;
+    const fg = pal[fgK] ?? fgK, bg = pal[bgK] ?? bgK;
+    if (!/^#[0-9a-f]{6}$/i.test(fg) || !/^#[0-9a-f]{6}$/i.test(bg)) { violations.push(`src/tokens.js  A1  paire ${fgK} / ${bgK} : couleur inconnue dans le thème ${name}`); continue; }
+    const [a, b] = [lum(fg), lum(bg)].sort((x, y) => y - x);
+    const ratio = (a + 0.05) / (b + 0.05);
+    pairChecks++;
+    if (ratio < min) violations.push(`src/tokens.js  A1  thème ${name} : ${fgK} (${fg}) sur ${bgK} (${bg}) : ${ratio.toFixed(2)}:1  → au moins ${min}:1`);
+  }
 }
-
 if (waiverCount > MAX_WAIVERS) violations.push(`(global)  W2  ${waiverCount} dérogations  → ${MAX_WAIVERS} au plus`);
 violations.forEach(v => console.log(v));
 const files = srcFiles.length + docFiles.length;
@@ -217,4 +224,4 @@ if (violations.length) {
   console.log(`\ndesign-lint : ${violations.length} violation(s), ${files} fichiers, ${waiverCount} dérogation(s)`);
   process.exit(1);
 }
-console.log(`design-lint : 0 violation, ${files} fichiers, ${waiverCount} dérogation(s)`);
+console.log(`design-lint : 0 violation, ${files} fichiers, ${waiverCount} dérogation(s), ${pairChecks} contrastes vérifiés dans ${Object.keys(THEMES).length} thèmes`);

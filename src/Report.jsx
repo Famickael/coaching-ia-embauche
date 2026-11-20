@@ -5,7 +5,7 @@ import { fmt } from "./lib/analysis.js";
 
 export const toneOf = d => (d.type === "appui" ? T.accent : T.violet);
 
-/* Charge l'URL locale de la vidéo d'une prise. */
+/* Charge l'URL locale de la vidéo d'une réponse. */
 export function useVideoUrl(take) {
   const [url, setUrl] = useState(null);
   useEffect(() => {
@@ -16,7 +16,7 @@ export function useVideoUrl(take) {
   return url;
 }
 
-/* Marqueurs : observations de l'assistant + notes horodatées du coach. */
+/* Marqueurs : repères de l'assistant + remarques du coach. */
 export function markersOf(take) {
   const dims = (take.analysis?.dimensions || []).map(d => ({ id: d.id, t: d.t, kind: "ia", type: d.type, color: toneOf(d), label: d.titre }));
   const notes = (take.report?.notes || []).map(n => ({ id: n.id, t: n.t, kind: "note", color: T.primary, label: n.text }));
@@ -89,7 +89,7 @@ export function Player({ take, url, markers, active, onActive, playerRef }) {
         </div>
         <div style={{ display: "flex", justifyContent: "space-between", ...TY.time, color: T.muted }}><span>{fmt(cur)}</span><span>{fmt(dur)}</span></div>
         <div style={{ display: "flex", gap: 16, flexWrap: "wrap", ...TY.caption, color: T.body, marginTop: 4 }}>
-          <Legend kind="appui" t="Point d'appui" /><Legend kind="explore" t="À explorer" /><Legend kind="note" t="Note du coach" />
+          <Legend kind="appui" t="Point d'appui" /><Legend kind="explore" t="À explorer" /><Legend kind="note" t="Remarque du coach" />
         </div>
       </div>
     </Card>
@@ -97,7 +97,7 @@ export function Player({ take, url, markers, active, onActive, playerRef }) {
 }
 const Legend = ({ kind, t }) => <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}><Mark kind={kind} s={12} />{t}</span>;
 
-/* Carte d'une observation de l'assistant (avec le commentaire du coach s'il existe). Cliquable : rendue en bouton. */
+/* Carte d'un repère de l'assistant (avec le commentaire du coach s'il existe). Cliquable : rendue en bouton. */
 export function DimCard({ d, comment, active, onClick }) {
   const ap = d.type === "appui";
   const tone = ap ? TONE.appui : TONE.ai;
@@ -133,13 +133,13 @@ export function ReportBody({ take, mode, counselorName }) {
 
   const intro = rep && (
     <Card level={2} style={{ borderLeft: `3px solid ${T.primary}`, display: "grid", gap: 8 }}>
-      <div style={{ ...TY.label, color: T.primary }}>Le mot de {counselorName || "votre coach"}</div>
-      <div style={{ ...TY.bodyLg, color: T.navy, whiteSpace: "pre-wrap" }}>{rep.intro || "Votre coach a relu votre prise."}</div>
+      <div style={{ ...TY.label, color: T.primary }}>Le message de {counselorName || "votre coach"} · votre coach</div>
+      <div style={{ ...TY.bodyLg, color: T.navy, whiteSpace: "pre-wrap" }}>{rep.intro || "Votre coach a regardé votre réponse."}</div>
     </Card>
   );
   const notes = rep?.notes?.length > 0 && (
     <Card>
-      <h3 style={{ ...TY.h4, color: T.navy, margin: "0 0 8px" }}>Notes horodatées</h3>
+      <h3 style={{ ...TY.h4, color: T.navy, margin: "0 0 8px" }}>Remarques de votre coach</h3>
       {rep.notes.slice().sort((a, b) => a.t - b.t).map(n => {
         const row = <><TimeChip t={n.t} tone="primary" /><span style={{ ...TY.body, color: T.navy }}>{n.text}</span></>;
         const st = { display: "flex", gap: 12, alignItems: "flex-start", width: "100%", padding: "8px 0", borderTop: `1px solid ${T.lineLt}` };
@@ -149,7 +149,7 @@ export function ReportBody({ take, mode, counselorName }) {
       })}
     </Card>
   );
-  const synth = <Notice tone="info" icon={I.sparkle} style={{ ...TY.bodyLg }}><strong>En deux mots.</strong> {A.synthese}</Notice>;
+  const synth = <Notice tone="info" icon={I.sparkle} style={{ ...TY.bodyLg }}><strong>En résumé.</strong> {A.synthese}</Notice>;
 
   if (mode !== "video") {
     return (

@@ -17,6 +17,7 @@ for (const f of walk(OUT).filter(f => /\.(js|css|html)$/.test(f))) {
 }
 if (bad.length) { console.error("Conformité du site construit :\n" + bad.join("\n")); process.exit(1); }
 const srv = spawn("node", ["node_modules/vite/bin/vite.js", "preview", "--outDir", OUT, "--port", String(PORT), "--strictPort"], { stdio: "inherit" });
-await new Promise(r => setTimeout(r, 2500));
+/* Attend que le serveur réponde (au plus 30 s) plutôt qu'un délai fixe. */
+for (let t = 0; t < 60; t++) { try { const r = await fetch(`http://localhost:${PORT}/`); if (r.ok) break; } catch { /* pas encore prêt */ } await new Promise(r => setTimeout(r, 500)); }
 const t = spawn("node", ["tests/site.e2e.cjs", `http://localhost:${PORT}/`, "tests/screenshots/site"], { stdio: "inherit" });
 t.on("exit", code => { srv.kill(); process.exit(code); });
