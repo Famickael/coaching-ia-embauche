@@ -10,7 +10,7 @@ import { QUESTIONS, WARMUP_QUESTION, fill } from "./lib/questions.js";
 const wrap = w => ({ maxWidth: w, margin: "0 auto" });
 const dateFr = iso => new Date(iso).toLocaleString("fr-FR", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" });
 
-export default function Beneficiary({ initialCode, setModal }) {
+export default function Beneficiary({ initialCode, setModal, onCode }) {
   const s = useStore();
   const [code, setCode] = useState(() => (initialCode && findParcours(initialCode) ? initialCode.toUpperCase() : null));
   const [view, setView] = useState("home");
@@ -20,6 +20,7 @@ export default function Beneficiary({ initialCode, setModal }) {
 
   useEffect(() => { if (p && !p.openedAt) updateParcours(p.code, { openedAt: new Date().toISOString() }); }, [p?.code]);
   useEffect(() => { if (code && !p) setCode(null); }, [p, code]); // parcours supprimé par le coach
+  useEffect(() => { onCode && onCode(code); }, [code]); // mémorise l'espace ouvert (bouton « Mon espace »)
 
   if (!p) return <main className="rp-pad" style={{ padding: "36px 24px 64px" }}><CodeEntry initial={initialCode} onOk={c => { setCode(c); setView("home"); }} /></main>;
   if (!p.consent) return <main className="rp-pad" style={{ padding: "36px 24px 64px" }}><Consent p={p} setModal={setModal} onBack={() => setCode(null)} /></main>;
@@ -75,13 +76,12 @@ function CodeEntry({ initial, onOk }) {
         <form onSubmit={submit}>
           <label htmlFor="code" style={{ font: `600 13px ${FB}`, color: T.navy, display: "block", textAlign: "left", marginBottom: 8 }}>Votre code d'accès</label>
           <input id="code" value={code} autoComplete="off" maxLength={6} onChange={e => { setCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "")); setErr(""); }} placeholder="6 caractères"
-            style={{ width: "100%", height: 56, padding: "0 18px", borderRadius: RAD.md, border: `1.5px solid ${err ? T.error : T.line}`, font: `700 22px ${FM}`, letterSpacing: ".25em", textAlign: "center", color: T.navy, background: T.bg }} />
-          {err && <div role="alert" style={{ font: `500 13px ${FB}`, color: T.error, marginTop: 8, textAlign: "left" }}>{err}</div>}
+            style={{ width: "100%", height: 56, padding: "0 18px", borderRadius: RAD.md, border: `1.5px solid ${err ? T.errorDk : T.line}`, font: `700 22px ${FM}`, letterSpacing: ".25em", textAlign: "center", color: T.navy, background: T.bg }} />
+          {err && <div role="alert" style={{ font: `500 13px ${FB}`, color: T.errorDk, marginTop: 8, textAlign: "left" }}>{err}</div>}
           <div style={{ marginTop: 20 }}><Btn kind="objective" size="lg" full disabled={code.length < 6}>Accéder à mon espace&nbsp;<Icon d={I.arrow} s={18} c="#fff" /></Btn></div>
         </form>
       </Card>
       <p style={{ font: `400 12.5px ${FB}`, color: T.muted, marginTop: 20 }}>Aucun compte à créer. Ce code vous est personnel.</p>
-      <p style={{ font: `400 12.5px ${FB}`, color: T.muted, marginTop: 4 }}>Pour découvrir l'outil, utilisez le code d'essai <span style={{ font: `700 12.5px ${FM}`, color: T.primary, letterSpacing: ".1em" }}>{TRIAL_CODE}</span>, déjà saisi ci-dessus.</p>
     </div>
   );
 }
@@ -150,7 +150,7 @@ function Home({ p, takes, go, counselor, onQuit }) {
       </Card>
 
       {reports.length > 0 && (
-        <div style={{ background: `${T.orange}10`, border: `1px solid ${T.orange}33`, borderRadius: RAD.md, padding: "14px 18px", marginBottom: 18, font: `500 14px ${FB}`, color: T.navy }}>
+        <div style={{ background: `${T.accent}10`, border: `1px solid ${T.accent}33`, borderRadius: RAD.md, padding: "14px 18px", marginBottom: 18, font: `500 14px ${FB}`, color: T.navy }}>
           {counselor || "Votre coach"} vous a envoyé {reports.length > 1 ? `${reports.length} rapports` : "un rapport"}. Ouvrez la prise concernée pour le lire.
         </div>
       )}
@@ -158,7 +158,7 @@ function Home({ p, takes, go, counselor, onQuit }) {
       <h2 style={{ font: `800 20px ${FD}`, color: T.navy, margin: "8px 0 12px" }}>Mes prises</h2>
       {takes.length === 0 && <Card><div style={{ font: `400 14px ${FB}`, color: T.body }}>Vous n'avez pas encore de prise. Lancez un entraînement quand vous êtes prêt·e.</div></Card>}
       {takes.map(t => {
-        const st = t.report ? ["Rapport reçu", "orange"] : t.shared ? ["Envoyée, en attente de relecture", "primary"] : ["Sur cet appareil uniquement", "muted"];
+        const st = t.report ? ["Rapport reçu", "appui"] : t.shared ? ["Envoyée, en attente de relecture", "primary"] : ["Sur cet appareil uniquement", "muted"];
         return (
           <Card key={t.id} hover style={{ marginBottom: 10, display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
             <div style={{ width: 42, height: 42, borderRadius: RAD.sm, background: GRAD_AI, display: "grid", placeItems: "center", flexShrink: 0 }}><Icon d={t.hasVideo && !t.mime?.startsWith("audio") ? I.play : I.mic} s={17} c="#fff" /></div>
@@ -174,7 +174,7 @@ function Home({ p, takes, go, counselor, onQuit }) {
 
       <div style={{ marginTop: 28, paddingTop: 18, borderTop: `1px solid ${T.line}`, display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }} className="noprint">
         <button onClick={onQuit} style={{ font: `500 13px ${FB}`, color: T.muted, background: "none", border: "none", cursor: "pointer" }}>← Changer de code</button>
-        <button onClick={withdraw} style={{ font: `500 13px ${FB}`, color: T.error, background: "none", border: "none", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6 }}><Icon d={I.trash} s={14} c={T.error} /> Retirer mon consentement et supprimer mes données</button>
+        <button onClick={withdraw} style={{ font: `500 13px ${FB}`, color: T.errorDk, background: "none", border: "none", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6 }}><Icon d={I.trash} s={14} c={T.error} /> Retirer mon consentement et supprimer mes données</button>
       </div>
     </div>
   );

@@ -1,6 +1,6 @@
 import React, { useMemo, useRef, useState } from "react";
-import { T, GRAD_SOFT, FD, FB, FM, RAD, SH, Card, Tag, Btn, Back, Icon, I } from "./ui.jsx";
-import { useStore, TRIAL_COACH, setCounselor, createParcours, deleteParcours, takesOf, updateTake, parcoursStatus } from "./lib/store.js";
+import { T, GRAD_SOFT, FD, FB, FM, RAD, SH, Card, Tag, Btn, Back, Icon, I, ORG_NAME } from "./ui.jsx";
+import { useStore, TRIAL_LOGIN, setCounselor, logoutCounselor, createParcours, deleteParcours, takesOf, updateTake, parcoursStatus } from "./lib/store.js";
 import { Player, DimCard, markersOf, useVideoUrl } from "./Report.jsx";
 import { fmt } from "./lib/analysis.js";
 
@@ -8,10 +8,10 @@ const inp = { width: "100%", height: 48, padding: "0 16px", borderRadius: RAD.md
 const dateFr = iso => (iso ? new Date(iso).toLocaleString("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "");
 export const linkFor = code => `${location.origin}${location.pathname}#/s/${code}`;
 
-export default function Counselor({ setRole }) {
+export default function Counselor() {
   const s = useStore();
   const [view, setView] = useState({ name: "list" });
-  if (!s.counselor) return <main className="rp-pad" style={{ padding: "36px 24px 64px" }}><Identify /></main>;
+  if (!s.counselor) return <main className="rp-pad" style={{ padding: "48px 24px 64px" }}><Login /></main>;
 
   return (
     <main className="rp-pad" style={{ maxWidth: 1120, margin: "0 auto", padding: "36px 24px 64px" }}>
@@ -20,15 +20,16 @@ export default function Counselor({ setRole }) {
           <h1 style={{ font: `800 27px ${FD}`, margin: "0 0 3px", letterSpacing: "-.025em", color: T.navy }}>Espace coach · {s.counselor.name}</h1>
           <p style={{ font: `400 14px ${FB}`, color: T.body, margin: 0 }}>Les personnes que vous accompagnez dans le module entretien</p>
         </div>
-        <div style={{ display: "flex", gap: 8 }}>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <Btn kind={view.name === "list" ? "dark" : "secondary"} size="sm" onClick={() => setView({ name: "list" })}>Mes bénéficiaires</Btn>
           <Btn kind={view.name === "create" ? "dark" : "secondary"} size="sm" onClick={() => setView({ name: "create" })}><Icon d={I.plus} s={15} c={view.name === "create" ? "#fff" : T.primary} /> Nouveau parcours</Btn>
+          <Btn kind="ghost" size="sm" onClick={logoutCounselor}>Se déconnecter</Btn>
         </div>
       </div>
       <div key={view.name + (view.code || "") + (view.takeId || "")} className="up">
         {view.name === "list" && <List s={s} open={code => setView({ name: "parcours", code })} create={() => setView({ name: "create" })} />}
         {view.name === "create" && <Create done={code => setView({ name: "created", code })} cancel={() => setView({ name: "list" })} />}
-        {view.name === "created" && <Created p={s.parcours[view.code]} back={() => setView({ name: "list" })} openAsBenef={() => { location.hash = `#/s/${view.code}`; setRole("benef"); }} />}
+        {view.name === "created" && <Created p={s.parcours[view.code]} back={() => setView({ name: "list" })} openAsBenef={() => { location.hash = `#/s/${view.code}`; }} />}
         {view.name === "parcours" && s.parcours[view.code] && <Parcours s={s} p={s.parcours[view.code]} back={() => setView({ name: "list" })} review={takeId => setView({ name: "review", code: view.code, takeId })} />}
         {view.name === "review" && s.takes[view.takeId] && <Review s={s} p={s.parcours[view.code]} take={s.takes[view.takeId]} back={() => setView({ name: "parcours", code: view.code })} />}
       </div>
@@ -36,16 +37,30 @@ export default function Counselor({ setRole }) {
   );
 }
 
-function Identify() {
-  const [name, setName] = useState(TRIAL_COACH);
+/* Connexion simulée : identifiants fictifs pré-remplis, aucune vérification.
+   À remplacer par une authentification forte en production (voir README). */
+function Login() {
+  const [email, setEmail] = useState(TRIAL_LOGIN.email);
+  const [pwd, setPwd] = useState(TRIAL_LOGIN.password);
+  const [forgot, setForgot] = useState(false);
+  const ok = /.+@.+\..+/.test(email) && pwd.length >= 4;
+  const lab = { font: `600 13px ${FB}`, color: T.navy, display: "block", margin: "0 0 7px" };
   return (
-    <Card pad={32} style={{ maxWidth: 480, margin: "0 auto", boxShadow: SH.sm }}>
+    <Card pad={32} topbar="coach" style={{ maxWidth: 440, margin: "0 auto", boxShadow: SH.sm }}>
       <Tag tone="primary">Espace coach</Tag>
-      <h1 style={{ font: `800 24px ${FD}`, margin: "12px 0 6px", color: T.navy }}>Comment vous présenter aux bénéficiaires ?</h1>
-      <p style={{ font: `400 14px/1.6 ${FB}`, color: T.body, margin: "0 0 18px" }}>Ce nom apparaît dans leur espace et sur leurs rapports, par exemple « Camille B. ».</p>
-      <form onSubmit={e => { e.preventDefault(); if (name.trim().length >= 2) setCounselor(name); }}>
-        <input value={name} onChange={e => setName(e.target.value)} placeholder="Prénom et initiale" style={inp} autoFocus />
-        <div style={{ marginTop: 16 }}><Btn kind="primary" full disabled={name.trim().length < 2}>Accéder à mon espace</Btn></div>
+      <h1 style={{ font: `800 24px ${FD}`, margin: "12px 0 6px", color: T.navy }}>Connexion</h1>
+      <p style={{ font: `400 14px/1.6 ${FB}`, color: T.body, margin: "0 0 20px" }}>Accédez à vos parcours et aux prises que l'on vous a envoyées.</p>
+      <form onSubmit={e => { e.preventDefault(); if (ok) setCounselor(TRIAL_LOGIN.name); }}>
+        <label htmlFor="login-email" style={lab}>Adresse électronique professionnelle</label>
+        <input id="login-email" type="email" inputMode="email" autoCapitalize="none" autoCorrect="off" autoComplete="username" value={email} onChange={e => setEmail(e.target.value)} style={inp} />
+        <label htmlFor="login-pwd" style={{ ...lab, marginTop: 14 }}>Mot de passe</label>
+        <input id="login-pwd" type="password" autoComplete="current-password" value={pwd} onChange={e => setPwd(e.target.value)} style={inp} />
+        <div style={{ textAlign: "right", marginTop: 8 }}>
+          <button type="button" onClick={() => setForgot(true)} style={{ font: `600 13px ${FB}`, color: T.primary, background: "none", border: "none", padding: "6px 0", cursor: "pointer", textDecoration: "underline", textUnderlineOffset: 3 }}>Mot de passe oublié ?</button>
+        </div>
+        {forgot && <div role="status" style={{ font: `400 13px/1.5 ${FB}`, color: T.navy, background: `${T.primary}0D`, borderRadius: RAD.sm, padding: "9px 12px", marginTop: 4 }}>Contactez votre référent pour réinitialiser votre mot de passe.</div>}
+        <div style={{ marginTop: 16 }}><Btn kind="primary" full disabled={!ok}>Se connecter</Btn></div>
+        <p style={{ font: `400 12px ${FB}`, color: T.muted, textAlign: "center", margin: "14px 0 0" }}>Accès réservé aux coachs de {ORG_NAME}.</p>
       </form>
     </Card>
   );
@@ -73,7 +88,7 @@ function List({ s, open, create }) {
   return (
     <div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(200px,1fr))", gap: 14, marginBottom: 8 }}>
-        <Stat n={rows.filter(r => r.st.key === "toreview").length} l="Prises à relire" c={T.orange} />
+        <Stat n={rows.filter(r => r.st.key === "toreview").length} l="Prises à relire" c={T.accent} />
         <Stat n={rows.length} l="Parcours ouverts" c={T.primary} />
         <Stat n={reviewed.length} l="Rapports envoyés" c={T.success} />
         <Stat n={benefWithTakes ? `${Math.round((retrain / benefWithTakes) * 100)} %` : "–"} l="Bénéficiaires qui se réentraînent" c={T.violet} />
@@ -90,7 +105,7 @@ function List({ s, open, create }) {
       ) : (
         <Card pad={0} style={{ overflow: "hidden", boxShadow: SH.sm }}>
           {rows.map(({ p, st, takes }, i) => (
-            <div key={p.code} style={{ display: "flex", alignItems: "center", gap: 16, padding: "15px 22px", borderTop: i ? `1px solid ${T.lineLt}` : "none", background: st.key === "toreview" ? `${T.orange}08` : "#fff", flexWrap: "wrap" }}>
+            <div key={p.code} style={{ display: "flex", alignItems: "center", gap: 16, padding: "15px 22px", borderTop: i ? `1px solid ${T.lineLt}` : "none", background: st.key === "toreview" ? `${T.accent}08` : "#fff", flexWrap: "wrap" }}>
               <div style={{ width: 42, height: 42, borderRadius: "50%", background: GRAD_SOFT, display: "grid", placeItems: "center", font: `700 15px ${FD}`, color: T.primary }}>{p.prenom[0]?.toUpperCase()}</div>
               <div style={{ flex: 1, minWidth: 200 }}>
                 <div style={{ font: `700 15px ${FD}`, color: T.navy }}>{p.prenom} <span style={{ font: `600 12px ${FM}`, color: T.muted, marginLeft: 6 }}>{p.code}</span></div>
