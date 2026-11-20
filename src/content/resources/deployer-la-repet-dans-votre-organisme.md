@@ -4,7 +4,7 @@ category: organismes
 type: guide
 summary: Les questions à se poser avant un déploiement, pour la direction, la DSI, le juridique et le DPO, et l'état actuel du prototype.
 image: ressources/deployer-la-repet-dans-votre-organisme.webp
-imageAlt: Deux femmes échangent autour d'une petite table ronde près d'une fenêtre.
+imageAlt: Deux femmes discutent à un bureau près d’une fenêtre.
 date: 2026-11-20
 readingTime: 8
 author: Équipe La Répét'
