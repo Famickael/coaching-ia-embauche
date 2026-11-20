@@ -72,18 +72,18 @@ export const SiteStyle = () => (
     .rs-link:hover{color:${T.primaryDk}}
     /* En-tête */
     .rs-progress{position:absolute;left:0;right:0;bottom:-1px;height:3px;background:${T.primary};transform-origin:0 50%;transform:scaleX(0);pointer-events:none}
-    .rs-burger{display:none}
     .rs-menu{position:fixed;left:0;right:0;bottom:0;top:${HEADER_H}px;z-index:49;background:${T.bg};overflow-y:auto;padding:24px 24px 48px;display:flex;flex-direction:column;gap:8px;animation:rsMenu ${MO.base} ${MO.ease} both}
     @keyframes rsMenu{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
     .rs-menu a.rs-mlink{display:flex;align-items:center;justify-content:space-between;min-height:56px;padding:0 4px;border-bottom:1px solid ${T.line};text-decoration:none;color:${T.navy};font:800 20px/1.25 ${FD}}
     .rs-menu a.rs-mlink[aria-current=page]{color:${T.primary}}
-    @media (max-width:1023px){ .rs-links,.rs-demo{display:none!important} .rs-burger{display:inline-flex} }
     /* Boutons et éléments interactifs du site */
     .rs-chip{display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 16px;border-radius:${RAD.pill}px;border:1.5px solid ${T.line};background:${T.surface};color:${T.body};cursor:pointer;font:600 13px/1 ${FB};white-space:nowrap;transition:background-color ${MO.fast},border-color ${MO.fast},color ${MO.fast}}
     .rs-chip:hover{border-color:${T.primary};color:${T.primary}}
-    .rs-chip[aria-pressed=true]{background:${TT.primaryBg};border-color:${T.primary};color:${T.primary}}
+    .rs-chip[aria-pressed=true],.rs-chip[aria-selected=true]{background:${TT.primaryBg};border-color:${T.primary};color:${T.primary}}
     .rs-icbtn{width:44px;height:44px;border-radius:50%;display:inline-grid;place-items:center;border:1px solid ${T.line};background:${T.surface};color:${T.primary};cursor:pointer;flex-shrink:0;transition:border-color ${MO.fast}}
     .rs-icbtn:hover{border-color:${T.primary}}
+    .rs-icbtn.rs-burger{display:none}
+    @media (max-width:1023px){ .rs-links,.rs-demo{display:none!important} .rs-icbtn.rs-burger{display:inline-grid} }
     .rs-textbtn{background:none;border:none;padding:12px 0;cursor:pointer;color:${T.primary};font:600 14px/1 ${FB};text-decoration:underline;text-underline-offset:3px}
     .rs-card-btn{display:block;width:100%;text-align:left;background:${T.surface};border:1px solid ${T.line};border-radius:${RAD.lg}px;padding:0;cursor:pointer;box-shadow:${SH.xs};overflow:hidden;color:inherit;font:inherit;transition:box-shadow ${MO.base} ${MO.ease},transform ${MO.base} ${MO.ease},border-color ${MO.fast}}
     .rs-card-btn:hover{box-shadow:${SH.lg};transform:translateY(-2px)}
@@ -157,6 +157,56 @@ export const SiteStyle = () => (
     .rs-tl.play .rs-tl-pin{animation:rsPop .24s cubic-bezier(.34,1.56,.64,1) both}
     .rs-tl.play .rs-tl-row{animation:rsUp .3s ${MO.ease} both}
     .rs-tl.play .rs-tl-facts{animation:rsUp .3s ${MO.ease} 2.2s both}
+    /* Phrase qui se colore au défilement */
+    .rs-phrase{position:relative}
+    .rs-phrase-in{position:-webkit-sticky;position:sticky;top:${HEADER_H}px;height:calc(100vh - ${HEADER_H}px);height:calc(100svh - ${HEADER_H}px);display:flex;align-items:center}
+    .rs-w{transition:color .25s ease}
+    /* Cartes de fonctionnalités animées */
+    .rs-fcards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px}
+    .rs-fcard{background:${T.surface};border:1px solid ${T.line};border-radius:${RAD.lg}px;padding:16px 16px 24px;box-shadow:${SH.xs};display:grid;gap:12px;align-content:start;transition:box-shadow ${MO.base} ${MO.ease},transform ${MO.base} ${MO.ease}}
+    .rs-fcard:hover{box-shadow:${SH.lg};transform:translateY(-2px)}
+    .rs-fvis{position:relative;height:168px;border-radius:${RAD.md}px;background:${T.bg};overflow:hidden;display:flex;flex-direction:column;justify-content:center;padding:16px}
+    .rs-cyc>*{grid-area:1/1}
+    .rs-cyc>*:not(:first-child){opacity:0}
+    .play .rs-cyc>*{animation:rsCyc 9s infinite both}
+    .play .rs-cyc>*:nth-child(2){animation-delay:3s}.play .rs-cyc>*:nth-child(3){animation-delay:6s}
+    @keyframes rsCyc{0%{opacity:0;transform:translateY(6px)}4%,30%{opacity:1;transform:none}34%,100%{opacity:0;transform:translateY(-6px)}}
+    .rs-jobs>span:first-child{background:${TT.primaryBg};border-color:${T.primary};color:${T.primary}}
+    .play .rs-jobs>span{animation:rsJob 9s infinite both}
+    .play .rs-jobs>span:nth-child(2){animation-delay:3s}.play .rs-jobs>span:nth-child(3){animation-delay:6s}
+    @keyframes rsJob{0%,33%{background:${TT.primaryBg};border-color:${T.primary};color:${T.primary}}34%,100%{background:${T.surface};border-color:${T.line};color:${T.body}}}
+    .rs-fhl{background-repeat:no-repeat;background-size:100% 100%;border-radius:4px;padding:0 2px}
+    .play .rs-fhl{animation:rsHl 6s infinite both}
+    .play .rs-fhl.h2{animation-delay:.8s}
+    @keyframes rsHl{0%,8%{background-size:0% 100%}20%,85%{background-size:100% 100%}95%,100%{background-size:0% 100%}}
+    .rs-ftag{opacity:1}
+    .play .rs-ftag{animation:rsTag 6s infinite both}
+    .play .rs-ftag.t2{animation-delay:.3s}
+    @keyframes rsTag{0%,22%{opacity:0;transform:translateY(6px)}30%,85%{opacity:1;transform:none}95%,100%{opacity:0}}
+    .rs-digits{display:inline-block;height:1em;overflow:hidden;vertical-align:top}
+    .rs-digits>span{display:block}
+    .play .rs-digits>span{animation:rsDig 10s steps(10) infinite}
+    @keyframes rsDig{from{transform:translateY(0)}to{transform:translateY(-10em)}}
+    .rs-wave{display:flex;align-items:center;gap:4px;height:40px}
+    .rs-wave i{display:block;width:4px;border-radius:2px;background:${T.primary};height:40%}
+    .play .rs-wave i{animation:rsWave 1.2s ease-in-out infinite}
+    @keyframes rsWave{0%,100%{transform:scaleY(.5)}50%{transform:scaleY(1.4)}}
+    .rs-typing{display:none}
+    .play .rs-typing{display:inline-flex;position:absolute;top:18px;left:16px;animation:rsTypeA 6s infinite both}
+    .play .rs-answer{animation:rsTypeB 6s infinite both}
+    @keyframes rsTypeA{0%,40%{opacity:1}45%,100%{opacity:0}}
+    @keyframes rsTypeB{0%,44%{opacity:0;transform:translateY(6px)}52%,92%{opacity:1;transform:none}100%{opacity:0}}
+    .rs-seg{position:relative;display:grid;grid-template-columns:1fr 1fr;background:${T.surface};border:1px solid ${T.line};border-radius:${RAD.md}px;padding:4px}
+    .rs-seg>i{position:absolute;top:4px;bottom:4px;left:4px;width:calc(50% - 4px);border-radius:12px;background:${TT.primaryBg};border:1.5px solid ${T.primary}}
+    .play .rs-seg>i{animation:rsSeg 6s ${MO.ease} infinite both}
+    @keyframes rsSeg{0%,40%{transform:none}50%,90%{transform:translateX(100%)}100%{transform:none}}
+    .rs-seg>span{position:relative;text-align:center;padding:8px 4px;font:600 12px/1.3 ${FB};color:${T.navy}}
+    @media (max-width:760px){
+      .rs-fcards{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;gap:16px;margin:0 -16px;padding:4px 16px 16px;scroll-padding:0 16px;-webkit-overflow-scrolling:touch}
+      .rs-fcard{flex:0 0 82%;scroll-snap-align:start}
+      .rs-phrase-in{top:${HEADER_H_M}px;height:calc(100vh - ${HEADER_H_M}px);height:calc(100svh - ${HEADER_H_M}px)}
+      .rs-phrase-t{font-size:32px!important}
+    }
     /* Article */
     .rs-prose{color:${T.body};font:400 16px/1.7 ${FB}}
     .rs-prose h2{font:800 24px/1.25 ${FD};letter-spacing:-.02em;color:${T.navy};margin:48px 0 16px;scroll-margin-top:96px}
@@ -191,10 +241,10 @@ export const SiteStyle = () => (
       .rs-g2,.rs-g3,.rs-g4,.rs-split{grid-template-columns:minmax(0,1fr);gap:16px}
       .rs-split{gap:32px}
       .rs-panel{top:${HEADER_H_M}px;height:calc(100vh - ${HEADER_H_M}px);height:calc(100svh - ${HEADER_H_M}px);justify-content:flex-start;padding:16px 0}
-      .rs-pgrid{grid-template-columns:minmax(0,1fr);gap:16px;flex:1}
-      .rs-steps-d{display:none}
+      .rs-pgrid{grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(0,1fr);gap:16px;flex:1}
+      .rs-steps-d{display:none!important}
       .rs-tabs-m{display:block}
-      .rs-visbox{height:auto!important;flex:1;min-height:280px}
+      .rs-visbox{height:auto!important;min-height:300px}
       .rs-section{padding-top:48px!important}
       .rs-pad{padding-left:16px!important;padding-right:16px!important}
       .rs-chips.rs-scroll{flex-wrap:nowrap;overflow-x:auto;margin:0 -16px;padding:0 16px 4px}
@@ -347,3 +397,37 @@ export function ScrollProgress() {
 
 /* Lien interne en bouton-texte souligné. */
 export const linkStyle = { ...TY.bodyStrong, color: T.primary, textDecoration: "underline", textUnderlineOffset: 3 };
+
+/* Onglets accessibles : flèches gauche et droite, Début et Fin ; un seul onglet dans l'ordre de tabulation. */
+export function Tabs({ tabs, label, idPrefix = "tab" }) {
+  const [cur, setCur] = useState(0);
+  const refs = useRef([]);
+  const key = e => {
+    const n = tabs.length;
+    const k = { ArrowRight: (cur + 1) % n, ArrowLeft: (cur - 1 + n) % n, Home: 0, End: n - 1 }[e.key];
+    if (k === undefined) return;
+    e.preventDefault(); setCur(k); refs.current[k]?.focus();
+  };
+  return (
+    <div>
+      <div role="tablist" aria-label={label} className="rs-chips rs-scroll" onKeyDown={key}>
+        {tabs.map(([t], i) => (
+          <button key={t} ref={el => (refs.current[i] = el)} type="button" role="tab" id={`${idPrefix}-t${i}`} aria-controls={`${idPrefix}-p${i}`}
+            aria-selected={cur === i} tabIndex={cur === i ? 0 : -1} className="rs-chip" onClick={() => setCur(i)}>{t}</button>
+        ))}
+      </div>
+      {tabs.map(([t, panel], i) => (
+        <div key={t} role="tabpanel" id={`${idPrefix}-p${i}`} aria-labelledby={`${idPrefix}-t${i}`} hidden={cur !== i} tabIndex={0} style={{ marginTop: 24 }}>{panel}</div>
+      ))}
+    </div>
+  );
+}
+
+/* Défile jusqu'à une section de la page (routes du type #/solutions/coachs). */
+export function useSectionScroll(section) {
+  useEffect(() => {
+    if (!section) return;
+    const t = setTimeout(() => document.getElementById(section)?.scrollIntoView({ block: "start" }), 60);
+    return () => clearTimeout(t);
+  }, [section]);
+}

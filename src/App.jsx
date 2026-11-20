@@ -130,7 +130,7 @@ function Nav({ route, s }) {
     return () => { document.body.style.overflow = prev; document.removeEventListener("keydown", key); window.removeEventListener("resize", close); };
   }, [menu]);
 
-  return (
+  return (<>
     <header className="noprint" style={{ position: "sticky", top: 0, zIndex: 50, background: menu ? T.bg : "rgba(248,250,252,.9)", backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)", borderBottom: `1px solid ${T.line}` }}>
       <div className="rp-nav" style={{ maxWidth: W.page, margin: "0 auto", padding: "0 24px", height: 64, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 20, minWidth: 0 }}>
@@ -165,6 +165,7 @@ function Nav({ route, s }) {
         </div>
       </div>
       {isPublic && <ScrollProgress />}
+    </header>
       {menu && (
         <div id="rs-menu" ref={panel} className="rs-menu" role="dialog" aria-modal="true" aria-label="Menu">
           <nav aria-label="Navigation principale" onClick={() => setMenu(false)}>
@@ -181,8 +182,7 @@ function Nav({ route, s }) {
           </div>
         </div>
       )}
-    </header>
-  );
+  </>);
 }
 
 /* Déconnexion : le coach se déconnecte ; le bénéficiaire quitte son espace sur cet appareil

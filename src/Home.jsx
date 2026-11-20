@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { T, GRAD, GRAD_MAIN, FD, FB, FM, RAD, SH, RepetMark, Halo, Tag, Btn, Card, Icon, I } from "./ui.jsx";
-import { useReducedMotion, useCount, Reveal } from "./motion.jsx";
+import { useReducedMotion, useCount, useInView, Reveal } from "./motion.jsx";
 import { TT, ON, TY, W, MO, SI, img, Eyebrow, Section, IconTile, TextBtn, HEADER_H, HEADER_H_M } from "./site.jsx";
 
 /* Page d'accueil : héros (accroche qui change, scènes en boucle), strate épinglée « un seul dispositif »,
@@ -10,8 +10,10 @@ export default function Home({ go, openSpace }) {
   return (
     <main>
       <Hero go={go} />
+      <Phrase />
       <Strate />
       <div className="rs-pad" style={{ maxWidth: W.page, margin: "0 auto", padding: "0 24px" }}>
+        <Features />
         <NotDo />
         <ForWho go={go} />
         <FinalBand openSpace={openSpace} go={go} />
@@ -450,6 +452,139 @@ function VisCoach() {
         <Icon d={SI.users} s={16} c={T.primary} /> Débriefing en atelier jeudi
       </div>
     </div>
+  );
+}
+
+/* ─── Grande phrase qui se colore mot par mot au fil du défilement ─── */
+const PHRASE = [["Un"], ["entretien,"], ["ça"], ["se"], ["prépare"], ["à", 1], ["voix", 1], ["haute.", 1]];
+const PHRASE_SUB = "Alors répétez, écoutez-vous, recommencez. À votre rythme, sans note.";
+
+function Phrase() {
+  const reduced = useReducedMotion();
+  const sec = useRef(null);
+  const [lit, setLit] = useState(reduced ? PHRASE.length + 1 : 0);
+  useEffect(() => {
+    if (reduced) { setLit(PHRASE.length + 1); return; }
+    let raf = 0;
+    const upd = () => {
+      raf = 0;
+      const el = sec.current; if (!el) return;
+      const hh = window.innerWidth <= 760 ? HEADER_H_M : HEADER_H;
+      const r = el.getBoundingClientRect(), range = r.height - (window.innerHeight - hh);
+      // la coloration commence quand la phrase arrive au centre et finit avant la fin de la section
+      const p = range > 0 ? Math.min(1, Math.max(0, (hh - r.top + window.innerHeight * 0.35) / (range + window.innerHeight * 0.1))) : 1;
+      setLit(Math.round(p * (PHRASE.length + 1)));
+    };
+    const on = () => { if (!raf) raf = requestAnimationFrame(upd); };
+    upd();
+    window.addEventListener("scroll", on, { passive: true });
+    window.addEventListener("resize", on);
+    return () => { window.removeEventListener("scroll", on); window.removeEventListener("resize", on); cancelAnimationFrame(raf); };
+  }, [reduced]);
+
+  const text = (
+    <div className="rs-pad" style={{ maxWidth: W.page, width: "100%", margin: "0 auto", padding: "0 24px" }}>
+      <p className="rs-sr">{PHRASE.map(w => w[0]).join(" ")} {PHRASE_SUB}</p>
+      <div aria-hidden style={{ maxWidth: 900, display: "grid", gap: 24 }}>
+        <div className="rs-phrase-t" style={{ ...TY.display, color: T.navy }}>
+          {PHRASE.map(([w, key], i) => {
+            const on = i < lit;
+            return (
+              <React.Fragment key={i}>
+                <span className="rs-w" style={on && key
+                  ? { background: GRAD_MAIN, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text", paddingBottom: ".08em" }
+                  : { color: on ? T.navy : T.line }}>{w}</span>{i < PHRASE.length - 1 ? " " : ""}
+              </React.Fragment>
+            );
+          })}
+        </div>
+        <div className="ty-lead rs-w" style={{ ...TY.lead, fontSize: 20, color: lit > PHRASE.length ? T.body : T.line, maxWidth: 560 }}>{PHRASE_SUB}</div>
+      </div>
+    </div>
+  );
+  if (reduced) return <section className="rs-section" style={{ paddingTop: 80 }}>{text}</section>;
+  return (
+    <section ref={sec} className="rs-phrase" style={{ height: "180vh" }}>
+      <div className="rs-phrase-in">{text}</div>
+    </section>
+  );
+}
+
+/* ─── Cartes de fonctionnalités : micro-animation en boucle, seulement quand la carte est visible ─── */
+function FCard({ title, text, children }) {
+  const reduced = useReducedMotion();
+  const [ref, v] = useInView({ once: false, threshold: 0.35, rootMargin: "0px" });
+  return (
+    <div ref={ref} className={`rs-fcard ${v && !reduced ? "play" : ""}`}>
+      <div className="rs-fvis" aria-hidden>{children}</div>
+      <h3 style={{ ...TY.h3, color: T.navy, margin: "4px 8px 0" }}>{title}</h3>
+      <p style={{ ...TY.body, color: T.body, margin: "0 8px" }}>{text}</p>
+    </div>
+  );
+}
+
+const miniCard = { background: T.surface, borderRadius: RAD.sm, padding: "12px 16px", boxShadow: SH.xs };
+
+function Features() {
+  return (
+    <Section eyebrow="Au fil de l'entraînement" title="Tout ce qu'il faut pour répéter sereinement" sub="Des outils simples, pensés pour s'entraîner seul et garder la main sur ce que l'on partage.">
+      <div className="rs-fcards">
+        <FCard title="Un échauffement sans enregistrement" text="Des phrases à lire à voix haute pour se mettre en route. Rien n'est enregistré ni analysé.">
+          <div style={{ ...TY.overline, color: T.muted, marginBottom: 8 }}>Échauffement · lisez à voix haute</div>
+          <div className="rs-cyc" style={{ display: "grid" }}>
+            {["« Je vous remercie de me recevoir. »", "« J'ai travaillé deux ans en boutique. »", "« Je suis disponible dès lundi. »"].map(t => (
+              <div key={t} style={{ ...miniCard, ...TY.h3, color: T.navy }}>{t}</div>
+            ))}
+          </div>
+        </FCard>
+        <FCard title="Des questions adaptées au métier" text="Choisissez le métier visé : les questions s'y adaptent. Vous pouvez aussi ajouter les vôtres.">
+          <div className="rs-jobs" style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
+            {["agent d'accueil", "serveur(se)", "aide-soignant(e)"].map(j => <span key={j} style={{ ...TY.tag, padding: "8px 12px", borderRadius: RAD.pill, border: `1.5px solid ${T.line}`, background: T.surface, color: T.body }}>{j}</span>)}
+          </div>
+          <div className="rs-cyc" style={{ display: "grid" }}>
+            {["« Comment accueillez-vous une personne mécontente ? »", "« Comment gérez-vous un service chargé ? »", "« Comment réagissez-vous face à une urgence ? »"].map(t => (
+              <div key={t} style={{ ...miniCard, ...TY.small, color: T.navy, fontWeight: 600 }}>{t}</div>
+            ))}
+          </div>
+        </FCard>
+        <FCard title="Caméra ou micro seul" text="Répondez en vidéo, ou en voix seule si vous préférez. Trois minutes maximum par réponse.">
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 8, background: T.surface, borderRadius: RAD.pill, padding: "4px 12px", boxShadow: SH.xs }}>
+              <span style={{ width: 8, height: 8, borderRadius: "50%", background: T.error, animation: "blink 1.2s infinite" }} />
+              <span style={{ ...TY.time, color: T.navy }}>0:4<span className="rs-digits"><span>0<br />1<br />2<br />3<br />4<br />5<br />6<br />7<br />8<br />9</span></span></span>
+            </span>
+            <Tag tone="muted"><Icon d={I.mic} s={12} c={T.body} /> Voix seule</Tag>
+          </div>
+          <div className="rs-wave" style={{ marginTop: 24, justifyContent: "center" }}>
+            {Array.from({ length: 22 }, (_, i) => <i key={i} style={{ animationDelay: `${(i * 137) % 900}ms`, height: `${30 + ((i * 53) % 60)}%` }} />)}
+          </div>
+        </FCard>
+        <FCard title="Une transcription repérée" text="Votre réponse est transcrite sur votre appareil. Les passages utiles sont repérés, sans jugement.">
+          <p style={{ ...TY.small, color: T.navy, margin: 0 }}>
+            Bonjour, je m'appelle Sami. <span className="rs-fhl h2" style={{ backgroundImage: `linear-gradient(${TT.violetBg},${TT.violetBg})` }}>Euh</span>, j'ai <span className="rs-fhl" style={{ backgroundImage: `linear-gradient(${T.accentBg},${T.accentBg})` }}>géré la caisse d'une supérette pendant trois ans</span>.
+          </p>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 12 }}>
+            <span className="rs-ftag"><Tag tone="appui"><Icon d={I.check} s={12} c={T.accent} /> Exemple concret</Tag></span>
+            <span className="rs-ftag t2"><Tag tone="ai"><Icon d={I.search} s={12} c={T.violet} /> Mot d'appui</Tag></span>
+          </div>
+        </FCard>
+        <FCard title="Un assistant pour vos questions" text="Une hésitation sur un retour ou sur une question difficile ? L'assistant répond, votre coach complète.">
+          <div style={{ display: "grid", gap: 8 }}>
+            <div style={{ ...miniCard, justifySelf: "end", background: TT.primaryBg, ...TY.small, color: T.navy, maxWidth: "85%" }}>Comment parler d'un trou dans mon CV ?</div>
+            <div style={{ position: "relative", ...miniCard, background: TT.violetBg, ...TY.small, color: T.navy, maxWidth: "90%", minHeight: 44 }}>
+              <span className="rs-typing rp-dots" style={{ color: T.violet }}><i /><i /><i /></span>
+              <span className="rs-answer" style={{ display: "block" }}>Restez simple et honnête, puis parlez de ce que vous avez fait pendant cette période.</span>
+            </div>
+          </div>
+        </FCard>
+        <FCard title="Rapport écrit ou vidéo, au choix" text="Découvrez votre retour comme vous le préférez : en lisant, ou en vous revoyant avec des repères.">
+          <div className="rs-seg"><i /><span>Rapport écrit</span><span>Me revoir en vidéo</span></div>
+          <div style={{ ...miniCard, marginTop: 12, display: "flex", alignItems: "center", gap: 8 }}>
+            <Pin ap /><span style={{ ...TY.caption, color: T.navy, flex: 1 }}>Ouverture directe à 0:04</span><span style={{ ...TY.time, color: T.muted }}>0:04</span>
+          </div>
+        </FCard>
+      </div>
+    </Section>
   );
 }
 
