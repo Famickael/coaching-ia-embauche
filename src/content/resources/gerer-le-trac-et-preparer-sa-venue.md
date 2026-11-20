@@ -4,7 +4,7 @@ category: preparer
 type: guide
 summary: Des gestes pratiques pour les jours qui précèdent, le matin même et pendant l'entretien. Le trac ne disparaît pas, il se gère.
 image: ressources/gerer-le-trac-et-preparer-sa-venue.webp
-imageAlt: Une personne vérifie un itinéraire sur son téléphone avant un rendez-vous.
+imageAlt: Une personne consulte son téléphone en traversant la rue.
 date: 2026-11-20
 readingTime: 7
 author: Équipe La Répét'
