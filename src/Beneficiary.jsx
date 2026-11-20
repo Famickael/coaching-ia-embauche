@@ -7,7 +7,9 @@ import Recorder from "./Recorder.jsx";
 import WarmupStage from "./WarmupStage.jsx";
 import Assistant from "./Assistant.jsx";
 import { ReportBody } from "./Report.jsx";
-import { useStore, TRIAL_CODE, findParcours, updateParcours, takesOf, createTake, updateTake, deleteTake, withdrawConsent, saveWarmupDebrief, loadWarmupDebrief, clearWarmupDebrief } from "./lib/store.js";
+import { useStore, TRIAL_CODE, findParcours, updateParcours, takesOf, createTake, updateTake, unshareTake, deleteTake, saveWarmupDebrief, loadWarmupDebrief, loadVideoUrl } from "./lib/store.js";
+import { PHRASES, SUMMARY, PAGES, LEGAL_VERSION } from "./content/legal.js";
+import { Summary } from "./Legal.jsx";
 import { transcribe } from "./lib/transcribe.js";
 import { analyze } from "./lib/analysis.js";
 import { QUESTIONS, fill, WARMUP_PHRASES, WARMUP_PROMPTS, fillPhrase, randomPhraseIndex, WORK_TOPICS, questionsForTopics } from "./lib/questions.js";
@@ -17,6 +19,8 @@ import { FEELINGS, feelingAck } from "./lib/assistant.js";
 const wrap = w => ({ maxWidth: w, margin: "0 auto", width: "100%" });
 const dateFr = iso => new Date(iso).toLocaleString("fr-FR", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" });
 const stack = (gap = GAP.stack) => ({ display: "grid", gap });
+/* Durée : « 45 s » ou « 1 min 32 ». */
+const dur = sec => { const n = Math.round(sec || 0); return n < 60 ? `${n} s` : `${Math.floor(n / 60)} min ${String(n % 60).padStart(2, "0")}`; };
 const actions = { display: "flex", justifyContent: "space-between", alignItems: "center", gap: GAP.actions, flexWrap: "wrap" };
 const PAGE = { padding: PAD.page };
 
@@ -33,7 +37,7 @@ export default function Beneficiary({ initialCode, setModal, onCode }) {
   useEffect(() => { onCode && onCode(code); }, [code]); // mémorise l'espace ouvert (bouton « Mon espace »)
 
   if (!p) return <main className="rp-page" style={PAGE}><CodeEntry initial={initialCode} onOk={c => { setCode(c); setView("home"); }} /></main>;
-  if (!p.consent) return <main className="rp-page" style={PAGE}><Consent p={p} setModal={setModal} onBack={() => setCode(null)} /></main>;
+  if (!p.consent) return <main className="rp-page" style={PAGE}><Consent p={p} onBack={() => setCode(null)} /></main>;
 
   const go = (v, patch) => { if (patch) setCtx(c => ({ ...c, ...patch })); setView(v); window.scrollTo({ top: 0 }); };
   const flowSteps = ["Question", "Entraînement", "Analyse", "Retour"];
@@ -48,7 +52,7 @@ export default function Beneficiary({ initialCode, setModal, onCode }) {
     <main className="rp-page" style={PAGE}>
       {flowIdx !== undefined && <div style={{ ...wrap(view === "report" && ctx.mode === "video" ? W.wide : W.read), marginBottom: GAP.block }} className="noprint"><Rail step={flowIdx} steps={flowSteps} /></div>}
       <div key={view} className="up">
-        {view === "home" && <Home p={p} takes={takesOf(p.code, s)} go={go} counselor={p.counselor} onQuit={() => setCode(null)} />}
+        {view === "home" && <Home p={p} takes={takesOf(p.code, s)} go={go} counselor={p.counselor} />}
         {view === "warmup" && <Warmup p={p} go={go} setModal={setModal} />}
         {view === "pick" && <Pick p={p} ctx={ctx} go={go} />}
         {view === "record" && (
@@ -67,7 +71,7 @@ export default function Beneficiary({ initialCode, setModal, onCode }) {
         {view === "processing" && <Processing p={p} ctx={ctx} go={go} />}
         {view === "choose" && take && <Choose take={take} go={go} series={series} />}
         {view === "report" && take && <TakeReport p={p} take={take} mode={ctx.mode} go={go} series={series} nextQuestion={nextQuestion} stopSeries={stopSeries} />}
-        {view === "share" && take && <Share p={p} take={take} go={go} />}
+        {view === "share" && take && <Share p={p} take={take} go={go} setModal={setModal} />}
         {view === "sent" && <Sent p={p} go={go} series={series} nextQuestion={nextQuestion} />}
       </div>
     </main>
@@ -104,30 +108,35 @@ function CodeEntry({ initial, onOk }) {
   );
 }
 
-/* ─── Consentement ─── */
-function Consent({ p, setModal, onBack }) {
-  const [c, setC] = useState({ local: false, ai: true });
+/* ─── Accord (consentement) : les deux cases décochées au départ (RGPD, art. 4(11) et 7) ─── */
+function Consent({ p, onBack }) {
+  const [c, setC] = useState({ local: false, ai: false });
   const box = (k, title, text, required) => (
     <CheckTile on={c[k]} onToggle={() => setC(x => ({ ...x, [k]: !x[k] }))}>
-      <span style={{ ...TY.bodyStrong, color: T.navy }}>{title} {required && <span style={{ ...TY.caption, color: T.muted }}>· nécessaire</span>}</span>
+      <span style={{ ...TY.bodyStrong, color: T.navy }}>{title} <span style={{ ...TY.caption, color: T.muted }}>· {required ? "obligatoire pour s'entraîner" : "au choix"}</span></span>
       <span style={{ ...TY.small, color: T.body }}>{text}</span>
     </CheckTile>
   );
-  const link = (k, l) => <Link onClick={() => setModal(k)}>{l}</Link>;
   return (
     <Card pad="none" level={2} style={wrap(W.read)}>
-      <GradHead tag={`Bonjour ${p.prenom}`} title="Avant de commencer" sub="Cet espace est le vôtre. Vous vous entraînez à votre rythme, rien n'est noté et rien n'est partagé sans votre accord." />
+      <GradHead tag={`Bonjour ${p.prenom}`} title="Avant de commencer" sub="Cet espace est le vôtre. Rien n'est noté. Rien n'est envoyé sans vous." />
       <div className="rp-pad-lg" style={{ padding: PAD.lg, ...stack(GAP.grid) }}>
+        <Summary items={SUMMARY.accord} />
         <div style={stack(GAP.stack)}>
-          {box("local", "Enregistrer et analyser mes entraînements sur cet appareil", "La vidéo et le son restent sur votre appareil. Ils ne sont envoyés à votre coach que si vous le décidez, réponse par réponse.", true)}
-          {box("ai", "Recevoir un retour de l'assistant", "Un retour écrit qui décrit des faits (rythme, pauses, structure, direction du regard). Il ne note pas et ne déduit aucune émotion. Sans cette option, vous pouvez quand même vous enregistrer et vous revoir.")}
+          {box("local", "Je veux m'enregistrer sur cet appareil.", "Ma vidéo et ma voix restent sur cet appareil. Mon coach les voit seulement si je les lui envoie, réponse par réponse.", true)}
+          {box("ai", "Je veux recevoir un retour de l'assistant.", "L'assistant est un programme. Il décrit des faits : rythme de parole, pauses, regard. Il ne met pas de note. Il ne cherche pas à deviner les émotions. Sans cette case, vous pouvez quand même vous enregistrer et vous revoir.")}
         </div>
-        <p style={{ ...TY.small, color: T.body, margin: 0 }}>
-          En continuant, vous confirmez avoir pris connaissance des {link("cgu", "conditions d'utilisation")}, de la {link("rgpd", "notice de protection des données")} et du {link("lifecycle", "cycle de vie de la vidéo")}. Vous pouvez retirer votre consentement à tout moment depuis votre espace, sans justification.
-        </p>
+        <div style={stack(8)}>
+          <p style={{ ...TY.small, color: T.body, margin: 0 }}>{PHRASES.refuse}</p>
+          <p style={{ ...TY.small, color: T.body, margin: 0 }}>{PHRASES.changeMind}</p>
+          <p style={{ ...TY.small, color: T.body, margin: 0, display: "flex", flexWrap: "wrap", gap: "4px 16px" }}>
+            <Link href={PAGES.hub.route} target="_blank" rel="noopener">Tout lire sur vos données (nouvel onglet)</Link>
+            <Link href={PAGES.conditions.route} target="_blank" rel="noopener">Règles d'utilisation (nouvel onglet)</Link>
+          </p>
+        </div>
         <div className="rp-actions" style={actions}>
           <Back onClick={onBack} />
-          <Btn kind="objective" disabled={!c.local} onClick={() => updateParcours(p.code, { consent: { at: new Date().toISOString(), local: true, ai: c.ai } })} iconRight={I.arrow}>Je consens et je commence</Btn>
+          <Btn kind="objective" disabled={!c.local} onClick={() => updateParcours(p.code, { consent: { at: new Date().toISOString(), local: true, ai: c.ai, version: LEGAL_VERSION } })} iconRight={I.arrow}>Je suis d'accord, je commence</Btn>
         </div>
       </div>
     </Card>
@@ -137,18 +146,15 @@ function Consent({ p, setModal, onBack }) {
 function EmotionNote({ setModal }) {
   return (
     <Notice tone="ai" icon={I.shield}>
-      <strong>On ne juge pas vos émotions.</strong> L'assistant ne cherche pas à savoir si vous êtes stressé·e : il décrit seulement des faits.{" "}
-      <Link onClick={() => setModal("emotion")}>Pourquoi ?</Link>
+      <strong>L'assistant ne cherche pas à deviner vos émotions.</strong> Il décrit seulement ce qui se voit et ce qui s'entend.{" "}
+      <Link onClick={() => setModal("assistant")}>En savoir plus sur ce choix</Link>
     </Notice>
   );
 }
 
 /* ─── Espace personnel ─── */
-function Home({ p, takes, go, counselor, onQuit }) {
+function Home({ p, takes, go, counselor }) {
   const reports = takes.filter(t => t.report);
-  const withdraw = async () => {
-    if (window.confirm("Retirer votre consentement supprime tous vos entraînements et vos rapports sur cet appareil. Continuer ?")) { clearWarmupDebrief(p.code); await withdrawConsent(p.code); }
-  };
   return (
     <div style={{ ...wrap(W.read), ...stack(GAP.block) }}>
       <Card pad="none" level={2}>
@@ -191,7 +197,7 @@ function Home({ p, takes, go, counselor, onQuit }) {
                   <IconTile icon={t.hasVideo && !t.mime?.startsWith("audio") ? I.play : I.mic} />
                   <div style={{ flex: 1, minWidth: 200, ...stack(4) }}>
                     <div style={{ ...TY.h4, color: T.navy }}>{t.question}</div>
-                    <div style={{ ...TY.caption, color: T.muted }}>{dateFr(t.createdAt)} · {Math.round(t.duration)} s</div>
+                    <div style={{ ...TY.caption, color: T.muted }}>{dateFr(t.createdAt)} · {dur(t.duration)}</div>
                   </div>
                   <Tag tone={st[1]}>{st[0]}</Tag>
                   <Btn kind="secondary" size="sm" onClick={() => go(t.hasVideo ? "choose" : "report", { takeId: t.id, mode: "simple", queue: null })}>Ouvrir</Btn>
@@ -202,10 +208,9 @@ function Home({ p, takes, go, counselor, onQuit }) {
         )}
       </section>
 
-      <div style={{ paddingTop: 16, borderTop: `1px solid ${T.line}`, ...actions }} className="noprint">
-        <Back onClick={onQuit}>Changer de code</Back>
-        <Btn kind="danger" size="sm" icon={I.trash} onClick={withdraw}>Retirer mon consentement et supprimer mes données</Btn>
-      </div>
+      <Notice tone="info" icon={I.shield}>
+        {PHRASES.noTracking} {PHRASES.sharedDevice} <Link href={PAGES.hub.route}>Vos données</Link>
+      </Notice>
     </div>
   );
 }
@@ -587,7 +592,8 @@ function Processing({ p, ctx, go }) {
           <div style={{ position: "absolute", inset: 8, border: `4px solid ${T.lineLt}`, borderTopColor: T.violet, borderRadius: "50%", animation: "spin .9s linear infinite" }} />
         </div>
         <Txt v="h2" as="h1" color={T.navy} role="status">{stage}</Txt>
-        <Txt v="body" color={T.body}>Aucune émotion n'est déduite : le retour décrit uniquement des faits observables.</Txt>
+        <Txt v="body" color={T.body}>Tout se passe sur votre appareil. Cela peut prendre un moment.</Txt>
+        <Txt v="caption" color={T.muted}>{PHRASES.download}</Txt>
       </>) : (<>
         <Txt v="h2" as="h1" color={T.navy}>La transcription n'a pas pu aboutir</Txt>
         <Txt v="body" color={T.body}>Vérifiez votre connexion (le modèle se télécharge au premier usage) puis réessayez.</Txt>
@@ -640,7 +646,7 @@ function TakeReport({ p, take, mode, go, series, nextQuestion, stopSeries }) {
     <div style={{ ...wrap(mode === "video" ? W.wide : W.read), ...stack(16) }}>
       <Card pad="none" level={2}>
         <GradHead tag={take.report ? "Rapport de votre coach" : "Votre retour"} title={take.question}
-          sub={`${dateFr(take.createdAt)} · ${Math.round(take.duration)} s. Ce retour décrit des faits, il ne note pas.`}
+          sub={`${dateFr(take.createdAt)} · ${dur(take.duration)}. ${PHRASES.feedback}${take.analysis?.source === "llm" ? ` ${PHRASES.feedbackLlm}` : ""}`}
           action={take.hasVideo && (
             <Btn kind="ghostDark" size="sm" className="noprint" onClick={() => go("report", { mode: mode === "video" ? "simple" : "video" })}>
               {mode === "video" ? "Plutôt un rapport écrit" : "Plutôt me revoir en vidéo"}
@@ -663,11 +669,13 @@ function TakeReport({ p, take, mode, go, series, nextQuestion, stopSeries }) {
         <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
           {take.shared && <span style={{ color: T.successDk, display: "inline-flex", marginTop: 2 }}><Icon d={I.check} s={20} /></span>}
           {head(take.report ? "Rapport reçu" : take.shared ? "Réponse envoyée à votre coach" : `Prêt·e à en parler avec ${p.counselor || "votre coach"} ?`,
-            take.shared ? "Vous pouvez continuer à vous entraîner et envoyer une nouvelle réponse à tout moment." : "Cette réponse reste sur votre appareil tant que vous ne l'envoyez pas.")}
+            take.shared ? (take.report ? "Vous pouvez continuer à vous entraîner et envoyer une nouvelle réponse à tout moment." : `Vous pouvez continuer à vous entraîner. ${PHRASES.sent}`) : "Cette réponse reste sur votre appareil tant que vous ne l'envoyez pas.")}
         </div>
         <div className="rp-actions" style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <Btn kind="danger" size="sm" onClick={del} icon={I.trash}>Supprimer</Btn>
-          <Btn kind="ghost" size="sm" onClick={() => window.print()} icon={I.print}>Imprimer ou PDF</Btn>
+          <Btn kind="danger" size="sm" onClick={del} icon={I.trash}>Supprimer cette réponse</Btn>
+          {take.shared && !take.report && <Btn kind="ghost" size="sm" onClick={() => unshareTake(take.id)} icon={I.redo}>Reprendre mon envoi</Btn>}
+          {take.hasVideo && <Btn kind="ghost" size="sm" onClick={() => downloadTake(take)} icon={I.arrow}>{take.mime?.startsWith("audio") ? "Télécharger ma voix" : "Télécharger ma vidéo"}</Btn>}
+          <Btn kind="ghost" size="sm" onClick={() => window.print()} icon={I.print}>Imprimer</Btn>
           {!series?.hasNext && <Btn kind="secondary" size="sm" onClick={() => go("pick", { queue: null, selection: null, preselect: null })} icon={I.redo}>M'entraîner encore</Btn>}
           {!take.shared && <Btn kind={series?.hasNext ? "secondary" : "objective"} size="sm" onClick={() => go("share")} icon={I.send}>Envoyer à mon coach</Btn>}
         </div>
@@ -682,21 +690,33 @@ function TakeReport({ p, take, mode, go, series, nextQuestion, stopSeries }) {
   );
 }
 
-function Share({ p, take, go }) {
+/* Portabilité : télécharger sa réponse (fichier local, rien n'est envoyé). */
+async function downloadTake(take) {
+  const url = await loadVideoUrl(take.id);
+  if (!url) return;
+  const a = document.createElement("a");
+  a.href = url; a.download = `la-repet-reponse-${take.createdAt.slice(0, 10)}.${take.mime?.includes("mp4") ? "mp4" : "webm"}`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
+}
+
+function Share({ p, take, go, setModal }) {
   const [note, setNote] = useState("");
   return (
     <Card pad="lg" level={2} style={{ ...wrap(W.form), ...stack(GAP.grid) }}>
       <div style={stack(12)}>
-        <div><Tag tone="primary">Partage · vous décidez</Tag></div>
+        <div><Tag tone="primary">Envoi · vous décidez</Tag></div>
         <Txt v="h1" as="h1" color={T.navy}>Envoyer cette réponse à {p.counselor || "votre coach"}</Txt>
-        <Txt v="body" color={T.body}>Votre réponse enregistrée et le retour de l'assistant seront transmis uniquement à votre coach. Vous pouvez la supprimer à tout moment.</Txt>
+        <Txt v="body" color={T.body}>{PHRASES.share}</Txt>
       </div>
-      <Field id="note" label="Un mot pour votre coach (facultatif)">
+      <Summary items={SUMMARY.envoi} style={{ gap: 8 }} />
+      <Notice tone="info" icon={I.monitor}>{PHRASES.sameDevice} <Link onClick={() => setModal("video")}>Que devient ma vidéo ?</Link></Notice>
+      <Field id="note" label="Un message pour votre coach (facultatif)">
         <Textarea id="note" value={note} onChange={e => setNote(e.target.value)} placeholder="Par exemple : j'ai l'impression de parler trop vite, qu'en pensez-vous ?" />
       </Field>
       <div className="rp-actions" style={actions}>
-        <Back onClick={() => go("report")} />
-        <Btn kind="objective" onClick={() => { updateTake(take.id, { shared: true, sharedAt: new Date().toISOString(), note: note.trim() }); go("sent"); }} icon={I.send}>Envoyer</Btn>
+        <Back onClick={() => go("report")}>Je la garde pour moi</Back>
+        <Btn kind="objective" onClick={() => { updateTake(take.id, { shared: true, sharedAt: new Date().toISOString(), note: note.trim() }); go("sent"); }} icon={I.send}>Envoyer à mon coach</Btn>
       </div>
     </Card>
   );
@@ -710,7 +730,7 @@ function Sent({ p, go, series, nextQuestion }) {
         ? <Btn kind="objective" onClick={nextQuestion} iconRight={I.arrow}>Question suivante ({series.i + 2}/{series.n})</Btn>
         : <Btn kind="objective" onClick={() => go("pick", { queue: null, selection: null, preselect: null })} icon={I.redo}>M'entraîner à nouveau</Btn>}
     </>}>
-      {p.counselor || "Votre coach"} va relire votre réponse et y ajouter ses remarques. Vous retrouverez son rapport dans votre espace, avec ce même code, et vous en parlerez ensemble en atelier.
+      {p.counselor || "Votre coach"} va regarder votre réponse et ajouter ses remarques. Son rapport arrivera dans votre espace. Vous y revenez avec le même code. {PHRASES.sent}
     </Confirm>
   );
 }

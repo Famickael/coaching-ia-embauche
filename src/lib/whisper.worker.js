@@ -3,6 +3,9 @@
 import { pipeline, env } from "@huggingface/transformers";
 
 const MODEL = import.meta.env.VITE_WHISPER_MODEL || "onnx-community/whisper-base";
+/* Révision du modèle sur Hugging Face : « main » par défaut (dernière version publiée).
+   Pour figer une version précise, renseigner VITE_WHISPER_REVISION (identifiant de commit). */
+const REVISION = import.meta.env.VITE_WHISPER_REVISION || "main";
 if (import.meta.env.VITE_MODELS_BASE_URL) {
   // modèles auto-hébergés (production) : <base>/<modèle>/...
   env.remoteHost = import.meta.env.VITE_MODELS_BASE_URL;
@@ -15,6 +18,7 @@ self.onmessage = async ({ data }) => {
   try {
     if (!asr) {
       asr = await pipeline("automatic-speech-recognition", MODEL, {
+        revision: REVISION,
         dtype: { encoder_model: "fp32", decoder_model_merged: "q8" },
         device: navigator.gpu ? "webgpu" : "wasm",
         progress_callback: p => {

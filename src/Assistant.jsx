@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { T, TY, RAD, GRAD_AI, Btn, Chip, Input, IconTile, I } from "./ui.jsx";
 import { askAssistant, CONTEXT_SUGGESTIONS } from "./lib/assistant.js";
+import { PHRASES } from "./content/legal.js";
 
 const REMOTE = !!import.meta.env.VITE_LLM_ENDPOINT;
 
@@ -47,7 +48,7 @@ export default function Assistant({ context = "warmup", poste, title = "Posez di
         <IconTile icon={I.chat} c={T.surface} bg={GRAD_AI} round />
         <div style={{ minWidth: 0, display: "grid", gap: 2 }}>
           <h2 id={`${id}-title`} style={{ ...TY.h3, color: T.navy, margin: 0 }}>{title}</h2>
-          <div style={{ ...TY.caption, color: T.violet }}>Assistant · fonctionnement du site et préparation d'entretien</div>
+          <div style={{ ...TY.caption, color: T.violet }}>Assistant automatique · ce n'est pas une personne</div>
         </div>
       </div>
 
@@ -75,14 +76,12 @@ export default function Assistant({ context = "warmup", poste, title = "Posez di
         </div>
       )}
 
+      <div style={{ padding: "12px 16px 0", ...TY.body, color: T.body }}>{PHRASES.assistantChat} {PHRASES.noPersonal}</div>
       <form onSubmit={e => { e.preventDefault(); send(); }} style={{ display: "flex", gap: 8, padding: 16 }}>
         <label htmlFor={`${id}-input`} className="rp-sr">{inputLabel}</label>
         <Input id={`${id}-input`} value={text} onChange={e => setText(e.target.value)} placeholder={placeholder} autoComplete="off" maxLength={400} style={{ flex: 1, minWidth: 0 }} />
         <Btn kind="ai" type="submit" disabled={!text.trim() || typing} aria-label="Envoyer la question" icon={I.send} style={{ width: 48, padding: 0 }} />
       </form>
-      <div style={{ padding: "0 16px 12px", ...TY.caption, color: T.muted }}>
-        {REMOTE ? "Vos questions sont transmises au service de l'assistant, sans aucune image ni son." : "Les réponses sont préparées sur cet appareil : vos questions n'en sortent pas."} Ne saisissez pas d'informations personnelles.
-      </div>
     </section>
   );
 }

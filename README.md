@@ -13,11 +13,11 @@ Le principe : le coach crée un parcours et transmet un code (ou un lien). La pe
 | Expérience | Lien | Accès |
 |---|---|---|
 | **Côté bénéficiaire** | https://famickael.github.io/la-repet/#/s/REPETE | code d'essai **`REPETE`**, déjà rempli dans le lien |
-| **Côté coach** | https://famickael.github.io/la-repet/#/coach | page de connexion simulée, identifiants fictifs pré-remplis (« Sophie M. ») |
+| **Côté coach** | https://famickael.github.io/la-repet/#/espace | connexion de démonstration intégrée à « Mon espace », identifiants fictifs pré-remplis (« Sophie M. », `sophie.m@exemple.fr`) |
 
 Pour voir la boucle complète, ouvre les deux liens **dans le même navigateur** (deux onglets) : enregistre une prise côté bénéficiaire et envoie-la, elle apparaît « À relire » côté coach ; annote-la et envoie le rapport, il apparaît dans l'espace bénéficiaire. Le code `REPETE` est aussi pré-rempli dans la page « Mon espace ».
 
-Le parcours d'essai (prénom « Camille », poste « agent d'accueil ») est créé automatiquement au premier chargement, et recréé s'il est supprimé (`TRIAL_CODE` dans `src/lib/store.js`). Il ne contient aucune prise fictive. À retirer en production, avec la connexion coach simulée (`TRIAL_LOGIN` dans `src/lib/store.js`, `Login` dans `src/Counselor.jsx`) : aucune vérification n'est faite, les identifiants servent uniquement à projeter l'usage.
+Le parcours d'essai (prénom « Camille », poste « agent d'accueil ») est créé quand le code `REPETE` est saisi ou ouvert par lien (rien n'est écrit sur l'appareil avant), et recréé s'il est supprimé (`TRIAL_CODE` dans `src/lib/store.js`). Il ne contient aucune réponse fictive. À retirer en production, avec la connexion coach de démonstration (`TRIAL_LOGIN` dans `src/lib/store.js`, `Espace` dans `src/App.jsx`) : aucune vérification n'est faite, les identifiants servent uniquement à projeter l'usage.
 
 ---
 
@@ -40,7 +40,7 @@ Parcours de prise en main :
 
 **Important, mode local :** toutes les données sont stockées dans le navigateur (voir « Architecture »). Le coach et le bénéficiaire doivent donc utiliser le **même navigateur sur le même appareil** pour que la boucle fonctionne (par exemple deux onglets, synchronisés automatiquement). Un backend est nécessaire pour un usage réel à distance : voir « Passage en production ».
 
-Au premier enregistrement analysé, le navigateur télécharge le modèle de transcription Whisper (environ 80 Mo, mis en cache ensuite) depuis Hugging Face, et le modèle de suivi du visage MediaPipe (environ 4 Mo) depuis Google. Aucune donnée personnelle n'est envoyée lors de ces téléchargements. En production, ces fichiers doivent être auto-hébergés (variables `VITE_MODELS_BASE_URL`, `VITE_MEDIAPIPE_WASM`, `VITE_FACE_MODEL`).
+Au premier enregistrement analysé, le navigateur télécharge le modèle de transcription Whisper (environ 80 Mo, mis en cache ensuite) depuis Hugging Face, le moteur MediaPipe 1.2.3 et ONNX Runtime depuis jsDelivr, et le modèle de suivi du visage MediaPipe (environ 4 Mo, version « float16/1 ») depuis Google. La vidéo et la voix ne sont pas envoyées, mais comme pour tout site, ces serveurs voient l'adresse IP de l'appareil : c'est dit dans « Vos données » (`#/vos-donnees/appareil`). Les versions sont figées (plus de `@latest`) ; la révision de Whisper se fige avec `VITE_WHISPER_REVISION`. En production, ces fichiers doivent être auto-hébergés (variables `VITE_MODELS_BASE_URL`, `VITE_MEDIAPIPE_WASM`, `VITE_FACE_MODEL`, `VITE_SEGMENTER_MODEL`). Les polices sont auto-hébergées dans `public/fonts/` (licence OFL, `LICENCES.txt`) : aucun appel à Google Fonts.
 
 ---
 
@@ -108,7 +108,7 @@ Les photos suivantes proviennent de Pexels et sont utilisées sous la [licence P
 | Suppression d'une prise, d'un parcours, de toutes ses données | `deleteTake`, `deleteParcours`, `withdrawConsent` |
 | Indicateurs agrégés non stigmatisants | `List` (`Counselor.jsx`) : prises à relire, parcours, rapports, taux de réentraînement, délai moyen de relecture |
 | Impression ou export PDF du rapport | `window.print()` + feuille de style d'impression (`GStyle`) |
-| Mentions d'information : CGU, notice RGPD, cycle de vie de la vidéo, exclusion des émotions | `src/legal.jsx` (textes de travail à valider) |
+| Information sur les données en trois niveaux (phrase, résumé, page), pages « Vos données », conditions, mentions légales, déclaration d'accessibilité | `src/content/legal.js` (textes), `src/content/organisme.js` (champs « À compléter par l'organisme »), `src/Legal.jsx` (pages et fenêtre de résumé) ; audit dans `docs/conformite.md` |
 
 ---
 
@@ -120,7 +120,8 @@ src/
   main.jsx            point d'entrée React
   App.jsx             routage par ancre, en-tête (menu repliable sous 1024 px, barre de progression de lecture), page « Mon espace », pied de page
                       routes : #/, #/a-propos(/faq), #/solutions(/beneficiaires|coachs|organismes), #/ressources, #/ressources/c/CATEGORIE,
-                      #/ressources/SLUG, #/demo, #/espace, #/s/CODE, #/coach ; #/fonctionnement redirige vers #/solutions
+                      #/ressources/SLUG, #/demo, #/espace, #/s/CODE, #/coach, #/vos-donnees(/video|assistant|droits|appareil|notice|coachs),
+                      #/conditions, #/mentions-legales, #/accessibilite ; #/fonctionnement redirige vers #/solutions
   Home.jsx            accueil : héros (accroche qui change, scènes photo + interface en boucle), phrase qui se colore au défilement,
                       strate épinglée « un seul dispositif » en quatre temps, cartes animées, parti pris, portes d'entrée, bandeau final
   About.jsx           « À propos » : mission, pourquoi, parti pris, cadre réglementaire, pour qui, construction, FAQ en accordéons
@@ -134,7 +135,9 @@ src/
   motion.jsx          apparition au défilement (IntersectionObserver), compteur, respect de « réduire les animations »
   tokens.js           jetons du référentiel v3 (couleurs, typographie, espacements, rayons, ombres, mouvement, contrastes)
   ui.jsx              composants de base (réexporte les jetons) : logos, Txt, Btn, Card, Tag, Notice, Modal, champs, Rail, GradHead, styles globaux
-  legal.jsx           modales : cycle de vie de la vidéo, émotions, CGU, notice RGPD
+  Legal.jsx           pages « Vos données » (#/vos-donnees/...), conditions, mentions légales, accessibilité ; fenêtre de résumé (niveau 2)
+  content/legal.js    fonds unique des textes d'information : phrases, résumés, textes complets (variantes prototype et production)
+  content/organisme.js  SEUL fichier à compléter par l'organisme : responsable, DPO, hébergeur, durées, base légale (null = « À compléter par l'organisme »)
   Beneficiary.jsx     espace bénéficiaire : code, consentement, espace, échauffement, question, enregistrement, traitement, rapport, partage
   Counselor.jsx       espace coach : identification locale, liste et indicateurs, création de parcours, détail, relecture
   Recorder.jsx        enregistreur caméra/micro + déclenchement du suivi du regard
@@ -220,7 +223,7 @@ Par ordre de priorité :
 5. **Auto-hébergement des modèles** (Whisper, MediaPipe) et, si besoin, proxy serveur pour la transcription et la reformulation (modèles hébergés en France).
 6. **Validation des seuils** de `analysis.js` (débit, pauses, mots d'appui) et de `gaze.js` (seuils `down` et `side`) sur des prises réelles, puis **audit de biais** sur des profils représentatifs (âge, genre, accent, quartiers prioritaires, primo-arrivants).
 7. **Accessibilité** : audit RGAA 4.1.2 complet, consignes en FALC, test au lecteur d'écran.
-8. **Analyse d'impact (DPIA)** et validation des textes de `legal.jsx` par le juridique et le DPO.
+8. **Analyse d'impact (AIPD), obligatoire**, note de qualification AI Act, compléter `src/content/organisme.js` (champs « À compléter par l'organisme ») et faire valider les textes de `src/content/legal.js` par le juridique et le DPO ; formation des coachs. Détail et priorités : `docs/conformite.md`. Avec `VITE_BACKEND_URL`, les textes passent en variante « production ».
 
 Limites connues :
 - la qualité de transcription de Whisper base en français est correcte mais imparfaite sur les prises courtes ou bruitées ; `whisper-small` est meilleur mais plus lourd ;

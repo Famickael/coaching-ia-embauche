@@ -117,7 +117,8 @@ function checkFile(file) {
       if (m[1] === "font" && /^["']inherit["']$/.test(v)) return;
       report(m.index, "T1", m[0] + " " + v, "...TY.* ou <Txt v>");
     });
-    each(/\b(Manrope|Inter|JetBrains|Segoe)\b|sans-serif|monospace/g, m => report(m.index, "T2", m[0], "FD, FB, FM via TY.*"));
+    // T2 ne vise pas les textes de contenu (src/content/), qui peuvent citer une police par son nom (mentions légales)
+    if (!file.startsWith("src/content/")) each(/\b(Manrope|Inter|JetBrains|Segoe)\b|sans-serif|monospace/g, m => report(m.index, "T2", m[0], "FD, FB, FM via TY.*"));
     // S1 espacement hors échelle
     each(/\b(padding|margin)([A-Z][A-Za-z]*|-[a-z-]+)?\s*:|\b(gap|rowGap|columnGap|row-gap|column-gap)\s*:/g, m => {
       const v = valueAt(text, m.index + m[0].length);

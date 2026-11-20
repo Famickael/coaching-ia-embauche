@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { T, TY, RAD, PAD, GAP, W, Card, Tag, Btn, Back, Link, IconBtn, Icon, I, ORG_NAME, Txt, Notice, Empty, Confirm, ConfirmMark, Field, Input, Textarea, Toggle, Modal, TimeChip, Bare } from "./ui.jsx";
-import { useStore, TRIAL_LOGIN, setCounselor, createParcours, deleteParcours, takesOf, updateTake, parcoursStatus } from "./lib/store.js";
+import { useStore, createParcours, deleteParcours, takesOf, updateTake, parcoursStatus } from "./lib/store.js";
 import { Player, DimCard, markersOf, useVideoUrl } from "./Report.jsx";
 import { fmt } from "./lib/analysis.js";
 
@@ -14,7 +14,7 @@ export default function Counselor() {
   const s = useStore();
   const [view, setView] = useState({ name: "list" });
   const [modal, setModal] = useState(null); // null | { step: "create" } | { step: "created", code }
-  if (!s.counselor) return <main className="rp-page" style={{ padding: PAD.page }}><Login /></main>;
+  if (!s.counselor) return null; // sans connexion, App affiche « Mon espace » (connexion intégrée)
 
   return (
     <main className="rp-page" style={{ maxWidth: W.wide, margin: "0 auto", padding: PAD.page, ...stack(GAP.grid) }}>
@@ -44,40 +44,6 @@ export default function Counselor() {
         </Modal>
       )}
     </main>
-  );
-}
-
-/* Connexion simulée : identifiants fictifs pré-remplis, aucune vérification.
-   À remplacer par une authentification forte en production (voir README). */
-function Login() {
-  const [email, setEmail] = useState(TRIAL_LOGIN.email);
-  const [pwd, setPwd] = useState(TRIAL_LOGIN.password);
-  const [forgot, setForgot] = useState(false);
-  const ok = /.+@.+\..+/.test(email) && pwd.length >= 4;
-  return (
-    <Card pad="lg" level={2} topbar="coach" style={{ maxWidth: W.narrow, margin: "0 auto", ...stack(GAP.grid) }}>
-      <div style={stack(12)}>
-        <div><Tag tone="primary">Espace coach</Tag></div>
-        <Txt v="h1" as="h1" color={T.navy}>Connexion</Txt>
-        <Txt v="body" color={T.body}>Accédez à vos parcours et aux prises que l'on vous a envoyées.</Txt>
-      </div>
-      <form onSubmit={e => { e.preventDefault(); if (ok) setCounselor(TRIAL_LOGIN.name); }} style={stack(GAP.field)}>
-        <Field id="login-email" label="Adresse électronique professionnelle">
-          <Input id="login-email" type="email" inputMode="email" autoCapitalize="none" autoCorrect="off" autoComplete="username" value={email} onChange={e => setEmail(e.target.value)} />
-        </Field>
-        <div style={stack(4)}>
-          <Field id="login-pwd" label="Mot de passe">
-            <Input id="login-pwd" type="password" autoComplete="current-password" value={pwd} onChange={e => setPwd(e.target.value)} />
-          </Field>
-          <div style={{ textAlign: "right" }}>
-            <Link onClick={() => setForgot(true)} style={{ ...TY.small, ...TY.link, minHeight: 44 }}>Mot de passe oublié ?</Link>
-          </div>
-          {forgot && <Notice tone="info" role="status">Contactez votre référent pour réinitialiser votre mot de passe.</Notice>}
-        </div>
-        <Btn kind="objective" full disabled={!ok}>Se connecter</Btn>
-        <Txt v="caption" color={T.muted} style={{ textAlign: "center" }}>Accès réservé aux coachs de {ORG_NAME}.</Txt>
-      </form>
-    </Card>
   );
 }
 

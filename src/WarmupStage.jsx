@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { T, ON, TY, RAD, W, MO, GRAD_NIGHT, ringOf, Btn, Chip, Icon, I } from "./ui.jsx";
 import { loadSegmenter, startBackground, BG_COLOR } from "./lib/background.js";
+import { PHRASES } from "./content/legal.js";
 
 /* Aperçu en direct pour l'échauffement : caméra ou voix seule.
    Rien n'est enregistré (aucun MediaRecorder) : l'image et le son ne quittent pas cet écran.
@@ -119,11 +120,11 @@ export default function WarmupStage({ setModal }) {
         {(phase === "idle" || phase === "error") && (
           <div className="rs-on-dark" style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", padding: 20 }}>
             <div style={{ textAlign: "center", color: ON.text, maxWidth: W.narrow, display: "grid", gap: 8 }}>
-              <div style={{ ...TY.h3, color: ON.text }}>{phase === "error" ? "Caméra ou micro indisponible" : "Un aperçu, rien de plus"}</div>
-              <div style={{ ...TY.small, color: ON.text }}>{phase === "error" ? error : "Activez la caméra pour vous voir pendant que vous parlez, ou restez en voix seule. Rien n'est enregistré."}</div>
+              <div style={{ ...TY.h3, color: ON.text }}>{phase === "error" ? "Caméra ou micro introuvable" : "Voulez-vous vous voir ?"}</div>
+              <div style={{ ...TY.small, color: ON.text }}>{phase === "error" ? error : "Activez la caméra pour vous voir pendant que vous parlez. Ou restez en voix seule."}</div>
               <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap", marginTop: 8 }}>
                 <Btn kind="white" onClick={() => open(false)} icon={I.video}>Activer la caméra</Btn>
-                <Btn kind="ghostDark" onClick={() => open(true)} icon={I.mic}>Voix seule</Btn>
+                <Btn kind="ghostDark" onClick={() => open(true)} icon={I.mic}>Rester en voix seule</Btn>
               </div>
             </div>
           </div>
@@ -157,9 +158,9 @@ export default function WarmupStage({ setModal }) {
         <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center", justifyContent: "space-between" }}>
           {phase === "video" ? (
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
-              <span id="bg-label" style={{ ...TY.label, color: T.navy }}>Fond :</span>
+              <span id="bg-label" style={{ ...TY.label, color: T.navy }}>Arrière-plan :</span>
               <div role="radiogroup" aria-labelledby="bg-label" style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-                {opt("none", "Aucun")}{opt("blur", "Flou")}{opt("color", "Couleur unie")}
+                {opt("none", "Normal")}{opt("blur", "Flou")}{opt("color", "Couleur unie")}
               </div>
             </div>
           ) : <span style={{ ...TY.small, color: T.muted }}>Idéal pour préparer un entretien téléphonique.</span>}
@@ -170,12 +171,13 @@ export default function WarmupStage({ setModal }) {
       )}
       {phase === "video" && (bgState === "loading" || bgState === "unavailable") && (
         <div role="status" style={{ ...TY.small, color: bgState === "unavailable" ? T.errorDk : T.muted }}>
-          {bgState === "loading" ? "Préparation du fond sur votre appareil…" : "Le changement de fond n'est pas disponible sur cet appareil."}
+          {bgState === "loading" ? "Préparation de l'arrière-plan sur votre appareil…" : "Votre appareil ne permet pas de changer l'arrière-plan."}
         </div>
       )}
       {setModal && (
-        <div style={{ display: "flex", justifyContent: "center" }}>
-          <Btn kind="ghost" size="sm" icon={I.shield} onClick={() => setModal("lifecycle")}>Que devient ma vidéo ?</Btn>
+        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 8, flexWrap: "wrap", ...TY.caption, color: T.muted }}>
+          <Icon d={I.lock} s={16} /> {PHRASES.warmup}
+          <Btn kind="ghost" size="sm" icon={I.shield} onClick={() => setModal("video")}>Que devient ma vidéo ?</Btn>
         </div>
       )}
     </div>

@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { T, ON, TY, RAD, W, GAP, GRAD_NIGHT, Btn, Back, Icon, I } from "./ui.jsx";
 import { startGaze } from "./lib/gaze.js";
+import { PHRASES } from "./content/legal.js";
 
 const MAX_SEC = 180;
 
@@ -13,7 +14,7 @@ function pickMime(audioOnly) {
 
 /* Enregistreur : caméra + micro, ou micro seul.
    onDone({ blob, duration, gaze, audioOnly }) est appelé quand la personne valide sa prise. */
-export default function Recorder({ question, onDone, onCancel, trackGaze = true, setModal, validateLabel = "Valider cette prise" }) {
+export default function Recorder({ question, onDone, onCancel, trackGaze = true, setModal, validateLabel = "Garder cette réponse" }) {
   const liveRef = useRef(null), streamRef = useRef(null), recRef = useRef(null), chunks = useRef([]);
   const gazeRef = useRef(null), t0 = useRef(0);
   const [phase, setPhase] = useState("idle"); // idle | live | recording | done | error
@@ -38,7 +39,7 @@ export default function Recorder({ question, onDone, onCancel, trackGaze = true,
       setTimeout(() => { if (liveRef.current && !audio) { liveRef.current.srcObject = stream; liveRef.current.play().catch(() => {}); } }, 0);
     } catch (e) {
       setError(e?.name === "NotAllowedError"
-        ? "L'accès a été refusé. Autorisez la caméra ou le micro dans les réglages du navigateur, ou choisissez l'enregistrement du son seul."
+        ? "L'accès a été refusé. Autorisez la caméra ou le micro dans les réglages du navigateur, ou choisissez « Voix seule »."
         : "Aucune caméra ou aucun micro n'est disponible sur cet appareil.");
       setPhase("error");
     }
@@ -102,11 +103,11 @@ export default function Recorder({ question, onDone, onCancel, trackGaze = true,
         {(phase === "idle" || phase === "error") && (
           <div className="rs-on-dark" style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", padding: 24 }}>
             <div style={{ textAlign: "center", color: ON.text, maxWidth: W.narrow, display: "grid", gap: 8 }}>
-              <div style={{ ...TY.h3, color: ON.text }}>{phase === "error" ? "Caméra ou micro indisponible" : "Prêt·e quand vous l'êtes"}</div>
-              <div style={{ ...TY.small, color: ON.text }}>{phase === "error" ? error : "L'aperçu reste sur votre appareil. Vous pouvez aussi enregistrer uniquement votre voix."}</div>
+              <div style={{ ...TY.h3, color: ON.text }}>{phase === "error" ? "Caméra ou micro introuvable" : "Quand vous voulez"}</div>
+              <div style={{ ...TY.small, color: ON.text }}>{phase === "error" ? error : "L'image reste sur votre appareil. Vous pouvez aussi répondre en voix seule."}</div>
               <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap", marginTop: 8 }}>
                 <Btn kind="objective" onClick={() => open(false)} icon={I.video}>Activer la caméra</Btn>
-                <Btn kind="ghostDark" onClick={() => open(true)} icon={I.mic}>Son seulement</Btn>
+                <Btn kind="ghostDark" onClick={() => open(true)} icon={I.mic}>Voix seule</Btn>
               </div>
             </div>
           </div>
@@ -114,7 +115,7 @@ export default function Recorder({ question, onDone, onCancel, trackGaze = true,
 
         {(phase === "live" || phase === "recording") && audioOnly && (
           <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", color: ON.text }}>
-            <div style={{ textAlign: "center", display: "grid", justifyItems: "center", gap: 8 }}><Icon d={I.mic} s={40} /><div style={{ ...TY.label }}>Enregistrement du son seul</div></div>
+            <div style={{ textAlign: "center", display: "grid", justifyItems: "center", gap: 8 }}><Icon d={I.mic} s={40} /><div style={{ ...TY.label }}>Voix seule</div></div>
           </div>
         )}
 
@@ -127,24 +128,25 @@ export default function Recorder({ question, onDone, onCancel, trackGaze = true,
         )}
         {(phase === "live" || phase === "recording") && (
           <div style={{ ...pill, right: 12, background: T.successDk, ...TY.tag }}>
-            <Icon d={I.lock} s={12} /> Traitement local
+            <Icon d={I.lock} s={12} /> Reste sur cet appareil
           </div>
         )}
       </div>
 
       {setModal && (
-        <div style={{ display: "flex", justifyContent: "center" }}>
-          <Btn kind="ghost" size="sm" icon={I.shield} onClick={() => setModal("lifecycle")}>Que devient ma vidéo ?</Btn>
+        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 8, flexWrap: "wrap", ...TY.caption, color: T.muted }}>
+          <Icon d={I.lock} s={16} /> {PHRASES.camera}
+          <Btn kind="ghost" size="sm" icon={I.shield} onClick={() => setModal("video")}>Que devient ma vidéo ?</Btn>
         </div>
       )}
 
       <div className="rp-actions" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: GAP.actions }}>
         {onCancel ? <Back onClick={() => { stop(); stopStream(); onCancel(); }} /> : <span />}
         {phase === "live" && <Btn kind="objective" onClick={start} icon={I.rec}>Démarrer l'enregistrement</Btn>}
-        {phase === "recording" && <Btn kind="secondary" onClick={stop} icon={I.stop}>Arrêter</Btn>}
+        {phase === "recording" && <Btn kind="secondary" onClick={stop} icon={I.stop}>Arrêter l'enregistrement</Btn>}
         {phase === "done" && (
           <div className="rp-actions" style={{ display: "flex", gap: GAP.actions, flexWrap: "wrap" }}>
-            <Btn kind="secondary" onClick={redo} icon={I.redo}>Refaire</Btn>
+            <Btn kind="secondary" onClick={redo} icon={I.redo}>Recommencer</Btn>
             <Btn kind="ai" onClick={() => onDone({ ...result, audioOnly })} iconRight={I.arrow}>{validateLabel}</Btn>
           </div>
         )}

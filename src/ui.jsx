@@ -145,7 +145,7 @@ const BTN_SIZE = {
 /* Bouton (référentiel 5.1). kind : objective (une seule action principale par écran), ai, primary, secondary,
    ghost, danger, white, ghostDark. Icônes par icon (à gauche) et iconRight (flèche de progression). as="span" :
    aspect de bouton sans interaction (à l'intérieur d'une carte cliquable). */
-function Btn({ children, onClick, kind = "primary", size = "md", disabled, full, icon, iconRight, as, type, className, style, ...rest }) {
+const Btn = React.forwardRef(function Btn({ children, onClick, kind = "primary", size = "md", disabled, full, icon, iconRight, as, type, className, style, ...rest }, ref) {
   const [hov, setHov] = useState(false);
   const h = hov && !disabled;
   const sh = SH.btn[kind];
@@ -171,12 +171,12 @@ function Btn({ children, onClick, kind = "primary", size = "md", disabled, full,
   const cls = [`rp-btn rp-btn-${size}`, className].filter(Boolean).join(" ");
   if (as === "span") return <span className={cls} style={st} aria-hidden={rest["aria-hidden"]}>{content}</span>;
   return (
-    <button type={type} onClick={disabled ? undefined : onClick} disabled={disabled} className={cls}
+    <button ref={ref} type={type} onClick={disabled ? undefined : onClick} disabled={disabled} className={cls}
       onMouseEnter={() => !disabled && setHov(true)} onMouseLeave={() => setHov(false)} style={st} {...rest}>
       {content}
     </button>
   );
-}
+});
 
 /* Bouton icône seul (référentiel 5.1) : 44 × 44, rond, aria-label obligatoire.
    variant : outline (bordure, fond blanc), plain (transparent), dark (sur fond sombre). */
@@ -596,9 +596,13 @@ function ScrollProgress() {
 /* ─── STYLES GLOBAUX ─── */
 
 const F = k => TY[k].font; // police d'un niveau, pour les règles CSS ci-dessous
+/* Polices auto-hébergées (public/fonts, sous-ensemble latin, licence OFL) : aucun appel à un service tiers. */
+const FONT_DIR = `${import.meta.env.BASE_URL}fonts/`;
+const FONT_FACES = [["Manrope", "manrope", [700, 800]], ["Inter", "inter", [400, 600, 700]], ["JetBrains Mono", "jetbrains-mono", [500, 700]], ["Atkinson Hyperlegible", "atkinson-hyperlegible", [400, 700]]]
+  .flatMap(([fam, file, ws]) => ws.map(w => `@font-face{font-family:'${fam}';font-style:normal;font-weight:${w};font-display:swap;src:url('${FONT_DIR}${file}-latin-${w}-normal.woff2') format('woff2')}`)).join("\n");
 const GStyle = () => (
   <style>{`
-    @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@700;800&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap');
+    ${FONT_FACES}
     *{box-sizing:border-box} body{margin:0;background:${T.bg}}
     html{overflow-y:scroll;scrollbar-gutter:stable}
     ::selection{background:${T.lavender};color:${T.surface}}
@@ -624,6 +628,9 @@ const GStyle = () => (
     .rp-link:hover{color:${T.primaryDk}!important}
     .rs-on-dark .rp-link:hover{color:${ON.text}!important}
     .rp-back:hover{color:${T.primary}!important}
+    .rp-menuitem:hover,.rp-menuitem:focus-visible{background:${T.primaryBg}}
+    .rp-trustlink:hover{color:${T.primary}!important;text-decoration:underline!important}
+    .rp-todo{white-space:normal}
     .rp-icbtn{width:44px;height:44px;border-radius:50%;display:inline-grid;place-items:center;cursor:pointer;flex-shrink:0;padding:0;transition:background-color ${MO.fast},border-color ${MO.fast}}
     .rp-icbtn-outline{border:1px solid ${T.line};background:${T.surface}}
     .rp-icbtn-outline:hover{border-color:${T.primary}}
@@ -832,7 +839,8 @@ const GStyle = () => (
       .rp-pad,.rs-pad{padding-left:16px!important;padding-right:16px!important}
       .rp-wide-m{width:100%}
       .rp-wide-m>button{width:100%}
-      .rp-trust{display:grid!important;grid-template-columns:1fr 1fr;gap:8px 16px!important}
+      .rp-trust{display:grid!important;grid-template-columns:1fr;gap:0 16px!important}
+      .rp-fgroups{grid-template-columns:minmax(0,1fr)!important;gap:16px!important}
       .rp-flow{flex-direction:column;gap:20px!important;overflow:visible!important}
       .rp-flow-step{flex:none!important;min-width:0!important}
       .rs-menu{top:${HEADER_H_M}px;padding:16px 16px 40px}
