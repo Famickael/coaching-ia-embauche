@@ -21,7 +21,7 @@ import { useStore, getState, setLastSpace, setCounselor, logoutCounselor, findPa
      #/ressources               centre de ressources (catégories, articles mis en avant, recherche)
      #/ressources/c/CATEGORIE   liste des ressources d'une catégorie
      #/ressources/SLUG          article
-     #/demo                     demande de démonstration
+     #/demo                     demande de prise en main accompagnée
      #/espace                   « Mon espace » : code d'accès ou connexion coach
      #/s/CODE                   espace bénéficiaire
      #/beneficiaire             saisie du code
@@ -55,7 +55,7 @@ function routeFromHash() {
 }
 
 /* Titre du document à chaque route (RGAA 8.6). */
-const TITLES = { home: "S'entraîner à l'entretien d'embauche", about: "À propos", solutions: "Solutions", resources: "Ressources", demo: "Demander une démo", espace: "Mon espace", benef: "Mon espace", coach: "Espace coach" };
+const TITLES = { home: "S'entraîner à l'entretien d'embauche", about: "À propos", solutions: "Solutions", resources: "Ressources", demo: "Demander une prise en main", espace: "Mon espace", benef: "Mon espace", coach: "Espace coach" };
 const titleOf = (route, counselor) => route.role === "legal" ? PAGES[route.page].title : route.role === "coach" && !counselor ? TITLES.espace : TITLES[route.role] || TITLES.home;
 
 const go = hash => { if (location.hash === hash) window.scrollTo({ top: 0 }); else location.hash = hash; };
@@ -161,7 +161,7 @@ function Nav({ route, s }) {
             </a>
             <SettingsMenu route={route} s={s} />
           </>) : (<>
-            <span className="rs-demo"><Btn kind="secondary" size="sm" onClick={() => go("#/demo")}>Demander une démo</Btn></span>
+            <span className="rs-demo"><Btn kind="secondary" size="sm" onClick={() => go("#/demo")}>Demander une prise en main</Btn></span>
             <Btn kind="primary" size="sm" onClick={openSpace}><span className="rp-hide-m" style={{ display: "inline-flex" }}><Icon d={I.user} s={16} /></span>Mon espace</Btn>
             <IconBtn ref={burger} variant="outline" className="rs-burger" aria-expanded={menu} aria-controls="rs-menu" label={menu ? "Fermer le menu" : "Ouvrir le menu"} icon={menu ? I.close : I.menu} onClick={() => setMenu(m => !m)} />
           </>)}
@@ -178,7 +178,7 @@ function Nav({ route, s }) {
             ))}
           </nav>
           <div style={{ display: "grid", gap: 12, marginTop: 24 }}>
-            <Btn kind="secondary" full onClick={() => { setMenu(false); go("#/demo"); }}>Demander une démo</Btn>
+            <Btn kind="secondary" full onClick={() => { setMenu(false); go("#/demo"); }}>Demander une prise en main</Btn>
           </div>
           <nav aria-label="Vos données" onClick={() => setMenu(false)} style={{ marginTop: 24, display: "grid", gap: 4 }}>
             <div style={{ ...TY.overline, color: T.muted }}>Vos données</div>
@@ -304,7 +304,6 @@ function Espace() {
             <div><Tag tone="primary">Coach</Tag></div>
             <Txt v="h2" as="h2" color={T.navy}>Je suis coach</Txt>
             <Txt v="body" color={T.body}>Créez des parcours, transmettez les codes d'accès et relisez les réponses que l'on vous envoie.</Txt>
-            <Notice tone="warning" role="">Connexion de démonstration : aucun mot de passe n'est vérifié.</Notice>
             <form onSubmit={login} style={{ display: "grid", gap: GAP.field, marginTop: 8 }}>
               <Field id="login-email" label="Adresse électronique professionnelle">
                 <Input id="login-email" type="email" inputMode="email" autoCapitalize="none" autoCorrect="off" autoComplete="username" value={email} onChange={e => setEmail(e.target.value)} />
@@ -340,7 +339,7 @@ function Footer() {
   ];
   const groups = [
     ["Vos données", [["#/vos-donnees", "Vos données"], ["#/vos-donnees/video", "Que devient ma vidéo ?"], ["#/vos-donnees/assistant", "L'assistant et l'IA"], ["#/vos-donnees/droits", "Vos droits"]]],
-    ["Le site", [["#/a-propos", "À propos"], ["#/solutions", "Solutions"], ["#/ressources", "Ressources"], ["#/a-propos/faq", "Questions fréquentes"], ["#/demo", "Demander une démo"]]],
+    ["Le site", [["#/a-propos", "À propos"], ["#/solutions", "Solutions"], ["#/ressources", "Ressources"], ["#/a-propos/faq", "Questions fréquentes"], ["#/demo", "Demander une prise en main"]]],
     ["Informations légales", [["#/conditions", "Conditions d'utilisation"], ["#/mentions-legales", "Mentions légales"], ["#/accessibilite", "Accessibilité : non conforme"]]],
   ];
   const lk = { ...TY.caption, ...TY.link, minHeight: 44, display: "inline-flex", alignItems: "center" };

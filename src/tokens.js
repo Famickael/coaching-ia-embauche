@@ -129,7 +129,7 @@ export const MO = {
   reveal: ".7s", slow: ".9s", fade: "1.1s", soft: "cubic-bezier(.45,0,.55,1)",   // pages publiques (v3.1) : apparitions, étapes, fondus de scène
 };
 /* Cadence des éléments qui tournent seuls (ms) : scènes du héros, fin d'accroche. */
-export const PACE = { scene: 7000, accroche: 3600 };
+export const PACE = { scene: 11500, accroche: 5000 };
 export const Z = { nav: 50, modal: 100 };
 
 /* Champ de saisie (section 5.3). */

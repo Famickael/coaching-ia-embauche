@@ -22,13 +22,13 @@ export const fill = (q, poste) => q.replace("{poste}", posteLabel(poste) || "ce 
 /* Échauffement : une seule phrase à la fois, à dire à voix haute. Rien n'est enregistré. */
 export const WARMUP_PHRASES = [
   "Bonjour, je m'appelle {prenom} et je vous remercie de me recevoir.",
-  "Je suis ravi·e d'être ici aujourd'hui pour parler du poste de {poste}.",
+  "Merci de me recevoir aujourd'hui pour parler du poste de {poste}.",
   "Je m'intéresse au métier de {poste} depuis plusieurs mois.",
   "Ce qui me plaît dans le métier de {poste}, c'est le contact avec les gens.",
-  "Dans mon dernier emploi, j'étais chargé·e d'accueillir et d'orienter le public.",
+  "Dans mon dernier emploi, j'accueillais et j'orientais le public.",
   "J'aime apprendre de nouvelles choses et je m'adapte vite.",
   "Je suis quelqu'un de ponctuel et d'organisé.",
-  "Je travaille bien en équipe, et je sais aussi avancer seul·e.",
+  "Je travaille bien en équipe, et je sais aussi travailler en autonomie.",
   "Pendant ma formation, j'ai appris à respecter des consignes précises.",
   "Je peux vous donner un exemple concret de ce que j'ai réalisé.",
   "Ma principale qualité, c'est la persévérance.",
@@ -43,7 +43,7 @@ export const WARMUP_PHRASES = [
   "Je vous remercie pour cet échange, au plaisir de vous revoir.",
 ];
 
-/* Consignes de relance : une manière différente de redire la même phrase. */
+/* Consignes : une manière différente de redire la même phrase. */
 export const WARMUP_PROMPTS = [
   "Lisez-la une première fois, tranquillement, à voix haute.",
   "Redites-la un peu plus lentement, en articulant chaque mot.",

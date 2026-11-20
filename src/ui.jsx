@@ -28,7 +28,7 @@ function RepetLogo({ s = 22, dark = false, tagline = true }) {
       <img src={LOGO_SYM} alt="" aria-hidden style={{ height: s * 2.1, width: "auto", display: "block", filter: dark ? "brightness(0) invert(1)" : "none" }} />
       <div style={{ display: "flex", flexDirection: "column", gap: tagline ? 2 : 0 }}>
         <img src={LOGO_WORD} alt="La Répét'" style={{ height: wordH, width: "auto", display: "block", filter: dark ? "brightness(0) invert(1)" : "none" }} />
-        {tagline && <div style={{ font: `400 ${s * 0.44}px ${FB}`, color: dark ? ON.text : T.muted }}>Coach IA d'entretien</div>}
+        {tagline && <div style={{ font: `400 ${s * 0.44}px ${FB}`, color: dark ? ON.text : T.muted }}>S'entraîner à l'entretien</div>}
       </div>
     </div>
   );
@@ -630,7 +630,6 @@ const GStyle = () => (
     .rp-back:hover{color:${T.primary}!important}
     .rp-menuitem:hover,.rp-menuitem:focus-visible{background:${T.primaryBg}}
     .rp-trustlink:hover{color:${T.primary}!important;text-decoration:underline!important}
-    .rp-todo{white-space:normal}
     .rp-icbtn{width:44px;height:44px;border-radius:50%;display:inline-grid;place-items:center;cursor:pointer;flex-shrink:0;padding:0;transition:background-color ${MO.fast},border-color ${MO.fast}}
     .rp-icbtn-outline{border:1px solid ${T.line};background:${T.surface}}
     .rp-icbtn-outline:hover{border-color:${T.primary}}

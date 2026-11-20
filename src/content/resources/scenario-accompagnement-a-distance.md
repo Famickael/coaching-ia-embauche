@@ -43,7 +43,7 @@ Dans ce scénario, plusieurs effets seraient attendus, à vérifier sur le terra
 - l'organisme pourrait suivre l'usage du dispositif grâce aux seuls indicateurs agrégés, sans suivi individuel des performances.
 
 > [!attention] Points de vigilance
-> L'accès à un appareil avec caméra et une connexion correcte ne va pas de soi : le mode voix seule et un poste en libre accès à l'antenne sont des alternatives à prévoir. Le prototype stocke aujourd'hui les données dans le navigateur ; un usage réel à distance suppose la mise en production d'un backend.
+> L'accès à un appareil avec caméra et une connexion correcte ne va pas de soi : le mode voix seule et un poste en libre accès à l'antenne sont des alternatives à prévoir. La relecture à distance suppose que l'organisme ait raccordé l'outil à son serveur.
 
 ## Pour aller plus loin
 

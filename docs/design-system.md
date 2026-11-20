@@ -437,8 +437,8 @@ Remplace 1000, 920, 820, 720, 680, 640, 580, 560, 460.
 | `MO.slow` (v3.1) | 900 ms | Fin d'accroche qui change, étapes et visuels de la strate épinglée |
 | `MO.fade` (v3.1) | 1,1 s | Fondu entre deux scènes du héros |
 | `MO.soft` (v3.1) | `cubic-bezier(.45,0,.55,1)` | Courbe douce (ease-in-out) des transitions lentes ci-dessus |
-| `PACE.scene` (v3.1) | 7 000 ms | Durée d'une scène du héros |
-| `PACE.accroche` (v3.1) | 3 600 ms | Durée de chaque fin d'accroche |
+| `PACE.scene` (v3.2) | 11 500 ms | Durée d'une scène du héros (laisse le temps de lire la scène à côté du titre). Pause au survol, au focus et par le bouton pause |
+| `PACE.accroche` (v3.2) | 5 000 ms | Durée de chaque fin d'accroche |
 | Écran de chargement (v3.1) | 1,9 s minimum, fondu de sortie 0,6 s | Durée comptée depuis le début de la navigation, pour jouer une fois l'animation complète (bulles qui se rejoignent, puis trois points). « Réduire les animations » : écran statique, 0,6 s. Navigateur piloté : retrait immédiat. Retrait de secours en CSS à 10 s (`index.html`, `src/Loader.jsx`) |
 
 Les pages publiques (accueil, à propos, solutions, ressources) utilisent les durées lentes ; l'application (espaces bénéficiaire et coach) garde `MO.fast`, `MO.base` et `MO.enter` pour rester réactive.
@@ -505,7 +505,7 @@ Décrire, ne jamais noter. Formulation positive, appui avant exploration. Un bou
 | C3 | une opacité est concaténée à un jeton | `\$\{[^}]+\}[0-9a-fA-F]{2}(?![0-9a-zA-Z])` | aucune |
 | C4 | un nom de couleur CSS est utilisé | `:\s*"(white\|black\|red\|green\|blue\|gray\|grey)"` | `"transparent"`, `"currentColor"`, `"inherit"`, `"none"` |
 | T1 | une propriété typographique est écrite | `\b(font\|fontSize\|fontWeight\|fontFamily\|lineHeight\|letterSpacing)\s*:` dans un objet de style | `fontStyle`, `font: "inherit"` |
-| T2 | une famille est nommée | `Manrope\|Inter\|JetBrains\|Segoe\|sans-serif\|monospace` | aucune |
+| T2 | une famille est nommée | `Manrope\|Inter\|JetBrains\|Segoe\|sans-serif\|monospace` | textes de contenu de `src/content/` (mentions légales qui citent les polices) |
 | S1 | `padding*`, `margin*`, `gap`, `rowGap`, `columnGap` contient un nombre de px hors de l'échelle `SPACE` | tout nombre, isolé ou dans une chaîne `"12px 16px"` ; signe négatif admis | `auto`, `%`, `vh`, `svh`, `em`, `calc()` ; les valeurs `PAD.*`, `GAP.*`, `sp(n)` |
 | S2 | `sp(n)` est appelé avec un `n` tel que `4n` est hors échelle | `sp\(([\d.]+)\)` | aucune |
 | S3 | `<Card pad=` reçoit autre chose que `"none"`, `"sm"`, `"md"`, `"lg"` | `<Card[^>]*\bpad=\{` | aucune |
@@ -644,5 +644,11 @@ Dégradés : `GRAD` et `GRAD_AI` recomposés selon 1.3, `GRAD_NIGHT` ajouté, `G
 | 2026-11-20 | « Se connecter » (coach) et « Générer le code » en `objective` ; « Échauffement · ni enregistré, ni analysé » et « Partage · vous décidez » en étiquette `primary` (contexte), « Rapport reçu » en `success` | Rôles des couleurs (1.1, 5.4) |
 | 2026-11-20 | Page « Mon espace » ramenée à `W.read` ; liste déroulante des métiers : seule dérogation (K4, option de combobox ARIA) | Largeurs et sémantique |
 | 2026-11-20 | Écran de chargement : 1,9 s minimum, fondu 0,6 s ; 0,6 s si « réduire les animations » | Demande du propriétaire : laisser voir l'animation |
+
+| 2026-11-20 | Polices auto-hébergées (`public/fonts/`, `@font-face` générés dans `GStyle`), plus aucun appel à Google Fonts ; Atkinson Hyperlegible ajoutée pour l'option « police lisible » | Conformité (docs/conformite.md, T1) |
+| 2026-11-20 | Règle T2 : exception pour `src/content/` (textes qui citent une police) | Mentions légales |
+| 2026-11-20 | `PACE.scene` 11 500 ms, `PACE.accroche` 5 000 ms | Demande du propriétaire : laisser le temps de lire les scènes |
+| 2026-11-20 | En-tête des espaces : lien « Vos données » et menu « Mes paramètres » (bouton `aria-expanded`, `role="menu"`, flèches, Début, Fin, Échap) à la place de la pastille d'espace | Conformité et demande du propriétaire |
+| 2026-11-20 | Pied de page en trois groupes de liens (Vos données, Le site, Informations légales) ; engagements cliquables | docs/conformite.md, 4.3 |
 
 Ajouter une ligne à chaque évolution d'une règle ou d'une échelle.

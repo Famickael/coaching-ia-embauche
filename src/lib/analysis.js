@@ -1,10 +1,10 @@
-/* Analyse descriptive d'une prise.
+/* Analyse descriptive d'une réponse.
    Entrée : segments horodatés de la transcription [{start, end, text}], durée, poste visé,
    mesures de regard issues de gaze.js (facultatif).
    Sortie : { synthese, dimensions: [{id, titre, type: "appui"|"explorer", observation, conseil, t}], metrics }.
 
    Règles de conception (AI Act art. 5(1)(f), partis pris pédagogiques) :
-   - uniquement des faits observables (débit, mots d'appui, pauses, structure, regard) ;
+   - uniquement des faits observables (rythme de parole, petits mots répétés, pauses, construction, regard) ;
    - aucune note, aucun score, aucune déduction d'émotion ou de trait de personnalité ;
    - points d'appui présentés avant les points à explorer ;
    - repères présentés comme des conventions, avec une formulation positive.
@@ -31,7 +31,7 @@ export function computeMetrics(segments, duration) {
   const speakingTime = segments.reduce((a, s) => a + Math.max(0, (s.end ?? s.start) - s.start), 0) || duration;
   const wpm = speakingTime > 5 ? Math.round((w.length / speakingTime) * 60) : null;
 
-  // mots d'appui, avec le premier horodatage d'apparition
+  // petits mots répétés, avec le premier horodatage d'apparition
   const lower = " " + text.toLowerCase().replace(/[.,;!?]/g, " ") + " ";
   const fillers = {};
   for (const f of FILLERS) {
@@ -77,8 +77,8 @@ export function localAnalysis({ segments, duration, gaze }) {
   if (m.wordCount < 15) {
     return {
       metrics: m,
-      synthese: "La prise est très courte ou la voix a été peu captée. Vous pouvez recommencer en vous rapprochant du micro, rien n'est enregistré sans votre accord.",
-      dimensions: [{ id: "captation", titre: "Captation du son", type: "explorer", t: 0,
+      synthese: "Votre réponse est très courte, ou le micro vous a peu entendu. Vous pouvez recommencer en vous rapprochant du micro.",
+      dimensions: [{ id: "captation", titre: "Son enregistré", type: "explorer", t: 0,
         observation: `${m.wordCount} mots ont été reconnus sur ${fmt(m.duration)}.`,
         conseil: "Vérifiez que le micro est autorisé et parlez à environ 50 cm de l'écran." }],
     };
@@ -105,8 +105,8 @@ export function localAnalysis({ segments, duration, gaze }) {
       id: "pauses", titre: "Pauses", type: m.pauses.length <= 3 ? "appui" : "explorer", t: longest.t,
       observation: `${m.pauses.length} pause${m.pauses.length > 1 ? "s" : ""} de plus de 2 secondes, la plus longue à ${fmt(longest.t)} (${Math.round(longest.d)} s).`,
       conseil: m.pauses.length <= 3
-        ? "Quelques pauses rythment le propos et laissent le temps de réfléchir. C'est une ressource."
-        : "Les pauses sont nombreuses. Préparer deux ou trois mots-clés par question peut aider à enchaîner.",
+        ? "Quelques pauses rythment la réponse et laissent le temps de réfléchir. Vous pouvez les garder."
+        : "Préparer deux ou trois mots-clés par question peut aider à enchaîner.",
     });
   }
 
@@ -114,7 +114,7 @@ export function localAnalysis({ segments, duration, gaze }) {
   if (m.concreteAt != null) {
     dims.push({
       id: "exemples", titre: "Exemples concrets", type: "appui", t: m.concreteAt,
-      observation: `Vous appuyez votre propos sur un élément précis : « ${m.concreteText.slice(0, 90)}${m.concreteText.length > 90 ? "…" : ""} ».`,
+      observation: `Vous citez un élément précis : « ${m.concreteText.slice(0, 90)}${m.concreteText.length > 90 ? "…" : ""} ».`,
       conseil: "Les exemples datés ou chiffrés rendent une réponse plus facile à retenir pour un recruteur.",
     });
   } else {
@@ -125,13 +125,13 @@ export function localAnalysis({ segments, duration, gaze }) {
     });
   }
 
-  // Mots d'appui
+  // Petits mots répétés
   const perMin = m.speakingTime ? (m.fillerTotal / m.speakingTime) * 60 : 0;
   if (m.fillerTotal) {
     const top = Object.entries(m.fillers).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([f, n]) => `« ${f} » (${n})`).join(", ");
     dims.push({
-      id: "appui", titre: "Mots d'appui", type: perMin <= 4 ? "appui" : "explorer", t: m.firstFillerAt ?? 0,
-      observation: `${m.fillerTotal} mot${m.fillerTotal > 1 ? "s" : ""} d'appui repéré${m.fillerTotal > 1 ? "s" : ""} : ${top}.`,
+      id: "appui", titre: "Petits mots répétés", type: perMin <= 4 ? "appui" : "explorer", t: m.firstFillerAt ?? 0,
+      observation: `${m.fillerTotal} petit${m.fillerTotal > 1 ? "s" : ""} mot${m.fillerTotal > 1 ? "s" : ""} répété${m.fillerTotal > 1 ? "s" : ""} : ${top}.`,
       conseil: perMin <= 4
         ? "Leur présence reste discrète et ne gêne pas la compréhension."
         : "C'est très courant à l'oral. Marquer un temps de silence à la place, surtout en début de phrase, suffit souvent.",
@@ -140,7 +140,7 @@ export function localAnalysis({ segments, duration, gaze }) {
 
   // Structure
   dims.push({
-    id: "structure", titre: "Structure du propos", type: m.hasClosing && m.avgSentence <= 30 ? "appui" : "explorer", t: m.closingAt ?? 0,
+    id: "structure", titre: "Construction de la réponse", type: m.hasClosing && m.avgSentence <= 30 ? "appui" : "explorer", t: m.closingAt ?? 0,
     observation: `${m.sentences} phrase${m.sentences > 1 ? "s" : ""}, ${m.avgSentence} mots en moyenne par phrase${m.hasClosing ? ", avec une phrase de conclusion" : ", sans phrase de conclusion repérée"}.`,
     conseil: m.hasClosing
       ? (m.avgSentence <= 30 ? "La réponse se termine par une idée de synthèse, ce qui facilite la relance du recruteur." : "Des phrases plus courtes rendraient la conclusion encore plus nette.")
@@ -150,7 +150,7 @@ export function localAnalysis({ segments, duration, gaze }) {
   // Répétitions
   if (m.repeated.length) {
     dims.push({
-      id: "repetitions", titre: "Vocabulaire", type: "explorer", t: 0,
+      id: "repetitions", titre: "Mots qui reviennent", type: "explorer", t: 0,
       observation: `Mots revenus souvent : ${m.repeated.map(([x, n]) => `« ${x} » (${n})`).join(", ")}.`,
       conseil: "Vous pouvez préparer un ou deux synonymes pour varier, si vous le souhaitez.",
     });
@@ -172,8 +172,8 @@ export function localAnalysis({ segments, duration, gaze }) {
   dims.sort((a, b) => (a.type === b.type ? a.t - b.t : a.type === "appui" ? -1 : 1));
   const appuis = dims.filter(d => d.type === "appui").map(d => d.titre.toLowerCase());
   const synthese = appuis.length
-    ? `Points d'appui repérés : ${appuis.join(", ")}. Les autres repères sont des pistes à explorer si vous le souhaitez.`
-    : "Les repères ci-dessous décrivent votre prise. Ce sont des pistes à explorer, à votre rythme.";
+    ? `Vos points d'appui : ${appuis.join(", ")}. Les autres repères sont des pistes, à explorer si vous le souhaitez.`
+    : "Les repères ci-dessous décrivent votre réponse. Ce sont des pistes, à explorer si vous le souhaitez.";
 
   return { metrics: m, synthese, dimensions: dims };
 }

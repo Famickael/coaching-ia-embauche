@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { T, Bare, HL, GRAD_NIGHT, GRAD, GRAD_TITLE, GRAD_ACCROCHE, GRAD_HERO, GRAD_SECTION, GLOW, PACE, RAD, SH, RepetMark, Halo, Tag, Btn, Card, Icon, I, ON, TY, W, MO, SI, img, Eyebrow, Section, IconTile, Link, HEADER_H, HEADER_H_M } from "./ui.jsx";
 import { useReducedMotion, useCount, useInView, Reveal } from "./motion.jsx";
 
-/* Page d'accueil : héros (accroche qui change, scènes en boucle), strate épinglée « un seul dispositif »,
+/* Page d'accueil : héros (accroche qui change, scènes en boucle), strate épinglée en quatre étapes,
    parti pris, portes d'entrée, bandeau final. Le détail par public est sur la page Solutions. */
 
 export default function Home({ go, openSpace }) {
@@ -22,7 +22,7 @@ export default function Home({ go, openSpace }) {
 }
 
 /* ─── Héros ─── */
-const ENDINGS = ["sans pression.", "à votre rythme.", "avec vos propres mots.", "avec confiance."];
+const ENDINGS = ["à votre rythme.", "sans jugement.", "avec vos mots.", "en confiance."];
 
 function useTicker(n, ms, paused) {
   const [i, setI] = useState(0);
@@ -45,11 +45,11 @@ function Hero({ go }) {
         <div className="rs-hero">
           <div className="up" style={{ display: "grid", gap: 24, justifyItems: "start" }}>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              <Tag tone="ai" icon={I.sparkle}>Assistant IA</Tag>
+              <Tag tone="primary" icon={I.user}>Avec votre coach</Tag>
               <Tag tone="primary">Sans note, sans jugement</Tag>
             </div>
             <h1 className="ty-display" style={{ ...TY.display, color: T.primary, margin: 0 }}>
-              <span className="rs-sr">Répétez votre entretien d'embauche, sans pression, à votre rythme, avec vos propres mots, avec confiance.</span>
+              <span className="rs-sr">Répétez votre entretien d'embauche, à votre rythme, sans jugement, avec vos mots, en confiance.</span>
               <span aria-hidden>
                 <span style={{ background: GRAD_TITLE, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>Répétez votre entretien d'embauche,</span>
                 <span className="rs-rot">
@@ -60,14 +60,15 @@ function Hero({ go }) {
               </span>
             </h1>
             <p className="ty-lead" style={{ ...TY.lead, color: T.body, maxWidth: 520, margin: 0 }}>
-              Entraînez-vous seul, face à votre caméra, autant de fois que vous le souhaitez. Un assistant <strong style={{ color: T.navy }}>décrit votre réponse sans la noter</strong>, puis votre coach vous aide à aller plus loin.
+              Vous répondez à des questions d'entretien, seul, autant de fois que vous voulez. Un assistant IA <strong style={{ color: T.navy }}>décrit votre réponse, sans la noter</strong>. Vous choisissez ce que vous envoyez à votre coach.
             </p>
             <div className="rp-wide-m" style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
               <Btn kind="objective" size="lg" onClick={() => go("#/espace")} iconRight={I.arrow}>Lancer ma première répétition</Btn>
-              <Btn kind="secondary" size="lg" onClick={() => go("#/solutions")}>Voir les solutions</Btn>
+              <Btn kind="secondary" size="lg" onClick={() => go("#/solutions")}>Voir comment ça marche</Btn>
             </div>
-            <div style={{ ...TY.small, color: T.muted }}>
-              Aucun compte à créer. Vous êtes coach ? <Link onClick={() => go("#/coach")}>Accéder à l'espace coach</Link>
+            <div style={{ ...TY.small, color: T.muted, display: "grid", gap: 4 }}>
+              <span>Pas de compte à créer : votre coach vous donne un code d'accès.</span>
+              <span>Vous êtes coach ? <Link onClick={() => go("#/espace")}>Connectez-vous à l'espace coach</Link>.</span>
             </div>
           </div>
           <HeroStage reduced={reduced} />
@@ -80,18 +81,18 @@ function Hero({ go }) {
 /* Scènes du héros : une photo en situation et un petit morceau d'interface. Jamais de score ni de courbe. */
 const SCENES = [
   {
-    src: "recruteuse.webp", alt: "Une recruteuse écoute la personne en face d'elle, un bloc-notes à la main.", label: "Question de recruteuse et aperçu du débrief",
+    src: "recruteuse.webp", alt: "Une recruteuse écoute la personne en face d'elle, un bloc-notes à la main.", label: "Une question de recruteuse et le retour de l'assistant",
     bubble: { who: "Question de la recruteuse", text: "« Parlez-moi d'un problème que vous avez résolu au travail. »" },
     card: "debrief",
   },
   {
-    src: "entrainement.webp", alt: "Un homme s'entraîne devant son ordinateur portable, écouteurs aux oreilles.", label: "Entraînement et repères de l'assistant",
+    src: "entrainement.webp", alt: "Un homme s'entraîne devant son ordinateur portable, écouteurs aux oreilles.", label: "Un entraînement et les repères de l'assistant",
     bubble: { who: "Question 2 sur 3", text: "« Pourquoi ce poste vous intéresse-t-il ? »", rec: "0:42" },
     card: "reperes",
   },
   {
-    src: "coach.webp", alt: "Un coach relit un entretien sur son ordinateur et prend des notes.", label: "Note horodatée du coach",
-    bubble: { who: "Note du coach", text: "« Très bon exemple, gardez-le pour le jour de l'entretien. »", t: "0:35" },
+    src: "coach.webp", alt: "Un coach relit une réponse sur son ordinateur et prend des notes.", label: "Une remarque du coach",
+    bubble: { who: "Remarque du coach", text: "« Très bon exemple, gardez-le pour le jour de l'entretien. »", t: "0:35" },
     card: "rapport",
   },
 ];
@@ -101,7 +102,7 @@ function HeroStage({ reduced }) {
   const [stopped, setStopped] = useState(false);
   const [i, setI] = useTicker(SCENES.length, PACE.scene, reduced || hover || stopped);
   return (
-    <div className="rs-stage" role="group" aria-roledescription="carrousel" aria-label="Aperçu de La Répét'"
+    <div className="rs-stage" role="group" aria-roledescription="carrousel" aria-label="La Répét' en trois images"
       onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)} onFocus={() => setHover(true)} onBlur={() => setHover(false)}>
       {SCENES.map((sc, k) => <Scene key={sc.src} sc={sc} on={k === i} first={k === 0} />)}
       <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 4, marginTop: 40 }}>
@@ -109,7 +110,7 @@ function HeroStage({ reduced }) {
           <Bare key={sc.src} className="rs-dot" aria-current={k === i ? "true" : "false"} aria-label={`Scène ${k + 1} sur ${SCENES.length} : ${sc.label}`} onClick={() => setI(k)}><i /></Bare>
         ))}
         {!reduced && (
-          <Bare className="rs-dot" aria-label={stopped ? "Reprendre le défilement des scènes" : "Mettre en pause le défilement des scènes"} onClick={() => setStopped(v => !v)} style={{ color: T.primary, width: 44, height: 44, display: "inline-grid", placeItems: "center" }}>
+          <Bare className="rs-dot" aria-label={stopped ? "Relancer les images" : "Mettre les images en pause"} onClick={() => setStopped(v => !v)} style={{ color: T.primary, width: 44, height: 44, display: "inline-grid", placeItems: "center" }}>
             <Icon d={stopped ? I.play : I.pause} s={16} />
           </Bare>
         )}
@@ -162,10 +163,10 @@ export const Pin = ({ ap, s = 14 }) => (
 const ReperesCard = () => (
   <div style={{ background: T.surface, borderRadius: RAD.md, padding: 16, boxShadow: SH.glowAi, display: "grid", gap: 12, borderTop: `4px solid ${T.violet}` }}>
     <div style={{ display: "flex", alignItems: "center", gap: 8, ...TY.overline, color: T.violet }}><Icon d={I.sparkle} s={12} c={T.violet} /> Repères de l'assistant</div>
-    {[[true, "Un exemple concret à 0:35"], [true, "Environ 140 mots par minute"], [false, "« euh » revient 4 fois"]].map(([ap, t]) => (
+    {[[true, "Un exemple concret à 0:35"], [true, "Environ 140 mots par minute"], [false, "« Euh » revient 4 fois"]].map(([ap, t]) => (
       <div key={t} style={{ display: "flex", alignItems: "center", gap: 8 }}>
         <Pin ap={ap} /><span style={{ ...TY.small, color: T.navy, flex: 1 }}>{t}</span>
-        <span style={{ ...TY.label, color: ap ? T.accent : T.violet }}>{ap ? "Appui" : "À explorer"}</span>
+        <span style={{ ...TY.label, color: ap ? T.accent : T.violet }}>{ap ? "Point d'appui" : "À explorer"}</span>
       </div>
     ))}
   </div>
@@ -175,18 +176,18 @@ const RapportCard = () => (
   <div style={{ background: T.surface, borderRadius: RAD.md, padding: 16, boxShadow: SH.glow, display: "flex", gap: 12, alignItems: "center" }}>
     <div style={{ width: 40, height: 40, borderRadius: "50%", background: T.successBg, display: "grid", placeItems: "center", flexShrink: 0 }}><Icon d={I.check} s={20} c={T.successDk} /></div>
     <div>
-      <div style={{ ...TY.h4, color: T.navy }}>Rapport prêt pour le débriefing</div>
-      <div style={{ ...TY.caption, color: T.muted }}>Notes horodatées et commentaires sur les repères</div>
+      <div style={{ ...TY.h4, color: T.navy }}>Rapport de votre coach reçu</div>
+      <div style={{ ...TY.caption, color: T.muted }}>Ses remarques, placées au bon moment de votre réponse</div>
     </div>
   </div>
 );
 
 /* ─── Strate épinglée : le panneau reste fixe, seul son contenu change au fil du défilement ─── */
 const STEPS = [
-  { k: "S'entraîner", t: "Vous vous entraînez quand vous voulez", d: "Choisissez une question adaptée au métier visé, lancez la caméra ou le micro seul, et répondez. Recommencez autant de fois que vous le souhaitez.", V: VisCamera },
-  { k: "Recevoir un retour", t: "L'assistant décrit ce qu'il observe", d: "Débit, pauses, exemples concrets, mots d'appui, structure, direction du regard : des faits situés dans votre réponse, sans note ni émotion déduite.", V: VisReport },
-  { k: "Partager", t: "Vous décidez de ce que vous partagez", d: "La vidéo reste sur votre appareil. Elle part vers votre coach seulement si vous le choisissez, entretien par entretien.", V: VisShare },
-  { k: "Débriefer", t: "Votre coach annote, vous en parlez ensemble", d: "Votre coach relit, nuance et commente des moments précis. Son rapport sert de base au débriefing en atelier ou en rendez-vous.", V: VisCoach },
+  { k: "S'entraîner", t: "Vous vous entraînez quand vous voulez", d: "Choisissez une question liée au métier que vous visez. Répondez face à la caméra, ou en voix seule. Recommencez autant de fois que vous voulez.", V: VisCamera },
+  { k: "Recevoir un retour", t: "L'assistant décrit votre réponse", d: "Rythme de parole, pauses, exemples, regard : il vous dit ce qu'il a remarqué, et à quel moment. Il commence par ce qui fonctionne déjà.", V: VisReport },
+  { k: "Envoyer", t: "Vous décidez de ce que vous envoyez", d: "Votre vidéo reste sur votre appareil. Votre coach la voit seulement si vous la lui envoyez, réponse par réponse.", V: VisShare },
+  { k: "En parler", t: "Votre coach vous répond, vous en parlez ensemble", d: "Votre coach regarde votre réponse et ajoute ses remarques. Son rapport sert de point de départ à votre prochain rendez-vous ou atelier.", V: VisCoach },
 ];
 
 function Strate() {
@@ -239,7 +240,7 @@ function Strate() {
   const head = (
     <div style={{ display: "grid", gap: 12, maxWidth: W.read }}>
       <Eyebrow>Comment ça marche</Eyebrow>
-      <h2 className="ty-xl" style={{ ...TY.xl, color: T.navy, margin: 0 }}>Un seul dispositif, de l'entraînement au débriefing</h2>
+      <h2 className="ty-xl" style={{ ...TY.xl, color: T.navy, margin: 0 }}>Quatre étapes, de votre première réponse à l'échange avec votre coach</h2>
     </div>
   );
 
@@ -264,7 +265,7 @@ function Strate() {
   }
 
   return (
-    <section ref={sec} className="rs-strate" aria-label="Un seul dispositif, de l'entraînement au débriefing" style={{ height: `calc(100vh + ${N * 85}vh)`, background: GRAD_SECTION }}>
+    <section ref={sec} className="rs-strate" aria-label="Quatre étapes, de votre première réponse à l'échange avec votre coach" style={{ height: `calc(100vh + ${N * 85}vh)`, background: GRAD_SECTION }}>
       <div className="rs-panel">
         <div className="rs-pad" style={{ maxWidth: W.page, width: "100%", margin: "0 auto", padding: "0 24px", display: "flex", flexDirection: "column", gap: 32, height: "100%", justifyContent: "center", minHeight: 0 }}>
           {head}
@@ -344,8 +345,8 @@ function VisCamera() {
 const SEGS = [[0, 11], [13, 27], [29, 41], [44, 58], [60, 70], [73, 86], [88, 100]];
 const OBS = [
   { at: 4, time: "0:04", ap: true, d: 300, t: "Ouverture", txt: "Vous entrez directement dans le sujet." },
-  { at: 38, time: "0:35", ap: true, d: 900, t: "Exemples concrets", txt: "Une expérience précise pour appuyer." },
-  { at: 66, time: "1:01", ap: false, d: 1500, t: "Mots d'appui", txt: "« euh » revient quelques fois." },
+  { at: 38, time: "0:35", ap: true, d: 900, t: "Exemples concrets", txt: "Vous citez une expérience précise." },
+  { at: 66, time: "1:01", ap: false, d: 1500, t: "Petits mots répétés", txt: "« Euh » revient quelques fois." },
 ];
 
 function VisReport({ play }) {
@@ -358,7 +359,7 @@ function VisReport({ play }) {
         <div style={{ ...TY.h3, color: ON.text }}>Votre retour · question 1</div>
       </div>
       <div style={{ padding: "16px 24px 8px" }}>
-        <div style={{ ...TY.overline, color: T.muted }}>Chronologie de l'entretien</div>
+        <div style={{ ...TY.overline, color: T.muted }}>Déroulé de votre réponse</div>
         <div style={{ position: "relative", marginTop: 24 }}>
           <div style={{ position: "relative", height: 10, borderRadius: 4, background: T.lineLt, overflow: "hidden" }}>
             {SEGS.map(([a, b]) => <span key={a} style={{ position: "absolute", top: 0, bottom: 0, left: `${a}%`, width: `${b - a}%`, background: T.primary, borderRadius: 3 }} />)}
@@ -374,7 +375,7 @@ function VisReport({ play }) {
         <div style={{ display: "flex", justifyContent: "space-between", ...TY.time, color: T.muted, marginTop: 8 }}><span>0:00</span><span>1:32</span></div>
       </div>
       <div className="rs-tl-facts" style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", margin: "4px 24px 0", borderTop: `1px solid ${T.lineLt}`, borderBottom: `1px solid ${T.lineLt}` }}>
-        {[[wpm, "mots/min", "Débit"], [pauses, "", "Pauses"], ["1:32", "", "Durée"]].map(([n, u, l], i) => (
+        {[[wpm, "mots/min", "Rythme"], [pauses, "", "Pauses"], ["1:32", "", "Durée"]].map(([n, u, l], i) => (
           <div key={l} style={{ padding: "12px 0", textAlign: "center", borderLeft: i ? `1px solid ${T.lineLt}` : "none" }}>
             <div style={{ ...TY.num, color: T.navy, fontVariantNumeric: "tabular-nums" }}>{n}{u && <span style={{ ...TY.caption, color: T.muted, marginLeft: 4 }}>{u}</span>}</div>
             <div style={{ ...TY.overline, color: T.muted, marginTop: 4 }}>{l}</div>
@@ -423,7 +424,7 @@ function VisShare() {
         </div>
       </div>
       <div className="rs-in" style={{ ...TY.caption, color: T.muted, display: "flex", gap: 8, alignItems: "center", transitionDelay: ".9s" }}>
-        <Icon d={I.shield} s={16} c={T.primary} /> Vous pouvez supprimer une prise ou tout votre parcours à tout moment.
+        <Icon d={I.shield} s={16} c={T.primary} /> Vous pouvez supprimer une réponse, ou tout votre espace, à tout moment.
       </div>
     </div>
   );
@@ -438,7 +439,7 @@ function VisCoach() {
   );
   return (
     <div style={visBox}>
-      <div style={{ ...TY.overline, color: T.muted }}>Relecture du coach</div>
+      <div style={{ ...TY.overline, color: T.muted }}>Remarques de votre coach</div>
       <div style={{ position: "relative", marginTop: 16 }}>
         <div style={{ height: 6, borderRadius: 3, background: T.primaryBg }} />
         {OBS.map(o => <span key={o.at} style={{ position: "absolute", left: `${o.at}%`, top: -4, transform: "translateX(-50%)" }}><Pin ap={o.ap} /></span>)}
@@ -449,15 +450,16 @@ function VisCoach() {
       {note("0:48", "Ici, vous pouvez dire ce que vous avez fait, vous.", ".55s")}
       {note("1:01", "Une respiration suffit à la place du « euh ».", ".8s")}
       <div className="rs-in" style={{ display: "flex", alignItems: "center", gap: 8, ...TY.bodyStrong, color: T.primary, marginTop: 4, transitionDelay: "1.05s" }}>
-        <Icon d={SI.users} s={16} c={T.primary} /> Débriefing en atelier jeudi
+        <Icon d={SI.users} s={16} c={T.primary} /> Rendez-vous avec votre coach jeudi
       </div>
     </div>
   );
 }
 
 /* ─── Grande phrase qui se colore mot par mot au fil du défilement ─── */
-const PHRASE = [["Un"], ["entretien,"], ["ça"], ["se"], ["prépare"], ["à", 1], ["voix", 1], ["haute.", 1]];
-const PHRASE_SUB = "Alors répétez, écoutez-vous, recommencez. À votre rythme, sans note.";
+/* Deux phrases, une ou deux lignes à l'écran : la mécanique de coloration reste la même (mots-clés en dégradé). */
+const PHRASE = [["Un"], ["entretien,"], ["ça"], ["se"], ["prépare"], ["à", 1], ["voix", 1], ["haute.", 1], ["Entraînez-vous"], ["ici,"], ["en", 1], ["toute", 1], ["confiance.", 1]];
+const PHRASE_SUB = "Répétez, écoutez-vous, recommencez. Votre coach vous aide quand vous le décidez.";
 
 function Phrase() {
   const reduced = useReducedMotion();
@@ -485,7 +487,7 @@ function Phrase() {
   const text = (
     <div className="rs-pad" style={{ maxWidth: W.page, width: "100%", margin: "0 auto", padding: "0 24px" }}>
       <p className="rs-sr">{PHRASE.map(w => w[0]).join(" ")} {PHRASE_SUB}</p>
-      <div aria-hidden style={{ maxWidth: W.read, display: "grid", gap: 24 }}>
+      <div aria-hidden style={{ maxWidth: W.wide, display: "grid", gap: 24 }}>
         <div className="rs-phrase-t" style={{ ...TY.display, color: T.navy }}>
           {PHRASE.map(([w, key], i) => {
             const on = i < lit;
@@ -591,12 +593,12 @@ function Features() {
 /* ─── Ce que La Répét' ne fait pas ─── */
 function NotDo() {
   const items = [
-    ["7/10", I.ban, "Aucune note", "Pas de score, pas de classement. Des observations que vous êtes libre d'utiliser."],
-    ["humeur", I.shield, "Aucune émotion déduite", "L'assistant ne cherche ni votre humeur ni votre personnalité. Il s'en tient à ce qui se voit et s'entend."],
-    ["envoi auto", I.lock, "Aucun envoi sans vous", "Rien ne part vers votre coach sans votre accord, et vous pouvez tout supprimer."],
+    ["7/10", I.ban, "Aucune note", "Ni score, ni classement. L'assistant décrit, vous décidez quoi en faire."],
+    ["humeur", I.shield, "Aucune émotion devinée", "L'assistant ne cherche pas à deviner votre humeur ni votre personnalité. Il décrit ce qui se voit et ce qui s'entend."],
+    ["envoi auto", I.lock, "Aucun envoi sans votre accord", "Votre coach voit seulement ce que vous lui envoyez. Vous pouvez tout supprimer, à tout moment."],
   ];
   return (
-    <Section eyebrow="Le parti pris" title="Ce que La Répét' ne fait pas">
+    <Section eyebrow="Nos engagements" title="Ce que La Répét' ne fait pas">
       <div className="rs-g3">
         {items.map(([ghost, ic, t, d], i) => (
           <Reveal key={t} delay={i * 90} style={{ height: "100%" }}>
@@ -618,12 +620,12 @@ function NotDo() {
 /* ─── Pour qui ─── */
 function ForWho({ go }) {
   const doors = [
-    { top: true, t: "Un coach vous accompagne", d: "Votre coach vous a remis un code de 6 caractères. Il ouvre votre espace d'entraînement, sans compte à créer.", b: <Btn kind="secondary" onClick={() => go("#/espace")} iconRight={I.arrow}>J'ai un code</Btn> },
-    { top: "coach", t: "Vous êtes coach", d: "Créez un parcours, transmettez le code, relisez les entretiens que l'on vous envoie et préparez vos débriefings.", b: <Btn kind="secondary" onClick={() => go("#/coach")}>Espace coach</Btn> },
-    { top: "ai", t: "Vous représentez un organisme", d: "Direction, DSI, juridique : découvrez comment l'outil se déploie chez vous, avec vos règles et votre hébergement.", b: <Btn kind="secondary" onClick={() => go("#/solutions/organismes")}>Pour les organismes</Btn> },
+    { top: true, t: "Vous avez un code d'accès", d: "Votre coach vous a donné un code d'accès de 6 caractères. Il ouvre votre espace.", b: <Btn kind="secondary" onClick={() => go("#/espace")} iconRight={I.arrow}>Ouvrir mon espace</Btn> },
+    { top: "coach", t: "Vous êtes coach", d: "Créez un parcours et transmettez le code d'accès. Relisez les réponses que l'on vous envoie. Préparez vos débriefings.", b: <Btn kind="secondary" onClick={() => go("#/espace")}>Me connecter à l'espace coach</Btn> },
+    { top: "ai", t: "Vous représentez un organisme", d: "Direction, DSI, juridique : voyez comment l'outil s'installe chez vous, avec vos règles et votre hébergement.", b: <Btn kind="secondary" onClick={() => go("#/solutions/organismes")}>Voir le déploiement</Btn> },
   ];
   return (
-    <Section eyebrow="Pour qui" title="Trois portes d'entrée">
+    <Section eyebrow="Pour qui" title="Par où commencer ?">
       <div className="rs-g3">
         {doors.map((x, i) => (
           <Reveal key={x.t} delay={i * 90} style={{ height: "100%" }}>
@@ -640,7 +642,7 @@ function ForWho({ go }) {
 }
 
 /* ─── Bandeau final (partagé par les pages publiques) ─── */
-export function FinalBand({ title = "Prêt pour une première répétition ?", text = "Cinq minutes et votre code suffisent pour un premier entretien.", children, openSpace, go }) {
+export function FinalBand({ title = "Votre premier entraînement vous attend", text = "Il vous faut votre code d'accès et quelques minutes.", children, openSpace, go }) {
   return (
     <section style={{ padding: "80px 0" }} className="rs-section">
       <Reveal>
@@ -654,7 +656,6 @@ export function FinalBand({ title = "Prêt pour une première répétition ?", t
             <div className="rp-wide-m" style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
               {children || <>
                 <Btn kind="white" size="lg" onClick={openSpace} iconRight={I.arrow}>Ouvrir mon espace</Btn>
-                <Btn kind="ghostDark" size="lg" onClick={() => go("#/solutions")}>Voir les solutions</Btn>
               </>}
             </div>
           </div>

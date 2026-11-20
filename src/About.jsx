@@ -34,7 +34,7 @@ export default function About({ go, openSpace, section }) {
             <div style={{ display: "grid", gap: 16, ...TY.bodyLg, color: T.body }}>
               <p style={{ margin: 0 }}>Dans les ateliers de préparation aux entretiens, le temps manque. Chacun ne peut s'exercer qu'une ou deux fois, souvent devant le groupe, ce qui intimide une partie des participants. Entre deux séances, beaucoup aimeraient s'entraîner, mais seuls face à une caméra, sans retour, l'exercice décourage vite.</p>
               <p style={{ margin: 0 }}>Certains outils proposent des scores, des jauges ou des analyses d'émotions. Pour des personnes qui doutent déjà d'elles, une note peut décourager davantage qu'elle n'aide. Et la reconnaissance des émotions est désormais interdite par le droit européen dans les contextes de travail et d'éducation.</p>
-              <p style={{ margin: 0 }}>Nous avons donc voulu un outil qui <strong style={{ color: T.navy }}>décrit sans noter</strong>, qui laisse la personne décider de ce qu'elle partage, et qui redonne au coach du temps pour ce qu'il fait de mieux : accompagner.</p>
+              <p style={{ margin: 0 }}>Nous avons donc voulu un outil qui <strong style={{ color: T.navy }}>décrit sans noter</strong>, qui laisse la personne décider de ce qu'elle envoie, et qui redonne au coach du temps pour ce qu'il fait de mieux : accompagner.</p>
             </div>
             <Reveal>
               <div style={{ background: T.surface, border: `1px solid ${T.line}`, borderRadius: RAD.lg, padding: 32, display: "grid", gap: 16, boxShadow: SH.sm }}>
@@ -93,21 +93,6 @@ export default function About({ go, openSpace, section }) {
           </div>
         </Section>
 
-        <Section eyebrow="Comment c'est construit" title="De la conception au prototype">
-          <ol style={{ listStyle: "none", margin: 0, padding: 0 }} className="rs-g4">
-            {BUILD.map(([t, d], i) => (
-              <li key={t} style={{ borderTop: `2px solid ${i < 3 ? T.primary : T.line}`, paddingTop: 16, display: "grid", gap: 8, alignContent: "start" }}>
-                <span style={{ ...TY.time, color: i < 3 ? T.primary : T.muted }}>{`Étape ${i + 1}`}</span>
-                <h3 style={{ ...TY.h3, color: T.navy, margin: 0 }}>{t}</h3>
-                <p style={{ ...TY.body, color: T.body, margin: 0 }}>{d}</p>
-              </li>
-            ))}
-          </ol>
-          <p style={{ ...TY.small, color: T.muted, margin: "24px 0 0", maxWidth: W.read }}>
-            Le code s'appuie sur des briques ouvertes et standards (React, Vite, Whisper, MediaPipe), pour rester maîtrisable par une équipe interne. Le détail technique est sur la page <a href="#/solutions/organismes" className="rs-link">Solutions, organismes</a>.
-          </p>
-        </Section>
-
         <Section id="faq" eyebrow="Questions fréquentes" title="Vos questions, nos réponses" sub="Personnes accompagnées, coachs, organismes : les réponses aux questions que l'on nous pose le plus souvent.">
           <div style={{ display: "grid", gap: 48 }}>
             {FAQ.map(([group, items], g) => (
@@ -119,8 +104,8 @@ export default function About({ go, openSpace, section }) {
           </div>
         </Section>
 
-        <FinalBand title="Une question qui n'est pas dans la liste ?" text="Parlons-en : une démonstration est l'occasion d'aborder vos cas concrets.">
-          <Btn kind="white" size="lg" onClick={() => go("#/demo")} iconRight={I.arrow}>Demander une démo</Btn>
+        <FinalBand title="Une question qui n'est pas dans la liste ?" text="Parlez-en à votre coach, ou demandez une prise en main accompagnée.">
+          <Btn kind="white" size="lg" onClick={() => go("#/demo")} iconRight={I.arrow}>Demander une prise en main</Btn>
         </FinalBand>
       </div>
     </main>
@@ -152,35 +137,28 @@ const LAW = [
   [I.user, "Accessibilité", "Navigation au clavier, contrastes vérifiés en thème clair et sombre, options d'accessibilité (taille du texte, police lisible, espacement, règle de lecture). Déclaration : non conforme tant qu'aucun audit RGAA n'est réalisé."],
 ];
 
-const BUILD = [
-  ["Cadrage", "Un cadre AI Act et une analyse d'impact, un cadre psychosociologique sur les partis pris et les points de vigilance."],
-  ["Cahier des charges", "Des exigences fonctionnelles et non fonctionnelles, et un benchmark qui a conclu à une construction interne plutôt qu'à un achat."],
-  ["Prototype fonctionnel", "La boucle complète tourne dans le navigateur, sur un même appareil : entraînement, retour de l'assistant, envoi, relecture et rapport du coach."],
-  ["Mise en production", "Backend hébergé en France, authentification des coachs, auto-hébergement des modèles, audit d'accessibilité, validation juridique."],
-];
-
 const FAQ = [
   ["Personnes accompagnées", [
     ["Faut-il créer un compte ?", "Non. Votre coach vous donne un code d'accès de 6 caractères. Il ouvre votre espace. On ne vous demande ni adresse électronique ni mot de passe."],
-    ["Ma vidéo est-elle envoyée quelque part ?", ["Non, tant que vous ne l'envoyez pas à votre coach. Tout se fait sur votre appareil : l'enregistrement, la mise par écrit et le retour de l'assistant.", "La première fois, votre appareil télécharge les outils nécessaires (environ 85 Mo), depuis des serveurs tiers dans ce prototype. Votre vidéo et votre voix ne sont pas envoyées. Comme pour tout site, le serveur qui fournit ces fichiers voit l'adresse internet (IP) de votre appareil. Le détail est dans « Vos données »."]],
+    ["Ma vidéo est-elle envoyée quelque part ?", ["Non, tant que vous ne l'envoyez pas à votre coach. Tout se fait sur votre appareil : l'enregistrement, la mise par écrit et le retour de l'assistant.", "La première fois, votre appareil télécharge les outils nécessaires (environ 85 Mo). Votre vidéo et votre voix ne sont pas envoyées. Comme pour tout site, le serveur qui fournit ces fichiers voit l'adresse internet (IP) de votre appareil. Le détail est dans « Vos données »."]],
     ["Est-ce que je reçois une note ?", "Jamais. L'assistant décrit votre réponse : rythme de parole, pauses, exemples, regard. Il commence par ce qui fonctionne déjà. Il ne cherche à deviner ni vos émotions ni votre personnalité."],
     ["Puis-je m'entraîner sans caméra ?", "Oui, en voix seule. L'assistant ne décrit alors pas votre regard. Le reste du retour ne change pas."],
     ["Puis-je tout supprimer ?", "Oui, à tout moment. Vous pouvez supprimer une réponse. Vous pouvez aussi retirer votre accord : toutes vos réponses et vos vidéos sont alors supprimées."],
     ["Que faire si j'ai perdu mon code ?", "Demandez-le à votre coach : il le retrouve dans son espace."],
   ]],
   ["Coachs", [
-    ["Est-ce que je vois toutes les réponses ?", "Non. Vous voyez seulement les réponses que la personne choisit de vous envoyer, avec le message qu'elle a joint. Dans ce prototype sans serveur, vous les relisez sur le même appareil."],
+    ["Est-ce que je vois toutes les réponses ?", "Non. Vous voyez seulement les réponses que la personne choisit de vous envoyer, avec le message qu'elle a joint."],
     ["Puis-je contredire l'assistant ?", "Oui. Vous pouvez commenter chaque repère pour le confirmer, le nuancer ou le contredire. Votre commentaire apparaît à côté du repère dans le rapport."],
     ["Combien de temps demande une relecture ?", "Cela dépend de vous. Quelques remarques dans la vidéo et un mot d'introduction suffisent souvent. Votre brouillon s'enregistre tout seul : vous pouvez reprendre plus tard."],
     ["Puis-je utiliser l'outil en atelier collectif ?", "Oui. Les réponses reçues servent de support au débriefing. Montrer un extrait au groupe demande toujours l'accord explicite de la personne."],
     ["Existe-t-il un classement des personnes ou des coachs ?", "Non. Les chiffres portent sur l'ensemble des parcours : réponses à relire, rapports envoyés, délai moyen de relecture. Aucun ne mesure une personne ni un coach."],
   ]],
   ["Organismes", [
-    ["Où sont stockées les données ?", ["Dans ce prototype, dans le navigateur de l'appareil utilisé. Il n'y a pas de serveur : le coach et la personne utilisent donc le même appareil pour que l'envoi et le rapport fonctionnent.", "Pour une relecture à distance, l'organisme branche un serveur, hébergé chez lui, derrière les fonctions de stockage existantes."]],
+    ["Où sont stockées les données ?", ["Les entraînements sont gardés dans le navigateur de l'appareil de la personne, tant qu'elle ne les envoie pas.", "Les réponses envoyées et les rapports sont stockés selon l'hébergement choisi par l'organisme, qui se branche derrière les fonctions de stockage de l'outil. Le détail est sur la page Solutions, rubrique Organismes."]],
     ["L'outil est-il conforme à l'AI Act ?", "Il est conçu pour s'y conformer : aucune reconnaissance d'émotion, transparence sur le rôle de l'assistant, supervision humaine, absence de notation. La qualification réglementaire complète dépend de votre usage et reste à faire avec votre juridique et votre DPO."],
     ["Une analyse d'impact (AIPD) est-elle nécessaire ?", "Oui. Le public accompagné et l'usage d'une technologie nouvelle la rendent nécessaire avant tout déploiement. Les textes d'information fournis dans l'outil (« Vos données », conditions d'utilisation) sont des documents de travail à valider par votre DPO."],
     ["Combien cela coûte-t-il ?", "Il n'y a pas d'abonnement à un éditeur : l'outil est conçu pour être construit et hébergé par l'organisme. Le coût dépend du travail de mise en production (backend, authentification, hébergement des modèles) et de l'exploitation courante, à estimer avec votre DSI ou un prestataire."],
-    ["Comment l'installer ?", "Le prototype se publie sur un hébergement statique. La documentation technique du projet décrit l'installation et le travail restant pour la production."],
+    ["Comment l'installer ?", "L'outil est une application web, publiée sur l'hébergement de l'organisme. La documentation technique décrit l'installation et le raccordement au stockage."],
     ["Peut-on y mettre notre logo ?", "Oui. L'en-tête prévoit l'emplacement du logo de l'organisme qui déploie l'outil (marque blanche)."],
     ["Quels navigateurs sont pris en charge ?", "Les navigateurs récents sur ordinateur et téléphone, dont Safari sur iPhone. Sur les appareils modestes, la transcription peut prendre un peu plus de temps."],
   ]],
