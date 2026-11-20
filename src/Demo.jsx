@@ -111,7 +111,7 @@ export default function Demo({ go }) {
               </div>
             ))}
             <div style={{ background: T.primaryBg, borderRadius: RAD.md, padding: "12px 16px", display: "flex", gap: 12, ...TY.small, color: T.navy }}>
-              <Icon d={I.lock} s={16} c={T.primary} /> <span>Envie d'essayer d'abord ? Le code d'essai est déjà rempli dans <Link onClick={() => go("#/espace")} style={{ ...TY.small, fontWeight: 600, padding: 0 }}>Mon espace</Link>.</span>
+              <Icon d={I.lock} s={16} c={T.primary} /> <span>Envie d'essayer d'abord ? Le code d'essai est déjà rempli dans <Link onClick={() => go("#/espace")}>Mon espace</Link>.</span>
             </div>
           </aside>
         </div>

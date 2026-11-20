@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { T, RAD, SH, GAP, W, Z, TY, HEADER_H, RepetLogo, OrgLogo, Tag, Btn, IconBtn, Link, Card, Field, Input, Txt, Icon, I, GStyle, ScrollProgress } from "./ui.jsx";
+import { T, RAD, SH, GAP, W, Z, TY, HEADER_H, RepetLogo, Tag, Btn, IconBtn, Link, Card, Field, Input, Txt, Icon, I, GStyle, ScrollProgress } from "./ui.jsx";
 import { dismissLoader } from "./Loader.jsx";
 import { LegalModal } from "./legal.jsx";
 import Home from "./Home.jsx";
@@ -135,8 +135,6 @@ function Nav({ route, s }) {
           <a href="#/" onClick={e => { e.preventDefault(); go("#/"); }} aria-label="La Répét', accueil" style={{ display: "flex", flexShrink: 0 }}>
             <RepetLogo s={17} tagline={false} />
           </a>
-          <div className="rp-hide-m" style={{ width: 1, height: 32, background: T.line }} />
-          <span className="rp-hide-m"><OrgLogo s={10} /></span>
           <nav aria-label="Navigation principale" className="rs-links" style={{ display: "flex", alignItems: "center", gap: 24, marginLeft: 12 }}>
             {LINKS.map(([h, l, r]) => (
               <a key={h} href={h} className={`navlink ${route.role === r ? "on" : ""}`} aria-current={route.role === r ? "page" : undefined}>{l}</a>
@@ -169,9 +167,6 @@ function Nav({ route, s }) {
           </nav>
           <div style={{ display: "grid", gap: 12, marginTop: 24 }}>
             <Btn kind="secondary" full onClick={() => { setMenu(false); go("#/demo"); }}>Demander une démo</Btn>
-          </div>
-          <div style={{ marginTop: 24, display: "flex", alignItems: "center", gap: 12 }}>
-            <span style={{ ...TY.caption, color: T.muted }}>Déployé par</span><OrgLogo s={9} />
           </div>
         </div>
       )}
@@ -241,11 +236,7 @@ function Footer({ setModal }) {
   return (
     <footer className="noprint" style={{ borderTop: `1px solid ${T.line}`, background: T.surface, marginTop: GAP.section / 2 }}>
       <div className="rp-pad" style={{ maxWidth: W.page, margin: "0 auto", padding: "24px 24px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 20 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 20, flexWrap: "wrap" }}>
-          <RepetLogo s={14} tagline={false} />
-          <div style={{ width: 1, height: 24, background: T.line }} />
-          <OrgLogo s={9} />
-        </div>
+        <RepetLogo s={14} tagline={false} />
         {/* Exception documentée (référentiel 1.5) : chaque engagement garde sa couleur d'icône. */}
         <div className="rp-trust" style={{ display: "flex", gap: 20, ...TY.caption, color: T.body, flexWrap: "wrap" }}>
           {trust.map(([ic, l, c]) => <span key={l} style={{ display: "inline-flex", alignItems: "center", gap: 8 }}><Icon d={ic} s={16} c={c} /> {l}</span>)}

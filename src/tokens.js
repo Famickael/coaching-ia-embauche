@@ -24,7 +24,8 @@ export const T = {
   successBg: "#E9F8F0", warningBg: "#FFF6E8", errorBg: "#FFECEF",
   // Voiles et fonds particuliers
   overlay: "rgba(27,58,102,.45)", videoBg: "#000000",
-  glass: "rgba(248,250,252,.9)",          // en-tête collant translucide (section 6)
+  glass: "rgba(248,250,252,.9)",
+  studio: "#DCE6F2",                      // fond uni de remplacement de l'aperçu caméra (échauffement)          // en-tête collant translucide (section 6)
 };
 
 /* Texte et éléments posés sur fond sombre, dégradé ou vidéo (section 1.4). */
@@ -42,6 +43,13 @@ export const GRAD_COACH = `linear-gradient(135deg, ${T.blue} 0%, ${T.accent} 100
 export const GRAD_AI = `linear-gradient(135deg, ${T.blueDk} 0%, ${T.violet} 100%)`;
 export const GRAD_SOFT = `linear-gradient(135deg, rgba(56,96,151,.08), rgba(92,75,185,.07))`;
 export const GRAD_NIGHT = `linear-gradient(160deg, ${T.navy} 0%, ${T.primaryDk} 60%, ${T.violet} 100%)`;
+/* Profondeur et marque (v3.1, demande du propriétaire) : titre d'accroche et fonds des sections clés. */
+export const GRAD_TITLE = `linear-gradient(120deg, ${T.navy} 0%, ${T.primary} 100%)`;        // début du titre d'accroche (texte, AA)
+export const GRAD_ACCROCHE = `linear-gradient(90deg, ${T.blueDk} 0%, ${T.violet} 100%)`;    // fin d'accroche, mots-clés de la phrase (texte large, AA)
+export const GRAD_HERO = `linear-gradient(180deg, ${T.surface} 0%, ${T.primaryBg} 100%)`;   // fond du héros de l'accueil
+export const GRAD_SECTION = `linear-gradient(180deg, ${T.bg} 0%, ${T.primaryBg} 50%, ${T.bg} 100%)`; // fond d'une section clé (strate)
+/* Lueurs colorées diffuses (halos derrière les photos et les visuels), décor seulement. */
+export const GLOW = { blue: "rgba(56,147,205,.22)", violet: "rgba(92,75,185,.20)" };
 export const GRAD_PAGE = `linear-gradient(180deg, ${T.primaryBg}, ${T.bg})`;   // fond de PageHero (pages secondaires)
 /* Surlignage progressif (strate épinglée, cartes animées) : teintes de fond des rôles. */
 export const HL = {
@@ -82,7 +90,6 @@ export const TY = {
   mono:     { font: `500 12px/1.5 ${FM}` },
   /* Exceptions nommées : rendus validés (accueil) dont la taille reste dans SIZES */
   quote:    { font: `700 20px/1.45 ${FD}` },                          // citation d'article, phrase qui se colore (mobile)
-  phrase:   { font: `800 38px/1.25 ${FD}`, letterSpacing: "-.02em" }, // phrase qui se colore au défilement
   pageTitle: { font: `800 38px/1.1 ${FD}`, letterSpacing: "-.03em" }, // h1 des pages secondaires (PageHero)
   inherit:  { font: "inherit" },
 };
@@ -104,6 +111,9 @@ export const SH = {
   sm: "0 8px 20px rgba(27,58,102,.07)",
   lg: "0 20px 60px rgba(27,58,102,.10)",
   ring: `0 0 0 4px ${T.primaryBg}`,
+  /* Ombres colorées diffuses (v3.1) : photos et visuels du héros, visuel de la strate, bandeau d'appel final */
+  glow: "0 32px 64px -16px rgba(56,96,151,.30), 0 12px 32px -12px rgba(56,147,205,.22)",
+  glowAi: "0 32px 64px -16px rgba(92,75,185,.28), 0 12px 32px -12px rgba(56,96,151,.18)",
   /* Ombres colorées des boutons pleins [repos, survol], utilisées par Btn uniquement */
   btn: {
     primary: ["0 4px 12px rgba(56,96,151,.20)", "0 8px 20px rgba(56,96,151,.30)"],
@@ -115,7 +125,12 @@ export const SH = {
 export const ringOf = bg => `0 0 0 4px ${bg}`;
 
 /* Mouvement (section 7). */
-export const MO = { fast: ".12s", base: ".2s", enter: ".45s", ease: "cubic-bezier(.2,.7,.3,1)" };
+export const MO = {
+  fast: ".12s", base: ".2s", enter: ".45s", ease: "cubic-bezier(.2,.7,.3,1)",   // interface : survol, sélection, apparition d'écran
+  reveal: ".7s", slow: ".9s", fade: "1.1s", soft: "cubic-bezier(.45,0,.55,1)",   // pages publiques (v3.1) : apparitions, étapes, fondus de scène
+};
+/* Cadence des éléments qui tournent seuls (ms) : scènes du héros, fin d'accroche. */
+export const PACE = { scene: 7000, accroche: 3600 };
 export const Z = { nav: 50, modal: 100 };
 
 /* Champ de saisie (section 5.3). */
@@ -148,4 +163,6 @@ export const PAIRS = [
   [T.surface, T.violet, 4.5], [T.surface, T.errorDk, 4.5], [T.surface, T.successDk, 4.5], [T.surface, T.blueDk, 4.5], [T.surface, T.navy, 4.5],
   [T.accentLt, T.navy, 4.5],
   [T.lineStrong, T.surface, 3], [T.lineStrong, T.bg, 3],
+  // dégradés de texte de l'accueil (texte de 32 px et plus : seuil 3) ; GRAD_TITLE commence en navy
+  [T.primary, T.primaryBg, 3], [T.blueDk, T.bg, 3], [T.blueDk, T.primaryBg, 3], [T.violet, T.primaryBg, 3],
 ];

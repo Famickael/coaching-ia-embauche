@@ -69,7 +69,7 @@ async function run(b, vw, vh, opts = {}) {
     const range = h - vh;
     const seen = [];
     for (const [i, f] of [[1, 0.1], [2, 0.38], [3, 0.63], [4, 0.9]]) {
-      await p.evaluate(y => scrollTo(0, y), top + range * f); await p.waitForTimeout(650);
+      await p.evaluate(y => scrollTo(0, y), top + range * f); await p.waitForTimeout(1100);
       const panelTop = await p.locator(".rs-panel").evaluate(el => Math.round(el.getBoundingClientRect().top));
       check(panelTop <= 64 && panelTop >= 50, `[${tag}] strate : panneau non épinglé (top ${panelTop})`);
       seen.push(await p.locator(".rs-vis.on").count());

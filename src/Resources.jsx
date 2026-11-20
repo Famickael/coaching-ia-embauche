@@ -111,7 +111,7 @@ function ArticleCard({ a }) {
           <Tag tone={a.type === "cas" ? "ai" : "primary"}>{TYPES[a.type]}</Tag>
           <span style={{ ...TY.caption, color: T.muted }}>{catTitle(a.category)}</span>
         </div>
-        <h3 style={{ ...TY.h3, fontSize: 18, color: T.navy, margin: 0 }}>{a.title}</h3>
+        <h3 style={{ ...TY.h3, color: T.navy, margin: 0 }}>{a.title}</h3>
         <p style={{ ...TY.body, color: T.body, margin: 0, flex: 1 }}>{a.summary}</p>
         <span style={{ ...TY.caption, color: T.muted, display: "inline-flex", alignItems: "center", gap: 4 }}><Icon d={SI.clock} s={16} c={T.muted} /> {a.readingTime} min de lecture</span>
       </div>
@@ -245,7 +245,7 @@ function Article({ a, go, openSpace }) {
             <div className="up" style={{ display: "grid", gap: 16, maxWidth: W.read }}>
               <div style={{ ...TY.small }}><Crumbs items={[["#/ressources", "Ressources"], [`#/ressources/c/${a.category}`, catTitle(a.category)]]} /></div>
               <div><Tag tone={cas ? "ai" : "primary"}>{TYPES[a.type]}</Tag></div>
-              <h1 className="ty-xl" style={{ ...TY.xl, fontSize: 38, color: T.navy, margin: 0 }}>{a.title}</h1>
+              <h1 className="ty-xl" style={{ ...TY.pageTitle, color: T.navy, margin: 0 }}>{a.title}</h1>
               <p className="ty-lead" style={{ ...TY.lead, color: T.body, margin: 0 }}>{a.summary}</p>
               {meta}
             </div>
@@ -281,7 +281,7 @@ function Article({ a, go, openSpace }) {
                 </nav>
               )}
             </aside>
-            <div className="rs-prose" style={{ maxWidth: 720 }}><Blocks blocks={a.blocks} /></div>
+            <div className="rs-prose" style={{ maxWidth: W.read }}><Blocks blocks={a.blocks} /></div>
           </div>
         </div>
       </article>

@@ -42,7 +42,7 @@ export default function Solutions({ go, openSpace, section }) {
             <div className="rs-g2" style={{ gap: 12 }}>
               {OBSERVE.map(([t, ex], i) => (
                 <Reveal key={t} delay={(i % 2) * 70} style={{ height: "100%" }}>
-                  <Card pad={16} style={{ height: "100%", borderRadius: RAD.md, display: "grid", gap: 4, alignContent: "start" }}>
+                  <Card pad="sm" style={{ height: "100%", display: "grid", gap: 4, alignContent: "start" }}>
                     <h3 style={{ ...TY.h4, color: T.navy, margin: 0 }}>{t}</h3>
                     <p style={{ ...TY.small, color: T.body, margin: 0 }}>{ex}</p>
                   </Card>
@@ -93,10 +93,10 @@ export default function Solutions({ go, openSpace, section }) {
 
 const HeroAside = () => (
   <div className="rp-hide-m" style={{ position: "relative" }}>
-    <div style={{ borderRadius: RAD.xl, overflow: "hidden", boxShadow: SH.lg, aspectRatio: "3 / 2", background: T.primaryBg }}>
+    <div style={{ borderRadius: RAD.xl, overflow: "hidden", boxShadow: SH.glow, aspectRatio: "3 / 2", background: T.primaryBg }}>
       <img src={img("solutions-equipe.webp")} alt="Une coach et une personne accompagnée échangent autour d'une table ronde." width={1200} height={800} style={{ display: "block", width: "100%", height: "100%", objectFit: "cover" }} />
     </div>
-    <div style={{ position: "absolute", left: -24, bottom: -24, background: T.surface, borderRadius: RAD.md, padding: "12px 16px", boxShadow: SH.lg, display: "flex", alignItems: "center", gap: 12 }}>
+    <div style={{ position: "absolute", left: -24, bottom: -24, background: T.surface, borderRadius: RAD.md, padding: "12px 16px", boxShadow: SH.glow, display: "flex", alignItems: "center", gap: 12 }}>
       <IconTile icon={I.shield} />
       <div style={{ ...TY.label, color: T.navy }}>Conçu pour l'AI Act et le RGPD</div>
     </div>

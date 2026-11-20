@@ -54,7 +54,7 @@ export default function About({ go, openSpace, section }) {
             {PRINC.map(([n, t, d], i) => (
               <Reveal key={n} delay={(i % 2) * 80} style={{ height: "100%" }}>
                 <Card style={{ height: "100%", display: "flex", gap: 16 }}>
-                  <div style={{ ...TY.num, fontSize: 24, color: T.primary, flexShrink: 0 }}>{n}</div>
+                  <div style={{ ...TY.num, color: T.primary, flexShrink: 0 }}>{n}</div>
                   <div style={{ display: "grid", gap: 8 }}>
                     <h3 style={{ ...TY.h2, color: T.navy, margin: 0 }}>{t}</h3>
                     <p style={{ ...TY.body, color: T.body, margin: 0 }}>{d}</p>
@@ -129,7 +129,7 @@ export default function About({ go, openSpace, section }) {
 }
 
 const AboutAside = () => (
-  <div className="rp-hide-m" style={{ borderRadius: RAD.xl, overflow: "hidden", boxShadow: SH.lg, aspectRatio: "3 / 2", background: T.primaryBg }}>
+  <div className="rp-hide-m" style={{ borderRadius: RAD.xl, overflow: "hidden", boxShadow: SH.glow, aspectRatio: "3 / 2", background: T.primaryBg }}>
     <img src={img("a-propos.webp")} alt="Deux femmes échangent autour d'une table ronde, dans un bureau lumineux." width={1200} height={800} style={{ display: "block", width: "100%", height: "100%", objectFit: "cover" }} />
   </div>
 );
