@@ -52,3 +52,12 @@ export function useCount(target, start, delay, reduced) {
   }, [start, reduced, target, delay]);
   return n;
 }
+
+/* Défile jusqu'à une section de la page (routes du type #/solutions/coachs). */
+export function useSectionScroll(section) {
+  useEffect(() => {
+    if (!section) return;
+    const t = setTimeout(() => document.getElementById(section)?.scrollIntoView({ block: "start" }), 60);
+    return () => clearTimeout(t);
+  }, [section]);
+}

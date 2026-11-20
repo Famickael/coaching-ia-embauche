@@ -1,7 +1,6 @@
 import React from "react";
-import { T, RAD, SH, Btn, Card, Icon, I } from "./ui.jsx";
-import { Reveal } from "./motion.jsx";
-import { TT, TY, W, SI, img, Eyebrow, Section, PageHero, IconTile, Accordion, useSectionScroll } from "./site.jsx";
+import { T, RAD, SH, Btn, Card, Icon, I, TY, W, SI, img, Eyebrow, Section, PageHero, IconTile, Accordion } from "./ui.jsx";
+import { Reveal, useSectionScroll } from "./motion.jsx";
 import { FinalBand } from "./Home.jsx";
 
 /* Page « À propos » : mission, pourquoi ce projet, parti pris, cadre réglementaire, pour qui,
@@ -42,7 +41,7 @@ export default function About({ go, openSpace, section }) {
                 <Eyebrow>Un exemple de repère</Eyebrow>
                 <div style={{ display: "grid", gap: 12 }}>
                   <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}><Icon d={I.ban} s={20} c={T.errorDk} /><span style={{ ...TY.body, color: T.body, textDecoration: "line-through" }}>« Contact visuel insuffisant : 4/10 »</span></div>
-                  <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}><Icon d={I.check} s={20} c={TT.successDk} /><span style={{ ...TY.bodyStrong, color: T.navy }}>« Vous regardez vers le bas environ 40 % du temps, surtout en début de réponse. »</span></div>
+                  <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}><Icon d={I.check} s={20} c={T.successDk} /><span style={{ ...TY.bodyStrong, color: T.navy }}>« Vous regardez vers le bas environ 40 % du temps, surtout en début de réponse. »</span></div>
                 </div>
                 <p style={{ ...TY.small, color: T.muted, margin: 0 }}>La personne observe, puis décide elle-même quoi en faire, avec son coach.</p>
               </div>
@@ -121,7 +120,7 @@ export default function About({ go, openSpace, section }) {
         </Section>
 
         <FinalBand title="Une question qui n'est pas dans la liste ?" text="Parlons-en : une démonstration est l'occasion d'aborder vos cas concrets.">
-          <Btn kind="white" size="lg" onClick={() => go("#/demo")}>Demander une démo <Icon d={I.arrow} s={20} c={T.primary} /></Btn>
+          <Btn kind="white" size="lg" onClick={() => go("#/demo")} iconRight={I.arrow}>Demander une démo</Btn>
           <Btn kind="ghostDark" size="lg" onClick={openSpace}>Ouvrir mon espace</Btn>
         </FinalBand>
       </div>
@@ -130,7 +129,7 @@ export default function About({ go, openSpace, section }) {
 }
 
 const AboutAside = () => (
-  <div className="rp-hide-m" style={{ borderRadius: RAD.xl, overflow: "hidden", boxShadow: SH.lg, aspectRatio: "3 / 2", background: TT.primaryBg }}>
+  <div className="rp-hide-m" style={{ borderRadius: RAD.xl, overflow: "hidden", boxShadow: SH.lg, aspectRatio: "3 / 2", background: T.primaryBg }}>
     <img src={img("a-propos.webp")} alt="Deux femmes échangent autour d'une table ronde, dans un bureau lumineux." width={1200} height={800} style={{ display: "block", width: "100%", height: "100%", objectFit: "cover" }} />
   </div>
 );

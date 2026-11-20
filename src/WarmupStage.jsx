@@ -123,8 +123,8 @@ export default function WarmupStage({ setModal }) {
               <div style={{ font: `700 16px ${FD}`, color: "#fff", marginBottom: 6 }}>{phase === "error" ? "Caméra ou micro indisponible" : "Un aperçu, rien de plus"}</div>
               <div style={{ font: `400 13px/1.5 ${FB}`, marginBottom: 14 }}>{phase === "error" ? error : "Activez la caméra pour vous voir pendant que vous parlez, ou restez en voix seule. Rien n'est enregistré."}</div>
               <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
-                <Btn kind="blue" onClick={() => open(false)}>Activer la caméra</Btn>
-                <Btn kind="ghostDark" onClick={() => open(true)}><Icon d={I.mic} s={16} c="#fff" /> Voix seule</Btn>
+                <Btn kind="objective" onClick={() => open(false)}>Activer la caméra</Btn>
+                <Btn kind="ghostDark" onClick={() => open(true)} icon={I.mic}>Voix seule</Btn>
               </div>
             </div>
           </div>
@@ -164,9 +164,7 @@ export default function WarmupStage({ setModal }) {
               </div>
             </div>
           ) : <span style={{ font: `400 12.5px ${FB}`, color: T.muted }}>Idéal pour préparer un entretien téléphonique.</span>}
-          <Btn kind="secondary" size="sm" onClick={() => open(phase === "video")}>
-            <Icon d={phase === "video" ? I.mic : I.video} s={15} c={T.primary} /> {phase === "video" ? "Passer en voix seule" : "Passer en vidéo"}
-          </Btn>
+          <Btn kind="secondary" size="sm" onClick={() => open(phase === "video")} icon={phase === "video" ? I.mic : I.video}>{phase === "video" ? "Passer en voix seule" : "Passer en vidéo"}</Btn>
         </div>
       )}
       {phase === "video" && (bgState === "loading" || bgState === "unavailable") && (

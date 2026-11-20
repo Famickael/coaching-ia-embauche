@@ -1,7 +1,6 @@
 import React from "react";
-import { T, RAD, SH, Btn, Card, Tag, Icon, I } from "./ui.jsx";
-import { Reveal } from "./motion.jsx";
-import { TT, TY, W, SI, img, Eyebrow, Section, PageHero, IconTile, Tabs, useSectionScroll } from "./site.jsx";
+import { T, RAD, SH, Btn, Card, Tag, Icon, I, TY, W, SI, img, Eyebrow, Section, PageHero, IconTile, Tabs } from "./ui.jsx";
+import { Reveal, useSectionScroll } from "./motion.jsx";
 import { FinalBand } from "./Home.jsx";
 
 /* Page « Solutions » (ancienne page Fonctionnement) : le déroulé, puis ce que l'outil apporte à chaque public :
@@ -32,7 +31,7 @@ export default function Solutions({ go, openSpace, section }) {
 
         <AudienceSection id="beneficiaires" tag="Personnes accompagnées" title="S'entraîner seul, sans être jugé"
           sub="Un espace personnel, ouvert avec un code, pour répéter autant que nécessaire avant le jour J."
-          features={BENEF} cta={<Btn kind="objective" onClick={() => go("#/espace")}>Lancer ma première répétition <Icon d={I.arrow} s={16} c={T.surface} /></Btn>} />
+          features={BENEF} cta={<Btn kind="objective" onClick={() => go("#/espace")} iconRight={I.arrow}>Lancer ma première répétition</Btn>} />
 
         <AudienceSection id="coachs" tag="Coachs" title="Garder la main, gagner du temps de relecture"
           sub="Vous voyez seulement ce que la personne choisit de vous envoyer, et vous décidez de ce qui lui revient."
@@ -51,7 +50,7 @@ export default function Solutions({ go, openSpace, section }) {
               ))}
             </div>
             <Reveal>
-              <div style={{ background: TT.violetBg, borderRadius: RAD.lg, padding: 32, display: "grid", gap: 16 }}>
+              <div style={{ background: T.violetBg, borderRadius: RAD.lg, padding: 32, display: "grid", gap: 16 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 12 }}><IconTile icon={I.ban} c={T.violet} bg={T.surface} /><h3 style={{ ...TY.h2, color: T.navy, margin: 0 }}>Ce que l'assistant n'observe pas</h3></div>
                 <ul style={{ margin: 0, paddingLeft: 20, display: "grid", gap: 8, ...TY.body, color: T.navy }}>
                   <li>Les émotions, l'humeur ou le stress supposé.</li>
@@ -84,7 +83,7 @@ export default function Solutions({ go, openSpace, section }) {
         </Section>
 
         <FinalBand title="Voir La Répét' avec votre équipe" text="Une démonstration adaptée à vos publics, vos ateliers et votre hébergement.">
-          <Btn kind="white" size="lg" onClick={() => go("#/demo")}>Demander une démo <Icon d={I.arrow} s={20} c={T.primary} /></Btn>
+          <Btn kind="white" size="lg" onClick={() => go("#/demo")} iconRight={I.arrow}>Demander une démo</Btn>
           <Btn kind="ghostDark" size="lg" onClick={openSpace}>Ouvrir mon espace</Btn>
         </FinalBand>
       </div>
@@ -94,7 +93,7 @@ export default function Solutions({ go, openSpace, section }) {
 
 const HeroAside = () => (
   <div className="rp-hide-m" style={{ position: "relative" }}>
-    <div style={{ borderRadius: RAD.xl, overflow: "hidden", boxShadow: SH.lg, aspectRatio: "3 / 2", background: TT.primaryBg }}>
+    <div style={{ borderRadius: RAD.xl, overflow: "hidden", boxShadow: SH.lg, aspectRatio: "3 / 2", background: T.primaryBg }}>
       <img src={img("solutions-equipe.webp")} alt="Une coach et une personne accompagnée échangent autour d'une table ronde." width={1200} height={800} style={{ display: "block", width: "100%", height: "100%", objectFit: "cover" }} />
     </div>
     <div style={{ position: "absolute", left: -24, bottom: -24, background: T.surface, borderRadius: RAD.md, padding: "12px 16px", boxShadow: SH.lg, display: "flex", alignItems: "center", gap: 12 }}>

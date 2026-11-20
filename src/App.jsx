@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { T, FD, FB, FM, RAD, SH, sp, RepetLogo, OrgLogo, Tag, Btn, Card, Icon, I, GStyle } from "./ui.jsx";
-import { SiteStyle, ScrollProgress, SI, TT, TY, W } from "./site.jsx";
+import { T, RAD, SH, GAP, W, Z, TY, HEADER_H, RepetLogo, OrgLogo, Tag, Btn, IconBtn, Link, Card, Field, Input, Txt, Icon, I, GStyle, ScrollProgress } from "./ui.jsx";
 import { dismissLoader } from "./Loader.jsx";
 import { LegalModal } from "./legal.jsx";
 import Home from "./Home.jsx";
@@ -78,9 +77,8 @@ export default function App() {
   };
 
   return (
-    <div className="rp-app" style={{ background: T.bg, fontFamily: FB, color: T.navy, display: "flex", flexDirection: "column" }}>
+    <div className="rp-app" style={{ background: T.bg, ...TY.body, color: T.navy, display: "flex", flexDirection: "column" }}>
       <GStyle />
-      <SiteStyle />
       <Nav route={route} s={s} />
       <div style={{ flex: 1 }}>
         {route.role === "home" && <Home go={go} openSpace={openSpace} />}
@@ -131,8 +129,8 @@ function Nav({ route, s }) {
   }, [menu]);
 
   return (<>
-    <header className="noprint" style={{ position: "sticky", top: 0, zIndex: 50, background: menu ? T.bg : "rgba(248,250,252,.9)", backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)", borderBottom: `1px solid ${T.line}` }}>
-      <div className="rp-nav" style={{ maxWidth: W.page, margin: "0 auto", padding: "0 24px", height: 64, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
+    <header className="noprint" style={{ position: "sticky", top: 0, zIndex: Z.nav, background: menu ? T.bg : T.glass, backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)", borderBottom: `1px solid ${T.line}` }}>
+      <div className="rp-nav" style={{ maxWidth: W.page, margin: "0 auto", padding: "0 24px", height: HEADER_H, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 20, minWidth: 0 }}>
           <a href="#/" onClick={e => { e.preventDefault(); go("#/"); }} aria-label="La Répét', accueil" style={{ display: "flex", flexShrink: 0 }}>
             <RepetLogo s={17} tagline={false} />
@@ -150,17 +148,12 @@ function Nav({ route, s }) {
             <div style={{ display: "flex", alignItems: "center", gap: 8, background: T.surface, border: `1px solid ${T.line}`, borderRadius: RAD.pill, padding: "4px 4px 4px 12px", boxShadow: SH.xs }}>
               <Icon d={I.user} s={16} c={T.primary} />
               <span style={{ ...TY.label, color: T.navy, whiteSpace: "nowrap", maxWidth: 150, overflow: "hidden", textOverflow: "ellipsis" }}>{label}</span>
-              <button onClick={() => logout(route.role)} aria-label="Se déconnecter" title="Se déconnecter"
-                style={{ width: 32, height: 32, borderRadius: "50%", border: "none", background: TT.primaryBg, display: "grid", placeItems: "center", cursor: "pointer" }}>
-                <Icon d={I.logout} s={16} c={T.primary} />
-              </button>
+              <IconBtn icon={I.logout} label="Se déconnecter" size={16} onClick={() => logout(route.role)} style={{ width: 40, height: 40, background: T.primaryBg }} />
             </div>
           ) : (<>
             <span className="rs-demo"><Btn kind="secondary" size="sm" onClick={() => go("#/demo")}>Demander une démo</Btn></span>
-            <Btn kind="primary" size="sm" onClick={openSpace}><span className="rp-hide-m" style={{ display: "inline-flex" }}><Icon d={I.user} s={16} c={T.surface} /></span>Mon espace</Btn>
-            <button ref={burger} type="button" className="rs-burger rs-icbtn" aria-expanded={menu} aria-controls="rs-menu" aria-label={menu ? "Fermer le menu" : "Ouvrir le menu"} onClick={() => setMenu(m => !m)}>
-              <Icon d={menu ? I.close : SI.menu} s={20} />
-            </button>
+            <Btn kind="primary" size="sm" onClick={openSpace}><span className="rp-hide-m" style={{ display: "inline-flex" }}><Icon d={I.user} s={16} /></span>Mon espace</Btn>
+            <IconBtn ref={burger} variant="outline" className="rs-burger" aria-expanded={menu} aria-controls="rs-menu" label={menu ? "Fermer le menu" : "Ouvrir le menu"} icon={menu ? I.close : I.menu} onClick={() => setMenu(m => !m)} />
           </>)}
         </div>
       </div>
@@ -169,9 +162,9 @@ function Nav({ route, s }) {
       {menu && (
         <div id="rs-menu" ref={panel} className="rs-menu" role="dialog" aria-modal="true" aria-label="Menu">
           <nav aria-label="Navigation principale" onClick={() => setMenu(false)}>
-            <a href="#/" className="rs-mlink" aria-current={route.role === "home" ? "page" : undefined}>Accueil<Icon d={SI.chevronR} s={20} c={T.faint} /></a>
+            <a href="#/" className="rs-mlink" aria-current={route.role === "home" ? "page" : undefined}>Accueil<Icon d={I.chevronR} s={20} c={T.faint} /></a>
             {LINKS.map(([h, l, r]) => (
-              <a key={h} href={h} className="rs-mlink" aria-current={route.role === r ? "page" : undefined}>{l}<Icon d={SI.chevronR} s={20} c={T.faint} /></a>
+              <a key={h} href={h} className="rs-mlink" aria-current={route.role === r ? "page" : undefined}>{l}<Icon d={I.chevronR} s={20} c={T.faint} /></a>
             ))}
           </nav>
           <div style={{ display: "grid", gap: 12, marginTop: 24 }}>
@@ -203,29 +196,30 @@ function Espace() {
     if (p) go(`#/s/${p.code}`); else setErr("Ce code n'existe pas ou n'est plus actif. Vérifiez-le auprès de votre coach.");
   };
   return (
-    <main className="rp-pad" style={{ maxWidth: 920, margin: "0 auto", padding: "48px 24px 64px" }}>
-      <div className="up">
-        <h1 style={{ font: `800 32px ${FD}`, letterSpacing: "-.03em", color: T.navy, margin: "0 0 6px" }}>Mon espace</h1>
-        <p style={{ font: `400 16px ${FB}`, color: T.body, margin: "0 0 28px" }}>Choisissez votre accès.</p>
-        <div className="rp-stack" style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: 20, alignItems: "stretch" }}>
-          <Card pad={28} topbar style={{ boxShadow: SH.sm }}>
-            <Tag tone="appui">Bénéficiaire</Tag>
-            <h2 style={{ font: `800 21px ${FD}`, color: T.navy, margin: "12px 0 6px" }}>J'ai un code d'entraînement</h2>
-            <p style={{ font: `400 14px/1.6 ${FB}`, color: T.body, margin: "0 0 18px" }}>Saisissez le code de 6 caractères remis par votre coach.</p>
-            <form onSubmit={submit}>
-              <label htmlFor="espace-code" style={{ font: `600 13px ${FB}`, color: T.navy, display: "block", marginBottom: 8 }}>Votre code d'accès</label>
-              <input id="espace-code" value={code} autoComplete="off" maxLength={6} placeholder="6 caractères"
-                onChange={e => { setCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "")); setErr(""); }}
-                style={{ width: "100%", height: 54, padding: "0 18px", borderRadius: RAD.md, border: `1.5px solid ${err ? T.errorDk : T.line}`, font: `700 21px ${FM}`, letterSpacing: ".25em", textAlign: "center", color: T.navy, background: T.bg }} />
-              {err && <div role="alert" style={{ font: `500 13px ${FB}`, color: T.errorDk, marginTop: 8 }}>{err}</div>}
-              <div style={{ marginTop: 16 }}><Btn kind="objective" full disabled={code.length < 6}>Ouvrir mon espace&nbsp;<Icon d={I.arrow} s={17} c="#fff" /></Btn></div>
+    <main className="rp-page" style={{ maxWidth: W.read, margin: "0 auto", padding: "40px 24px 64px" }}>
+      <div className="up" style={{ display: "grid", gap: GAP.block }}>
+        <div style={{ display: "grid", gap: 8 }}>
+          <Txt v="h1" as="h1" color={T.navy}>Mon espace</Txt>
+          <Txt v="bodyLg" color={T.body}>Choisissez votre accès.</Txt>
+        </div>
+        <div className="rp-stack" style={{ alignItems: "stretch" }}>
+          <Card pad="lg" level={2} topbar style={{ display: "grid", gap: 12, alignContent: "start" }}>
+            <div><Tag tone="appui">Bénéficiaire</Tag></div>
+            <Txt v="h2" as="h2" color={T.navy}>J'ai un code d'entraînement</Txt>
+            <Txt v="body" color={T.body}>Saisissez le code de 6 caractères remis par votre coach.</Txt>
+            <form onSubmit={submit} style={{ display: "grid", gap: GAP.grid, marginTop: 8 }}>
+              <Field id="espace-code" label="Votre code d'accès" error={err}>
+                <Input id="espace-code" variant="code" error={err} value={code} autoComplete="off" maxLength={6} placeholder="6 caractères"
+                  onChange={e => { setCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "")); setErr(""); }} />
+              </Field>
+              <Btn kind="objective" full disabled={code.length < 6} iconRight={I.arrow}>Ouvrir mon espace</Btn>
             </form>
           </Card>
-          <Card pad={28} topbar="coach" style={{ boxShadow: SH.sm, display: "flex", flexDirection: "column" }}>
+          <Card pad="lg" topbar="coach" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             <div><Tag tone="primary">Coach</Tag></div>
-            <h2 style={{ font: `800 21px ${FD}`, color: T.navy, margin: "12px 0 6px" }}>Je suis coach</h2>
-            <p style={{ font: `400 14px/1.6 ${FB}`, color: T.body, margin: "0 0 18px", flex: 1 }}>Créez des parcours, transmettez les codes et relisez les entretiens que l'on vous envoie.</p>
-            <div><Btn kind="secondary" onClick={() => go("#/coach")}>Accéder à l'espace coach&nbsp;<Icon d={I.arrow} s={17} c={T.primary} /></Btn></div>
+            <Txt v="h2" as="h2" color={T.navy}>Je suis coach</Txt>
+            <Txt v="body" color={T.body} style={{ flex: 1 }}>Créez des parcours, transmettez les codes et relisez les entretiens que l'on vous envoie.</Txt>
+            <div style={{ marginTop: 8 }}><Btn kind="secondary" onClick={() => go("#/coach")} iconRight={I.arrow}>Accéder à l'espace coach</Btn></div>
           </Card>
         </div>
       </div>
@@ -237,34 +231,30 @@ function Espace() {
 
 function Footer({ setModal }) {
   const trust = [
-    [I.lock, "La vidéo reste sur votre appareil", TT.successDk],
+    [I.lock, "La vidéo reste sur votre appareil", T.successDk],
     [I.send, "Envoi au coach seulement si vous le décidez", T.blue],
     [I.ban, "Sans note ni classement", T.violet],
     [I.shield, "Aucune émotion déduite", T.accent],
   ];
-  const pages = [["#/a-propos", "À propos"], ["#/solutions", "Solutions"], ["#/ressources", "Ressources"], ["#/a-propos/faq", "FAQ"], ["#/demo", "Demander une démo"]];
   const links = [["cgu", "Conditions d'utilisation"], ["rgpd", "Protection des données"], ["lifecycle", "Cycle de vie de la vidéo"]];
-  const lk = { ...TY.caption, fontWeight: 600, color: T.primary, background: "none", border: "none", cursor: "pointer", padding: "12px 0", textDecoration: "underline", textUnderlineOffset: 3 };
+  const lk = { ...TY.caption, ...TY.link, minHeight: 44, display: "inline-flex", alignItems: "center" };
   return (
-    <footer className="noprint" style={{ borderTop: `1px solid ${T.line}`, background: T.surface, marginTop: sp(10) }}>
+    <footer className="noprint" style={{ borderTop: `1px solid ${T.line}`, background: T.surface, marginTop: GAP.section / 2 }}>
       <div className="rp-pad" style={{ maxWidth: W.page, margin: "0 auto", padding: "24px 24px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 20 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 20, flexWrap: "wrap" }}>
           <RepetLogo s={14} tagline={false} />
           <div style={{ width: 1, height: 24, background: T.line }} />
           <OrgLogo s={9} />
         </div>
+        {/* Exception documentée (référentiel 1.5) : chaque engagement garde sa couleur d'icône. */}
         <div className="rp-trust" style={{ display: "flex", gap: 20, ...TY.caption, color: T.body, flexWrap: "wrap" }}>
           {trust.map(([ic, l, c]) => <span key={l} style={{ display: "inline-flex", alignItems: "center", gap: 8 }}><Icon d={ic} s={16} c={c} /> {l}</span>)}
         </div>
       </div>
       <div style={{ borderTop: `1px solid ${T.lineLt}` }}>
-        <div className="rp-pad" style={{ maxWidth: W.page, margin: "0 auto", padding: "4px 24px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", columnGap: 24 }}>
-          <nav aria-label="Pages du site" style={{ display: "flex", flexWrap: "wrap", columnGap: 20 }}>
-            {pages.map(([h, l]) => <a key={h} href={h} style={{ ...lk, display: "inline-block" }}>{l}</a>)}
-          </nav>
-          <div style={{ display: "flex", flexWrap: "wrap", columnGap: 20 }}>
-            {links.map(([k, l]) => <button key={k} onClick={() => setModal(k)} style={lk}>{l}</button>)}
-          </div>
+        <div className="rp-pad" style={{ maxWidth: W.page, margin: "0 auto", padding: "4px 24px", display: "flex", justifyContent: "flex-end", alignItems: "center", flexWrap: "wrap", columnGap: 20 }}>
+          <Link href="#/a-propos/faq" style={lk}>FAQ</Link>
+          {links.map(([k, l]) => <Link key={k} onClick={() => setModal(k)} style={lk}>{l}</Link>)}
         </div>
       </div>
     </footer>

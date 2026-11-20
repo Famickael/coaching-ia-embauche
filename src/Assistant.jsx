@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { T, GRAD_AI, GRAD_AI_SOFT, FD, FB, RAD, Icon, I } from "./ui.jsx";
+import { T, GRAD_AI, FD, FB, RAD, Icon, I } from "./ui.jsx";
 import { askAssistant, CONTEXT_SUGGESTIONS } from "./lib/assistant.js";
 
 const REMOTE = !!import.meta.env.VITE_LLM_ENDPOINT;
@@ -38,7 +38,7 @@ export default function Assistant({ context = "warmup", poste, title = "Posez di
 
   return (
     <section aria-labelledby={`${id}-title`} style={{ border: `1px solid ${T.violet}33`, borderRadius: RAD.md, background: "#fff", overflow: "hidden" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 16px", background: GRAD_AI_SOFT, borderBottom: `1px solid ${T.violet}1f` }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 16px", background: T.violetBg, borderBottom: `1px solid ${T.violet}1f` }}>
         <div aria-hidden style={{ width: 30, height: 30, borderRadius: "50%", background: GRAD_AI, display: "grid", placeItems: "center", flexShrink: 0 }}><Icon d={I.chat} s={16} c="#fff" /></div>
         <div style={{ minWidth: 0 }}>
           <h2 id={`${id}-title`} style={{ font: `800 15.5px ${FD}`, color: T.navy, margin: 0 }}>{title}</h2>

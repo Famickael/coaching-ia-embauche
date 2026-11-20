@@ -105,7 +105,7 @@ export default function Recorder({ question, onDone, onCancel, trackGaze = true,
               <div style={{ font: `400 13px/1.5 ${FB}`, marginBottom: 16 }}>{phase === "error" ? error : "L'aperçu reste sur votre appareil. Vous pouvez aussi enregistrer uniquement votre voix."}</div>
               <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
                 <Btn kind="objective" onClick={() => open(false)}>Activer la caméra</Btn>
-                <Btn kind="ghostDark" onClick={() => open(true)}><Icon d={I.mic} s={16} c="#fff" /> Son seulement</Btn>
+                <Btn kind="ghostDark" onClick={() => open(true)} icon={I.mic}>Son seulement</Btn>
               </div>
             </div>
           </div>
@@ -142,10 +142,10 @@ export default function Recorder({ question, onDone, onCancel, trackGaze = true,
       <div style={{ marginTop: 16, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
         {onCancel ? <button onClick={() => { stop(); stopStream(); onCancel(); }} style={{ font: `500 14px ${FB}`, color: T.muted, background: "none", border: "none", cursor: "pointer" }}>← Retour</button> : <span />}
         <div style={{ display: "flex", gap: 10 }}>
-          {phase === "live" && <Btn kind="blue" onClick={start}><span style={{ width: 9, height: 9, borderRadius: "50%", background: "#fff", display: "inline-block" }} /> Démarrer l'enregistrement</Btn>}
+          {phase === "live" && <Btn kind="objective" onClick={start}><span style={{ width: 9, height: 9, borderRadius: "50%", background: "#fff", display: "inline-block" }} /> Démarrer l'enregistrement</Btn>}
           {phase === "recording" && <Btn kind="secondary" onClick={stop}>■ Arrêter</Btn>}
-          {phase === "done" && <Btn kind="secondary" onClick={redo}><Icon d={I.redo} s={16} c={T.primary} /> Refaire</Btn>}
-          {phase === "done" && <Btn kind="ai" onClick={() => onDone({ ...result, audioOnly })}>{validateLabel}&nbsp;<Icon d={I.arrow} s={18} c="#fff" /></Btn>}
+          {phase === "done" && <Btn kind="secondary" onClick={redo} icon={I.redo}>Refaire</Btn>}
+          {phase === "done" && <Btn kind="ai" onClick={() => onDone({ ...result, audioOnly })} iconRight={I.arrow}>{validateLabel}</Btn>}
         </div>
       </div>
     </div>

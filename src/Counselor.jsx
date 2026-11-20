@@ -22,8 +22,8 @@ export default function Counselor() {
           <p style={{ font: `400 14px ${FB}`, color: T.body, margin: 0 }}>Les personnes que vous accompagnez dans le module entretien</p>
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <Btn kind={view.name === "list" ? "dark" : "secondary"} size="sm" onClick={() => setView({ name: "list" })}>Mes bénéficiaires</Btn>
-          <Btn kind="secondary" size="sm" onClick={() => setModal({ step: "create" })}><Icon d={I.plus} s={15} c={T.primary} /> Nouveau parcours</Btn>
+          <Btn kind={view.name === "list" ? "primary" : "secondary"} size="sm" onClick={() => setView({ name: "list" })}>Mes bénéficiaires</Btn>
+          <Btn kind="secondary" size="sm" onClick={() => setModal({ step: "create" })} icon={I.plus}>Nouveau parcours</Btn>
         </div>
       </div>
       <div key={view.name + (view.code || "") + (view.takeId || "")} className="up">
@@ -121,7 +121,7 @@ function List({ s, open, create }) {
         <Card pad={32} style={{ textAlign: "center" }}>
           <div style={{ font: `700 17px ${FD}`, color: T.navy, marginBottom: 6 }}>Aucun parcours pour l'instant</div>
           <p style={{ font: `400 14px ${FB}`, color: T.body, margin: "0 0 16px" }}>Créez un parcours pour générer le code et le lien à transmettre à la personne accompagnée.</p>
-          <Btn kind="primary" onClick={create}><Icon d={I.plus} s={16} c="#fff" /> Créer un parcours</Btn>
+          <Btn kind="primary" onClick={create} icon={I.plus}>Créer un parcours</Btn>
         </Card>
       ) : (
         <Card pad={0} style={{ overflow: "hidden", boxShadow: SH.sm }}>
@@ -167,7 +167,7 @@ function Create({ done, cancel }) {
         </div>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 26 }}>
           <button type="button" onClick={cancel} style={{ font: `600 14px ${FB}`, color: T.muted, background: "none", border: "none", cursor: "pointer", padding: "8px 4px" }}>Annuler</button>
-          <Btn kind="primary" disabled={!prenom.trim()}>Générer le code&nbsp;<Icon d={I.arrow} s={18} c="#fff" /></Btn>
+          <Btn kind="primary" disabled={!prenom.trim()} iconRight={I.arrow}>Générer le code</Btn>
         </div>
       </form>
     </Card>
@@ -176,7 +176,7 @@ function Create({ done, cancel }) {
 
 function CopyBtn({ text, label }) {
   const [ok, setOk] = useState(false);
-  return <Btn kind="secondary" size="sm" onClick={() => navigator.clipboard?.writeText(text).then(() => { setOk(true); setTimeout(() => setOk(false), 1600); })}><Icon d={ok ? I.check : I.copy} s={15} c={T.primary} /> {ok ? "Copié" : label}</Btn>;
+  return <Btn kind="secondary" size="sm" onClick={() => navigator.clipboard?.writeText(text).then(() => { setOk(true); setTimeout(() => setOk(false), 1600); })} icon={ok ? I.check : I.copy}>{ok ? "Copié" : label}</Btn>;
 }
 
 function Created({ p, back, openAsBenef }) {
@@ -220,7 +220,7 @@ function Parcours({ s, p, back, review }) {
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <CopyBtn text={linkFor(p.code)} label="Copier le lien" />
-          <Btn kind="ghost" size="sm" onClick={del}><Icon d={I.trash} s={15} c={T.primary} /> Supprimer</Btn>
+          <Btn kind="ghost" size="sm" onClick={del} icon={I.trash}>Supprimer</Btn>
         </div>
       </Card>
       <h2 style={{ font: `800 18px ${FD}`, color: T.navy, margin: "0 0 4px" }}>Prises partagées</h2>
@@ -339,7 +339,7 @@ function Review({ s, p, take, back }) {
                 style={{ ...inp, height: 40, font: `400 13px ${FB}`, marginTop: -4, marginBottom: 14 }} />
             </div>
           ))}
-          <Btn kind="objective" full onClick={send}>{take.report ? "Renvoyer le rapport" : "Envoyer le rapport"}&nbsp;<Icon d={I.send} s={16} c="#fff" /></Btn>
+          <Btn kind="objective" full onClick={send} icon={I.send}>{take.report ? "Renvoyer le rapport" : "Envoyer le rapport"}</Btn>
           <p style={{ font: `400 11.5px/1.4 ${FB}`, color: T.muted, textAlign: "center", marginTop: 10 }}>Rien n'est transmis tant que vous n'avez pas envoyé le rapport. Vos saisies sont enregistrées en brouillon.</p>
         </div>
       </div>

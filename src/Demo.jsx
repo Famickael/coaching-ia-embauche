@@ -1,6 +1,5 @@
 import React, { useRef, useState } from "react";
-import { T, RAD, SH, Btn, Icon, I, ORG_NAME } from "./ui.jsx";
-import { TT, TY, W, SI, PageHero, IconTile, Field, Input, Textarea, Select, Checkbox, TextBtn } from "./site.jsx";
+import { T, RAD, SH, Btn, Icon, I, ORG_NAME, TY, W, SI, PageHero, IconTile, Field, Input, Textarea, Select, Checkbox, Link } from "./ui.jsx";
 
 /* Page « Demander une démo » : formulaire sans serveur. Rien n'est envoyé ni conservé par le site.
    Si VITE_CONTACT_EMAIL est défini, la demande s'ouvre dans le logiciel de messagerie (mailto:). */
@@ -90,7 +89,7 @@ export default function Demo({ go }) {
               J'accepte d'être recontacté·e au sujet de cette demande. Mes coordonnées servent uniquement à organiser la démonstration.
             </Checkbox>
             <div style={{ display: "grid", gap: 8, marginTop: 4 }}>
-              <div className="rp-wide-m"><Btn kind="objective" size="md">Envoyer ma demande <Icon d={I.send} s={16} c={T.surface} /></Btn></div>
+              <div className="rp-wide-m"><Btn kind="objective" size="md" icon={I.send}>Envoyer ma demande</Btn></div>
               <span style={{ ...TY.caption, color: T.muted }}>
                 {CONTACT ? "Votre logiciel de messagerie s'ouvrira avec votre demande prête à envoyer. Le site ne conserve rien." : "Le site ne conserve ni ne transmet vos coordonnées."}
               </span>
@@ -111,8 +110,8 @@ export default function Demo({ go }) {
                 </div>
               </div>
             ))}
-            <div style={{ background: TT.primaryBg, borderRadius: RAD.md, padding: "12px 16px", display: "flex", gap: 12, ...TY.small, color: T.navy }}>
-              <Icon d={I.lock} s={16} c={T.primary} /> <span>Envie d'essayer d'abord ? Le code d'essai est déjà rempli dans <TextBtn onClick={() => go("#/espace")} style={{ ...TY.small, fontWeight: 600, padding: 0 }}>Mon espace</TextBtn>.</span>
+            <div style={{ background: T.primaryBg, borderRadius: RAD.md, padding: "12px 16px", display: "flex", gap: 12, ...TY.small, color: T.navy }}>
+              <Icon d={I.lock} s={16} c={T.primary} /> <span>Envie d'essayer d'abord ? Le code d'essai est déjà rempli dans <Link onClick={() => go("#/espace")} style={{ ...TY.small, fontWeight: 600, padding: 0 }}>Mon espace</Link>.</span>
             </div>
           </aside>
         </div>
@@ -127,7 +126,7 @@ function Done({ f, go, reset }) {
   return (
     <main className="rs-pad" style={{ maxWidth: W.form, margin: "0 auto", padding: "64px 24px 0" }}>
       <div role="status" className="up" style={{ background: T.surface, border: `1px solid ${T.line}`, borderRadius: RAD.lg, boxShadow: SH.sm, padding: 32, display: "grid", gap: 16, justifyItems: "center", textAlign: "center" }}>
-        <div style={{ width: 56, height: 56, borderRadius: "50%", background: T.successBg, display: "grid", placeItems: "center" }}><Icon d={I.check} s={28} c={TT.successDk} /></div>
+        <div style={{ width: 56, height: 56, borderRadius: "50%", background: T.successBg, display: "grid", placeItems: "center" }}><Icon d={I.check} s={28} c={T.successDk} /></div>
         <h1 className="ty-h1" style={{ ...TY.h1, color: T.navy, margin: 0 }}>Merci {f.prenom}, votre demande est prête</h1>
         {f.mailto ? (
           <p style={{ ...TY.bodyLg, color: T.body, margin: 0 }}>Votre logiciel de messagerie s'est ouvert avec votre demande. Il vous reste à l'envoyer. S'il ne s'est pas ouvert, utilisez le lien ci-dessous.</p>
@@ -140,7 +139,7 @@ function Done({ f, go, reset }) {
             : <Btn kind="secondary" onClick={copy}>{copied ? "Demande copiée" : "Copier ma demande"}</Btn>}
           <Btn kind="primary" onClick={() => go("#/")}>Revenir à l'accueil</Btn>
         </div>
-        <TextBtn onClick={reset}>Faire une autre demande</TextBtn>
+        <Link onClick={reset}>Faire une autre demande</Link>
       </div>
     </main>
   );

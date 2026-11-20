@@ -171,7 +171,7 @@ async function run(b, vw, vh, opts = {}) {
 
   // Pied de page : lien FAQ
   await visit("#/");
-  await p.getByRole("navigation", { name: "Pages du site" }).getByRole("link", { name: "FAQ" }).click(); await p.waitForTimeout(400);
+  await p.locator("footer").getByRole("link", { name: "FAQ" }).click(); await p.waitForTimeout(400);
   check(p.url().endsWith("#/a-propos/faq"), `[${tag}] lien FAQ du pied de page`);
 
   errors.forEach(e => problems.push(`[${tag}] ${e}`));

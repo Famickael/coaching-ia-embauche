@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { T, GRAD_SOFT, GRAD_AI, GRAD_AI_SOFT, FD, FB, FM, RAD, SH, Card, Tag, Btn, Back, Icon, I, Rail, GradHead, RepetMark } from "./ui.jsx";
+import { T, GRAD_SOFT, GRAD_AI, FD, FB, FM, RAD, SH, Card, Tag, Btn, Back, Icon, I, Rail, GradHead, RepetMark } from "./ui.jsx";
 import Recorder from "./Recorder.jsx";
 import WarmupStage from "./WarmupStage.jsx";
 import Assistant from "./Assistant.jsx";
@@ -86,7 +86,7 @@ function CodeEntry({ initial, onOk }) {
           <input id="code" value={code} autoComplete="off" maxLength={6} onChange={e => { setCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "")); setErr(""); }} placeholder="6 caractères"
             style={{ width: "100%", height: 56, padding: "0 18px", borderRadius: RAD.md, border: `1.5px solid ${err ? T.errorDk : T.line}`, font: `700 22px ${FM}`, letterSpacing: ".25em", textAlign: "center", color: T.navy, background: T.bg }} />
           {err && <div role="alert" style={{ font: `500 13px ${FB}`, color: T.errorDk, marginTop: 8, textAlign: "left" }}>{err}</div>}
-          <div style={{ marginTop: 20 }}><Btn kind="objective" size="lg" full disabled={code.length < 6}>Accéder à mon espace&nbsp;<Icon d={I.arrow} s={18} c="#fff" /></Btn></div>
+          <div style={{ marginTop: 20 }}><Btn kind="objective" size="lg" full disabled={code.length < 6} iconRight={I.arrow}>Accéder à mon espace</Btn></div>
         </form>
       </Card>
       <p style={{ font: `400 12.5px ${FB}`, color: T.muted, marginTop: 20 }}>Aucun compte à créer. Ce code vous est personnel.</p>
@@ -163,7 +163,7 @@ function Home({ p, takes, go, counselor, onQuit }) {
                 ? "L'entraînement est enregistré sur votre appareil et reçoit un retour de l'assistant, qui décrit des faits sans noter. Vous décidez ensuite, réponse par réponse, de l'envoyer ou non à votre coach."
                 : "L'entraînement est enregistré sur votre appareil pour que vous puissiez vous revoir. Le retour de l'assistant est désactivé à votre demande. Vous décidez, réponse par réponse, de l'envoyer ou non à votre coach."}
               text="Vous choisissez une ou plusieurs questions et vous vous enregistrez sur cet appareil. L'assistant vous fait un retour.">
-              <Btn kind="objective" onClick={() => go("pick", { queue: null, selection: null, preselect: null })}>Démarrer l'entraînement&nbsp;<Icon d={I.arrow} s={17} c="#fff" /></Btn>
+              <Btn kind="objective" onClick={() => go("pick", { queue: null, selection: null, preselect: null })} iconRight={I.arrow}>Démarrer l'entraînement</Btn>
             </ChoiceTile>
           </div>
         </div>
@@ -355,7 +355,7 @@ function Warmup({ p, go, setModal }) {
             <div style={{ flex: 1, minWidth: 200, font: `500 13.5px/1.5 ${FB}`, color: T.primaryDk }} aria-live="polite">
               <strong>Relance {prompt + 1}/{WARMUP_PROMPTS.length} :</strong> {WARMUP_PROMPTS[prompt]}
             </div>
-            <Btn kind="ghost" size="sm" onClick={() => setPrompt(i => (i + 1) % WARMUP_PROMPTS.length)}><Icon d={I.redo} s={15} c={T.primary} /> Relance suivante</Btn>
+            <Btn kind="ghost" size="sm" onClick={() => setPrompt(i => (i + 1) % WARMUP_PROMPTS.length)} icon={I.redo}>Relance suivante</Btn>
           </div>
         </div>
 
@@ -383,7 +383,7 @@ function Warmup({ p, go, setModal }) {
 
       <div style={{ marginTop: 18, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
         <Back onClick={() => go("home")} />
-        <Btn kind="objective" onClick={finish}>J'ai terminé l'échauffement&nbsp;<Icon d={I.arrow} s={17} c="#fff" /></Btn>
+        <Btn kind="objective" onClick={finish} iconRight={I.arrow}>J'ai terminé l'échauffement</Btn>
       </div>
     </div>
   );
@@ -427,7 +427,7 @@ function WarmupDebrief({ p, go, again }) {
           </div>
           <div aria-live="polite">
             {feeling && (
-              <div style={{ marginTop: 10, display: "flex", gap: 10, alignItems: "flex-start", background: GRAD_AI_SOFT, borderRadius: RAD.sm, padding: "10px 13px", font: `400 13.5px/1.55 ${FB}`, color: T.navy }}>
+              <div style={{ marginTop: 10, display: "flex", gap: 10, alignItems: "flex-start", background: T.violetBg, borderRadius: RAD.sm, padding: "10px 13px", font: `400 13.5px/1.55 ${FB}`, color: T.navy }}>
                 <span aria-hidden style={{ marginTop: 1 }}><Icon d={I.chat} s={15} c={T.violet} /></span>
                 <span><strong style={{ color: T.violet }}>Assistant :</strong> {feelingAck(feeling)}</span>
               </div>
@@ -462,10 +462,10 @@ function WarmupDebrief({ p, go, again }) {
 
         <div style={{ marginTop: 22, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
           <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-            <Btn kind="ghost" size="sm" onClick={again}><Icon d={I.redo} s={15} c={T.primary} /> Refaire un échauffement</Btn>
+            <Btn kind="ghost" size="sm" onClick={again} icon={I.redo}>Refaire un échauffement</Btn>
             <Btn kind="ghost" size="sm" onClick={() => go("home")}>Revenir à mon espace</Btn>
           </div>
-          <Btn kind="objective" onClick={() => go("pick", { preselect: pre, selection: null, queue: null })}>Commencer l'entraînement&nbsp;<Icon d={I.arrow} s={17} c="#fff" /></Btn>
+          <Btn kind="objective" onClick={() => go("pick", { preselect: pre, selection: null, queue: null })} iconRight={I.arrow}>Commencer l'entraînement</Btn>
         </div>
       </Card>
     </div>
@@ -538,7 +538,7 @@ function Pick({ p, ctx, go }) {
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
             <input id="own" value={own} onChange={e => setOwn(e.target.value)} maxLength={240} placeholder="Par exemple : pourquoi avez-vous quitté votre dernier emploi ?"
               style={{ flex: "1 1 240px", minWidth: 0, height: 48, padding: "0 16px", borderRadius: RAD.md, border: `1.5px solid ${T.line}`, font: `400 15px ${FB}`, color: T.navy }} />
-            <Btn kind="secondary" disabled={own.trim().length < 5}><Icon d={I.plus} s={16} c={T.primary} /> Ajouter</Btn>
+            <Btn kind="secondary" disabled={own.trim().length < 5} icon={I.plus}>Ajouter</Btn>
           </div>
         </form>
         {custom.length > 0 && (
@@ -554,7 +554,7 @@ function Pick({ p, ctx, go }) {
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
           {n > 0 && <Btn kind="ghost" size="sm" onClick={() => setSel([])}>Tout désélectionner</Btn>}
-          <Btn kind="objective" disabled={!n} onClick={start}>{n ? `Commencer (${n} question${n > 1 ? "s" : ""})` : "Commencer"}&nbsp;<Icon d={I.arrow} s={17} c="#fff" /></Btn>
+          <Btn kind="objective" disabled={!n} onClick={start} iconRight={I.arrow}>{n ? `Commencer (${n} question${n > 1 ? "s" : ""})` : "Commencer"}</Btn>
         </div>
       </div>
       <div style={{ marginTop: 10 }}><Back onClick={() => go("home")} /></div>
@@ -675,7 +675,7 @@ function TakeReport({ p, take, mode, go, series, nextQuestion, stopSeries }) {
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
             {series.hasNext && <Btn kind="ghost" size="sm" onClick={stopSeries}>Arrêter ici</Btn>}
             {series.hasNext
-              ? <Btn kind="objective" onClick={nextQuestion}>Question suivante ({series.i + 2}/{series.n})&nbsp;<Icon d={I.arrow} s={17} c="#fff" /></Btn>
+              ? <Btn kind="objective" onClick={nextQuestion} iconRight={I.arrow}>Question suivante ({series.i + 2}/{series.n})</Btn>
               : <Btn kind="secondary" size="sm" onClick={stopSeries}>Revenir à mon espace</Btn>}
           </div>
         </Card>
@@ -686,16 +686,16 @@ function TakeReport({ p, take, mode, go, series, nextQuestion, stopSeries }) {
           <div style={{ font: `400 13px ${FB}`, color: T.body }}>{take.shared ? "Vous pouvez continuer à vous entraîner et envoyer une nouvelle réponse à tout moment." : "Cette réponse reste sur votre appareil tant que vous ne l'envoyez pas."}</div>
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <Btn kind="ghost" size="sm" onClick={del}><Icon d={I.trash} s={15} c={T.primary} /> Supprimer</Btn>
-          <Btn kind="ghost" size="sm" onClick={() => window.print()}><Icon d={I.print} s={15} c={T.primary} /> Imprimer ou PDF</Btn>
-          {!series?.hasNext && <Btn kind="secondary" size="sm" onClick={() => go("pick", { queue: null, selection: null, preselect: null })}><Icon d={I.redo} s={15} c={T.primary} /> M'entraîner encore</Btn>}
-          {!take.shared && <Btn kind={series?.hasNext ? "secondary" : "objective"} size="sm" onClick={() => go("share")}>Envoyer à mon coach&nbsp;<Icon d={I.send} s={15} c={series?.hasNext ? T.primary : "#fff"} /></Btn>}
+          <Btn kind="ghost" size="sm" onClick={del} icon={I.trash}>Supprimer</Btn>
+          <Btn kind="ghost" size="sm" onClick={() => window.print()} icon={I.print}>Imprimer ou PDF</Btn>
+          {!series?.hasNext && <Btn kind="secondary" size="sm" onClick={() => go("pick", { queue: null, selection: null, preselect: null })} icon={I.redo}>M'entraîner encore</Btn>}
+          {!take.shared && <Btn kind={series?.hasNext ? "secondary" : "objective"} size="sm" onClick={() => go("share")} icon={I.send}>Envoyer à mon coach</Btn>}
         </div>
       </Card>
       <div style={{ marginTop: 16 }} className="noprint">
         {ask
           ? <Assistant context="feedback" poste={p.poste} id="asst-feedback" title="Une question sur ce retour ?" intro="Je peux vous expliquer un repère du retour ou vous donner des conseils pour votre prochain essai. Je ne vois pas votre vidéo." />
-          : <button type="button" onClick={() => setAsk(true)} style={{ display: "inline-flex", alignItems: "center", gap: 8, font: `600 13.5px ${FB}`, color: T.violet, background: GRAD_AI_SOFT, border: `1px solid ${T.violet}33`, borderRadius: RAD.pill, padding: "10px 16px", cursor: "pointer" }}>
+          : <button type="button" onClick={() => setAsk(true)} style={{ display: "inline-flex", alignItems: "center", gap: 8, font: `600 13.5px ${FB}`, color: T.violet, background: T.violetBg, border: `1px solid ${T.violet}33`, borderRadius: RAD.pill, padding: "10px 16px", cursor: "pointer" }}>
               <Icon d={I.chat} s={16} c={T.violet} /> Une question sur ce retour ? Demandez à l'assistant
             </button>}
       </div>
@@ -731,8 +731,8 @@ function Sent({ p, go, series, nextQuestion }) {
       <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
         <Btn kind="secondary" onClick={() => go("home", { queue: null })}>Revenir à mon espace</Btn>
         {series?.hasNext
-          ? <Btn kind="objective" onClick={nextQuestion}>Question suivante ({series.i + 2}/{series.n})&nbsp;<Icon d={I.arrow} s={16} c="#fff" /></Btn>
-          : <Btn kind="objective" onClick={() => go("pick", { queue: null, selection: null, preselect: null })}><Icon d={I.redo} s={16} c="#fff" /> M'entraîner à nouveau</Btn>}
+          ? <Btn kind="objective" onClick={nextQuestion} iconRight={I.arrow}>Question suivante ({series.i + 2}/{series.n})</Btn>
+          : <Btn kind="objective" onClick={() => go("pick", { queue: null, selection: null, preselect: null })} icon={I.redo}>M'entraîner à nouveau</Btn>}
       </div>
     </Card>
   );

@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
-import { T, GRAD, GRAD_MAIN, FD, FB, FM, RAD, SH, RepetMark, Halo, Tag, Btn, Card, Icon, I } from "./ui.jsx";
+import { T, GRAD, GRAD_MAIN, FD, FB, FM, RAD, SH, RepetMark, Halo, Tag, Btn, Card, Icon, I, ON, TY, W, MO, SI, img, Eyebrow, Section, IconTile, Link, HEADER_H, HEADER_H_M } from "./ui.jsx";
 import { useReducedMotion, useCount, useInView, Reveal } from "./motion.jsx";
-import { TT, ON, TY, W, MO, SI, img, Eyebrow, Section, IconTile, TextBtn, HEADER_H, HEADER_H_M } from "./site.jsx";
 
 /* Page d'accueil : héros (accroche qui change, scènes en boucle), strate épinglée « un seul dispositif »,
    parti pris, portes d'entrée, bandeau final. Le détail par public est sur la page Solutions. */
@@ -40,13 +39,13 @@ function Hero({ go }) {
   const [w] = useTicker(ENDINGS.length, 2600, reduced);
   return (
     <section style={{ position: "relative", overflow: "hidden", background: T.bg }}>
-      <Halo style={{ width: 560, height: 560, background: TT.primaryBg, top: -180, right: -100 }} />
-      <Halo style={{ width: 420, height: 420, background: TT.violetBg, bottom: -160, left: -180 }} />
+      <Halo style={{ width: 560, height: 560, background: T.primaryBg, top: -180, right: -100 }} />
+      <Halo style={{ width: 420, height: 420, background: T.violetBg, bottom: -160, left: -180 }} />
       <div className="rs-pad" style={{ position: "relative", maxWidth: W.page, margin: "0 auto", padding: "80px 24px" }}>
         <div className="rs-hero">
           <div className="up" style={{ display: "grid", gap: 24, justifyItems: "start" }}>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              <Tag tone="ai"><Icon d={I.sparkle} s={12} c={T.violet} /> Assistant IA</Tag>
+              <Tag tone="ai" icon={I.sparkle}>Assistant IA</Tag>
               <Tag tone="primary">Sans note, sans jugement</Tag>
             </div>
             <h1 className="ty-display" style={{ ...TY.display, color: T.primary, margin: 0 }}>
@@ -64,11 +63,11 @@ function Hero({ go }) {
               Entraînez-vous seul, face à votre caméra, autant de fois que vous le souhaitez. Un assistant <strong style={{ color: T.navy }}>décrit votre réponse sans la noter</strong>, puis votre coach vous aide à aller plus loin.
             </p>
             <div className="rp-wide-m" style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-              <Btn kind="objective" size="lg" onClick={() => go("#/espace")}>Lancer ma première répétition <Icon d={I.arrow} s={20} c={T.surface} /></Btn>
+              <Btn kind="objective" size="lg" onClick={() => go("#/espace")} iconRight={I.arrow}>Lancer ma première répétition</Btn>
               <Btn kind="secondary" size="lg" onClick={() => go("#/solutions")}>Voir les solutions</Btn>
             </div>
             <div style={{ ...TY.small, color: T.muted }}>
-              Aucun compte à créer. Vous êtes coach ? <TextBtn onClick={() => go("#/coach")} style={{ ...TY.small, fontWeight: 600 }}>Accéder à l'espace coach</TextBtn>
+              Aucun compte à créer. Vous êtes coach ? <Link onClick={() => go("#/coach")} style={{ ...TY.small, fontWeight: 600 }}>Accéder à l'espace coach</Link>
             </div>
           </div>
           <HeroStage reduced={reduced} />
@@ -124,7 +123,7 @@ function Scene({ sc, on, first }) {
   return (
     <div className={`rs-scene ${on ? "on" : ""}`} aria-hidden={!on}>
       <div style={{ position: "relative" }}>
-        <div style={{ borderRadius: RAD.xl, overflow: "hidden", boxShadow: SH.lg, aspectRatio: "4 / 5", background: TT.primaryBg }}>
+        <div style={{ borderRadius: RAD.xl, overflow: "hidden", boxShadow: SH.lg, aspectRatio: "4 / 5", background: T.primaryBg }}>
           <img src={img(sc.src)} alt={sc.alt} width={900} height={1125} loading={first ? "eager" : "lazy"} decoding="async"
             style={{ display: "block", width: "100%", height: "100%", objectFit: "cover" }} />
         </div>
@@ -172,7 +171,7 @@ const ReperesCard = () => (
 
 const RapportCard = () => (
   <div style={{ background: T.surface, borderRadius: RAD.md, padding: 16, boxShadow: SH.lg, display: "flex", gap: 12, alignItems: "center" }}>
-    <div style={{ width: 40, height: 40, borderRadius: "50%", background: T.successBg, display: "grid", placeItems: "center", flexShrink: 0 }}><Icon d={I.check} s={20} c={TT.successDk} /></div>
+    <div style={{ width: 40, height: 40, borderRadius: "50%", background: T.successBg, display: "grid", placeItems: "center", flexShrink: 0 }}><Icon d={I.check} s={20} c={T.successDk} /></div>
     <div>
       <div style={{ ...TY.h4, color: T.navy }}>Rapport prêt pour le débriefing</div>
       <div style={{ ...TY.caption, color: T.muted }}>Notes horodatées et commentaires sur les repères</div>
@@ -412,8 +411,8 @@ function VisShare() {
           </div>
         </div>
         <div style={{ position: "relative", height: 24, marginTop: 16 }}>
-          <span className="rs-swap rs-off" style={{ position: "absolute", left: 0, top: 0 }}><Tag tone="muted"><Icon d={I.lock} s={12} c={T.body} /> Sur cet appareil</Tag></span>
-          <span className="rs-swap rs-onl" style={{ position: "absolute", left: 0, top: 0 }}><Tag tone="success"><Icon d={I.send} s={12} c={TT.successDk} /> Envoyée à votre coach</Tag></span>
+          <span className="rs-swap rs-off" style={{ position: "absolute", left: 0, top: 0 }}><Tag tone="muted" icon={I.lock}>Sur cet appareil</Tag></span>
+          <span className="rs-swap rs-onl" style={{ position: "absolute", left: 0, top: 0 }}><Tag tone="success" icon={I.send}>Envoyée à votre coach</Tag></span>
         </div>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 16, paddingTop: 16, borderTop: `1px solid ${T.lineLt}` }}>
           <span style={{ ...TY.bodyStrong, color: T.navy }}>Envoyer à mon coach</span>
@@ -431,7 +430,7 @@ function VisShare() {
 
 function VisCoach() {
   const note = (t, txt, d) => (
-    <div className="rs-in" style={{ display: "flex", gap: 12, alignItems: "flex-start", background: TT.primaryBg, borderLeft: `3px solid ${T.primary}`, borderRadius: RAD.xs, padding: "8px 12px", transitionDelay: d }}>
+    <div className="rs-in" style={{ display: "flex", gap: 12, alignItems: "flex-start", background: T.primaryBg, borderLeft: `3px solid ${T.primary}`, borderRadius: RAD.xs, padding: "8px 12px", transitionDelay: d }}>
       <span style={{ ...TY.time, color: T.surface, background: T.primary, borderRadius: RAD.pill, padding: "4px 8px", flexShrink: 0 }}>{t}</span>
       <span style={{ ...TY.small, color: T.navy }}>{txt}</span>
     </div>
@@ -440,7 +439,7 @@ function VisCoach() {
     <div style={visBox}>
       <div style={{ ...TY.overline, color: T.muted }}>Relecture du coach</div>
       <div style={{ position: "relative", marginTop: 16 }}>
-        <div style={{ height: 6, borderRadius: 3, background: TT.primaryBg }} />
+        <div style={{ height: 6, borderRadius: 3, background: T.primaryBg }} />
         {OBS.map(o => <span key={o.at} style={{ position: "absolute", left: `${o.at}%`, top: -4, transform: "translateX(-50%)" }}><Pin ap={o.ap} /></span>)}
         <span style={{ position: "absolute", left: "52%", top: -4, width: 14, height: 14, borderRadius: RAD.xs / 2, background: T.primary, border: `2px solid ${T.surface}` }} />
       </div>
@@ -553,7 +552,7 @@ function Features() {
               <span style={{ width: 8, height: 8, borderRadius: "50%", background: T.error, animation: "blink 1.2s infinite" }} />
               <span style={{ ...TY.time, color: T.navy }}>0:4<span className="rs-digits"><span>0<br />1<br />2<br />3<br />4<br />5<br />6<br />7<br />8<br />9</span></span></span>
             </span>
-            <Tag tone="muted"><Icon d={I.mic} s={12} c={T.body} /> Voix seule</Tag>
+            <Tag tone="muted" icon={I.mic}>Voix seule</Tag>
           </div>
           <div className="rs-wave" style={{ marginTop: 24, justifyContent: "center" }}>
             {Array.from({ length: 22 }, (_, i) => <i key={i} style={{ animationDelay: `${(i * 137) % 900}ms`, height: `${30 + ((i * 53) % 60)}%` }} />)}
@@ -561,17 +560,17 @@ function Features() {
         </FCard>
         <FCard title="Une transcription repérée" text="Votre réponse est transcrite sur votre appareil. Les passages utiles sont repérés, sans jugement.">
           <p style={{ ...TY.small, color: T.navy, margin: 0 }}>
-            Bonjour, je m'appelle Sami. <span className="rs-fhl h2" style={{ backgroundImage: `linear-gradient(${TT.violetBg},${TT.violetBg})` }}>Euh</span>, j'ai <span className="rs-fhl" style={{ backgroundImage: `linear-gradient(${T.accentBg},${T.accentBg})` }}>géré la caisse d'une supérette pendant trois ans</span>.
+            Bonjour, je m'appelle Sami. <span className="rs-fhl h2" style={{ backgroundImage: `linear-gradient(${T.violetBg},${T.violetBg})` }}>Euh</span>, j'ai <span className="rs-fhl" style={{ backgroundImage: `linear-gradient(${T.accentBg},${T.accentBg})` }}>géré la caisse d'une supérette pendant trois ans</span>.
           </p>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 12 }}>
-            <span className="rs-ftag"><Tag tone="appui"><Icon d={I.check} s={12} c={T.accent} /> Exemple concret</Tag></span>
-            <span className="rs-ftag t2"><Tag tone="ai"><Icon d={I.search} s={12} c={T.violet} /> Mot d'appui</Tag></span>
+            <span className="rs-ftag"><Tag tone="appui" icon={I.check}>Exemple concret</Tag></span>
+            <span className="rs-ftag t2"><Tag tone="ai" icon={I.search}>Mot d'appui</Tag></span>
           </div>
         </FCard>
         <FCard title="Un assistant pour vos questions" text="Une hésitation sur un retour ou sur une question difficile ? L'assistant répond, votre coach complète.">
           <div style={{ display: "grid", gap: 8 }}>
-            <div style={{ ...miniCard, justifySelf: "end", background: TT.primaryBg, ...TY.small, color: T.navy, maxWidth: "85%" }}>Comment parler d'un trou dans mon CV ?</div>
-            <div style={{ position: "relative", ...miniCard, background: TT.violetBg, ...TY.small, color: T.navy, maxWidth: "90%", minHeight: 44 }}>
+            <div style={{ ...miniCard, justifySelf: "end", background: T.primaryBg, ...TY.small, color: T.navy, maxWidth: "85%" }}>Comment parler d'un trou dans mon CV ?</div>
+            <div style={{ position: "relative", ...miniCard, background: T.violetBg, ...TY.small, color: T.navy, maxWidth: "90%", minHeight: 44 }}>
               <span className="rs-typing rp-dots" style={{ color: T.violet }}><i /><i /><i /></span>
               <span className="rs-answer" style={{ display: "block" }}>Restez simple et honnête, puis parlez de ce que vous avez fait pendant cette période.</span>
             </div>
@@ -618,7 +617,7 @@ function NotDo() {
 /* ─── Pour qui ─── */
 function ForWho({ go }) {
   const doors = [
-    { top: true, t: "Un coach vous accompagne", d: "Votre coach vous a remis un code de 6 caractères. Il ouvre votre espace d'entraînement, sans compte à créer.", b: <Btn kind="secondary" onClick={() => go("#/espace")}>J'ai un code <Icon d={I.arrow} s={16} c={T.primary} /></Btn> },
+    { top: true, t: "Un coach vous accompagne", d: "Votre coach vous a remis un code de 6 caractères. Il ouvre votre espace d'entraînement, sans compte à créer.", b: <Btn kind="secondary" onClick={() => go("#/espace")} iconRight={I.arrow}>J'ai un code</Btn> },
     { top: "coach", t: "Vous êtes coach", d: "Créez un parcours, transmettez le code, relisez les entretiens que l'on vous envoie et préparez vos débriefings.", b: <Btn kind="secondary" onClick={() => go("#/coach")}>Espace coach</Btn> },
     { top: "ai", t: "Vous représentez un organisme", d: "Direction, DSI, juridique : découvrez comment l'outil se déploie chez vous, avec vos règles et votre hébergement.", b: <Btn kind="secondary" onClick={() => go("#/solutions/organismes")}>Pour les organismes</Btn> },
   ];
@@ -653,7 +652,7 @@ export function FinalBand({ title = "Prêt pour une première répétition ?", t
             </div>
             <div className="rp-wide-m" style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
               {children || <>
-                <Btn kind="white" size="lg" onClick={openSpace}>Ouvrir mon espace <Icon d={I.arrow} s={20} c={T.primary} /></Btn>
+                <Btn kind="white" size="lg" onClick={openSpace} iconRight={I.arrow}>Ouvrir mon espace</Btn>
                 <Btn kind="ghostDark" size="lg" onClick={() => go("#/solutions")}>Voir les solutions</Btn>
               </>}
             </div>
