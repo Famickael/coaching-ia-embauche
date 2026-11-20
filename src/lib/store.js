@@ -188,3 +188,17 @@ export async function loadVideoUrl(id) {
   const blob = await tx("readonly", s => s.get(id));
   return blob ? URL.createObjectURL(blob) : null;
 }
+
+/* ── Questionnaire de fin d'échauffement ──
+   Clé séparée ("larepet.warmup.CODE") : ces réponses restent sur l'appareil, elles ne font pas partie
+   des données partagées avec le coach et ne sont pas destinées à remonter vers un serveur. */
+const WARMUP_KEY = code => `larepet.warmup.${code}`;
+export function saveWarmupDebrief(code, data) {
+  try { localStorage.setItem(WARMUP_KEY(code), JSON.stringify({ ...data, at: new Date().toISOString() })); } catch { /* mode privé */ }
+}
+export function loadWarmupDebrief(code) {
+  try { return JSON.parse(localStorage.getItem(WARMUP_KEY(code)) || "null"); } catch { return null; }
+}
+export function clearWarmupDebrief(code) {
+  try { localStorage.removeItem(WARMUP_KEY(code)); } catch { /* mode privé */ }
+}

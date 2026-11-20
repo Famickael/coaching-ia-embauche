@@ -172,9 +172,16 @@ const I = {
   pause: <><rect x="6" y="4" width="4" height="16" /><rect x="14" y="4" width="4" height="16" /></>,
   print: <><polyline points="6 9 6 2 18 2 18 9" /><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" /><rect x="6" y="14" width="12" height="8" /></>,
   note: <><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" /></>,
+  logout: <><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></>,
   search: <><circle cx="11" cy="11" r="7" /><line x1="21" y1="21" x2="16.5" y2="16.5" /></>,
   ban: <><circle cx="12" cy="12" r="9" /><line x1="5.6" y1="5.6" x2="18.4" y2="18.4" /></>,
   mic: <><rect x="9" y="2" width="6" height="12" rx="3" /><path d="M5 10a7 7 0 0 0 14 0M12 17v5" /></>,
+  info: <><circle cx="12" cy="12" r="9" /><line x1="12" y1="11" x2="12" y2="16.5" /><line x1="12" y1="7.6" x2="12.01" y2="7.6" /></>,
+  shuffle: <><polyline points="16 3 21 3 21 8" /><line x1="4" y1="20" x2="21" y2="3" /><polyline points="21 16 21 21 16 21" /><line x1="15" y1="15" x2="21" y2="21" /><line x1="4" y1="4" x2="9" y2="9" /></>,
+  video: <><rect x="2" y="6" width="14" height="12" rx="2" /><polygon points="22 8 16 12 22 16 22 8" /></>,
+  chat: <path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1.1-4.6A8 8 0 1 1 21 12z" />,
+  close: <><line x1="6" y1="6" x2="18" y2="18" /><line x1="18" y1="6" x2="6" y2="18" /></>,
+  bulb: <><path d="M9 18h6M10 21h4" /><path d="M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z" /></>,
 };
 
 /* ─── APP ──────────────────────────────────────────────────────────────── */
@@ -193,6 +200,16 @@ const GStyle = () => (
     .up{animation:up .45s cubic-bezier(.2,.7,.3,1) both}
     input:focus,textarea:focus{outline:none;border-color:${T.blue}!important;box-shadow:0 0 0 4px ${T.blue}22}
     button:focus-visible{outline:2px solid ${T.blue};outline-offset:2px}
+    /* ── Espace bénéficiaire : assistant, bulles d'information, sélection ── */
+    .rp-sr{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+    .rp-dots{display:inline-flex;gap:3px}
+    .rp-dots i{width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.3;animation:rpDot 1.2s infinite}
+    .rp-dots i:nth-child(2){animation-delay:.2s}
+    .rp-dots i:nth-child(3){animation-delay:.4s}
+    @keyframes rpDot{0%,80%,100%{opacity:.25;transform:none}40%{opacity:1;transform:translateY(-2px)}}
+    [role=checkbox]:focus-visible,[role=option]:focus-visible,[role=radio]:focus-visible{outline:2px solid ${T.blue};outline-offset:2px}
+    .rp-opt:hover{background:${T.lineLt}}
+    .rp-sel{position:-webkit-sticky;position:sticky;bottom:12px;z-index:3}
     /* ── Mouvement (accueil) ── */
     .rv{opacity:0;transform:translateY(16px);transition:opacity .45s cubic-bezier(.2,.7,.3,1),transform .45s cubic-bezier(.2,.7,.3,1)}
     .rv.is-in{opacity:1;transform:none}
@@ -204,13 +221,12 @@ const GStyle = () => (
     .hc .hc-mask{transform-origin:right;transform:scaleX(1)}
     .hc .hc-head{opacity:0}
     .hc .hc-pin{transform:translateX(-50%) scale(0)}
-    .hc .hc-row,.hc .hc-facts,.hc .hc-note{opacity:0}
+    .hc .hc-row,.hc .hc-facts{opacity:0}
     .hc.is-in .hc-mask{animation:hcMask 2.4s linear .3s both}
     .hc.is-in .hc-head{animation:hcHead 2.6s linear .3s both}
     .hc.is-in .hc-pin{animation:hcPop .24s cubic-bezier(.34,1.56,.64,1) both}
     .hc.is-in .hc-row{animation:hcUp .3s cubic-bezier(.2,.7,.3,1) both}
     .hc.is-in .hc-facts{animation:hcFade .3s ease 2.7s both}
-    .hc.is-in .hc-note{animation:hcFade .3s ease 3.3s both}
     /* scène collante du défilement */
     .sc{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:56px}
     .sc-scene{grid-column:2;grid-row:1;position:-webkit-sticky;position:sticky;top:max(96px,calc(50vh - 200px));top:max(96px,calc(50svh - 200px));align-self:start;height:400px}
@@ -261,6 +277,8 @@ const GStyle = () => (
       .rp-split{grid-template-columns:minmax(0,1fr)!important}
       .rp-head{padding:22px 20px!important}
       .rp-card-pad{padding-left:20px!important;padding-right:20px!important}
+      .rp-wide-m{width:100%}
+      .rp-wide-m>button{width:100%}
       .rp-hero-vis{max-width:440px;width:100%;margin:0 auto}
       .rp-float{left:8px!important;bottom:-24px!important}
       .sc{display:block}
@@ -268,8 +286,6 @@ const GStyle = () => (
       .sc-step{min-height:60vh;min-height:60svh;justify-content:flex-start;padding-top:20px;opacity:1}
       .sc-scene::after{content:"";position:absolute;left:0;right:0;top:100%;height:24px;background:linear-gradient(${T.bg},transparent);pointer-events:none}
       .rp-trust{display:grid!important;grid-template-columns:1fr 1fr;gap:10px 14px!important;font-size:12px!important}
-      .rp-nav-pill-label{display:none}
-      .rp-nav-pill-icon{display:none}
       .rp-nav nav{gap:8px!important}
       .rp-nav nav .navlink{font-size:13px}
     }
@@ -322,7 +338,4 @@ function GradHead({ tag, title, sub, action, soft }) {
 }
 
 
-// « Analyse sur votre appareil » n'est vrai que sans transcription ni reformulation par un serveur.
-const LOCAL_ONLY = !import.meta.env.VITE_STT_ENDPOINT && !import.meta.env.VITE_LLM_ENDPOINT;
-
-export { LOCAL_ONLY, T, GRAD_MAIN, GRAD_PREMIUM, GRAD_COACH, GRAD_AI, GRAD, GRAD_SOFT, GRAD_AI_SOFT, FD, FB, FM, RAD, SH, sp, RepetMark, RepetLogo, OrgLogo, ORG_NAME, Halo, Tag, Btn, Card, Back, Icon, I, GStyle, Rail, GradHead, LOGO_SYM, LOGO_WORD };
+export { T, GRAD_MAIN, GRAD_PREMIUM, GRAD_COACH, GRAD_AI, GRAD, GRAD_SOFT, GRAD_AI_SOFT, FD, FB, FM, RAD, SH, sp, RepetMark, RepetLogo, OrgLogo, ORG_NAME, Halo, Tag, Btn, Card, Back, Icon, I, GStyle, Rail, GradHead, LOGO_SYM, LOGO_WORD };

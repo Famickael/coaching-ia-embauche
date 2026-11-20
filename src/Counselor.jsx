@@ -1,6 +1,6 @@
-import React, { useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { T, GRAD_SOFT, FD, FB, FM, RAD, SH, Card, Tag, Btn, Back, Icon, I, ORG_NAME } from "./ui.jsx";
-import { useStore, TRIAL_LOGIN, setCounselor, logoutCounselor, createParcours, deleteParcours, takesOf, updateTake, parcoursStatus } from "./lib/store.js";
+import { useStore, TRIAL_LOGIN, setCounselor, createParcours, deleteParcours, takesOf, updateTake, parcoursStatus } from "./lib/store.js";
 import { Player, DimCard, markersOf, useVideoUrl } from "./Report.jsx";
 import { fmt } from "./lib/analysis.js";
 
@@ -11,6 +11,7 @@ export const linkFor = code => `${location.origin}${location.pathname}#/s/${code
 export default function Counselor() {
   const s = useStore();
   const [view, setView] = useState({ name: "list" });
+  const [modal, setModal] = useState(null); // null | { step: "create" } | { step: "created", code }
   if (!s.counselor) return <main className="rp-pad" style={{ padding: "48px 24px 64px" }}><Login /></main>;
 
   return (
@@ -22,18 +23,38 @@ export default function Counselor() {
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <Btn kind={view.name === "list" ? "dark" : "secondary"} size="sm" onClick={() => setView({ name: "list" })}>Mes bénéficiaires</Btn>
-          <Btn kind={view.name === "create" ? "dark" : "secondary"} size="sm" onClick={() => setView({ name: "create" })}><Icon d={I.plus} s={15} c={view.name === "create" ? "#fff" : T.primary} /> Nouveau parcours</Btn>
-          <Btn kind="ghost" size="sm" onClick={logoutCounselor}>Se déconnecter</Btn>
+          <Btn kind="secondary" size="sm" onClick={() => setModal({ step: "create" })}><Icon d={I.plus} s={15} c={T.primary} /> Nouveau parcours</Btn>
         </div>
       </div>
       <div key={view.name + (view.code || "") + (view.takeId || "")} className="up">
-        {view.name === "list" && <List s={s} open={code => setView({ name: "parcours", code })} create={() => setView({ name: "create" })} />}
-        {view.name === "create" && <Create done={code => setView({ name: "created", code })} cancel={() => setView({ name: "list" })} />}
-        {view.name === "created" && <Created p={s.parcours[view.code]} back={() => setView({ name: "list" })} openAsBenef={() => { location.hash = `#/s/${view.code}`; }} />}
+        {view.name === "list" && <List s={s} open={code => setView({ name: "parcours", code })} create={() => setModal({ step: "create" })} />}
         {view.name === "parcours" && s.parcours[view.code] && <Parcours s={s} p={s.parcours[view.code]} back={() => setView({ name: "list" })} review={takeId => setView({ name: "review", code: view.code, takeId })} />}
         {view.name === "review" && s.takes[view.takeId] && <Review s={s} p={s.parcours[view.code]} take={s.takes[view.takeId]} back={() => setView({ name: "parcours", code: view.code })} />}
       </div>
+      {modal && (
+        <Modal close={() => setModal(null)} label={modal.step === "create" ? "Nouveau parcours" : "Parcours créé"}>
+          {modal.step === "create"
+            ? <Create done={code => setModal({ step: "created", code })} cancel={() => setModal(null)} />
+            : <Created p={s.parcours[modal.code]} back={() => { setModal(null); setView({ name: "list" }); }} openAsBenef={() => { location.hash = `#/s/${modal.code}`; }} />}
+        </Modal>
+      )}
     </main>
+  );
+}
+
+/* Fenêtre modale : fond assombri, fermeture par Échap ou clic à l'extérieur. */
+function Modal({ children, close, label }) {
+  useEffect(() => {
+    const on = e => { if (e.key === "Escape") close(); };
+    window.addEventListener("keydown", on);
+    const prev = document.body.style.overflow; document.body.style.overflow = "hidden";
+    return () => { window.removeEventListener("keydown", on); document.body.style.overflow = prev; };
+  }, []);
+  return (
+    <div role="dialog" aria-modal="true" aria-label={label} onClick={e => { if (e.target === e.currentTarget) close(); }}
+      style={{ position: "fixed", inset: 0, zIndex: 100, background: "rgba(27,58,102,.45)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)", display: "flex", alignItems: "flex-start", justifyContent: "center", padding: "6vh 16px", overflowY: "auto" }}>
+      <div className="up" style={{ width: "100%", maxWidth: 600 }}>{children}</div>
+    </div>
   );
 }
 
@@ -145,7 +166,7 @@ function Create({ done, cancel }) {
           <Toggle on={!warmup} set={() => setWarmup(false)}>Directement l'entraînement</Toggle>
         </div>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 26 }}>
-          <Back onClick={cancel} />
+          <button type="button" onClick={cancel} style={{ font: `600 14px ${FB}`, color: T.muted, background: "none", border: "none", cursor: "pointer", padding: "8px 4px" }}>Annuler</button>
           <Btn kind="primary" disabled={!prenom.trim()}>Générer le code&nbsp;<Icon d={I.arrow} s={18} c="#fff" /></Btn>
         </div>
       </form>
