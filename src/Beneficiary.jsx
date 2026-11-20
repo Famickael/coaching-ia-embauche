@@ -12,7 +12,8 @@ import { PHRASES, SUMMARY, PAGES, LEGAL_VERSION } from "./content/legal.js";
 import { Summary } from "./Legal.jsx";
 import { transcribe } from "./lib/transcribe.js";
 import { analyze } from "./lib/analysis.js";
-import { QUESTIONS, fill, WARMUP_PHRASES, WARMUP_PROMPTS, fillPhrase, randomPhraseIndex, WORK_TOPICS, questionsForTopics } from "./lib/questions.js";
+import { QUESTIONS, fill, WARMUP_PHRASES, WARMUP_PROMPTS, fillPhrase, randomPhraseIndex, WORK_TOPICS, questionsForTopics, fullInterview, FULL_INTRO, FULL_OUTRO, posteLabel } from "./lib/questions.js";
+import RecruiterVoice from "./RecruiterVoice.jsx";
 import { searchJobs, norm } from "./lib/jobs.js";
 import { FEELINGS, feelingAck } from "./lib/assistant.js";
 
@@ -29,6 +30,7 @@ export default function Beneficiary({ initialCode, setModal, onCode }) {
   const s = useStore();
   const [code, setCode] = useState(() => (initialCode && findParcours(initialCode) ? initialCode.toUpperCase() : null));
   const [view, setView] = useState("home");
+  const [speaking, setSpeaking] = useState(false); // le recruteur lit la question : l'enregistrement attend
   const [ctx, setCtx] = useState({}); // question, recording, takeId, mode ; série : queue (textes), qi (rang), selection, preselect
   const p0 = code ? s.parcours[code] || getState().parcours[code] : null; // instantané éventuellement antérieur à la création du parcours d'essai
   const p = p0 && { ...p0, counselor: p0.counselor || s.counselor?.name || "" }; // nom du coach affiché
@@ -45,9 +47,9 @@ export default function Beneficiary({ initialCode, setModal, onCode }) {
   const flowIdx = { pick: 0, record: 1, processing: 2, choose: 3, report: 3 }[view];
   const take = ctx.takeId ? s.takes[ctx.takeId] : null;
   const total = ctx.queue?.length || 0;
-  const series = total ? { i: ctx.qi || 0, n: total, hasNext: (ctx.qi || 0) < total - 1 } : null;
+  const series = total ? { i: ctx.qi || 0, n: total, hasNext: (ctx.qi || 0) < total - 1, full: !!ctx.full, step: ctx.steps?.[ctx.qi || 0] } : null;
   const nextQuestion = () => go("record", { qi: series.i + 1, question: ctx.queue[series.i + 1], takeId: null, recording: null });
-  const stopSeries = () => go("home", { queue: null, qi: 0 });
+  const stopSeries = () => (series?.full ? go("recap") : go("home", { queue: null, qi: 0 }));
 
   const asstCtx = { warmup: "warmup", record: "record", processing: "record", choose: "feedback", report: "feedback", share: "feedback" }[view] || "general";
   return (
@@ -60,13 +62,14 @@ export default function Beneficiary({ initialCode, setModal, onCode }) {
         {view === "pick" && <Pick p={p} ctx={ctx} go={go} />}
         {view === "record" && (
           <Card pad="lg" level={2} style={{ ...wrap(W.read), ...stack(16) }}>
-            <div><Tag tone="primary">{series && series.n > 1 ? `Entraînement · question ${series.i + 1} sur ${series.n}` : "Entraînement"}</Tag></div>
+            <div><Tag tone="primary">{series?.full ? `Entraînement complet · question ${series.i + 1} sur ${series.n}` : series && series.n > 1 ? `Entraînement · question ${series.i + 1} sur ${series.n}` : "Entraînement"}</Tag></div>
             <div style={stack(8)}>
               <Txt v="h1" as="h1" color={T.navy}>À vous de répondre</Txt>
               <Txt v="body" color={T.body}>Rien ne vous interrompt pendant que vous parlez. Vous pouvez recommencer autant de fois que vous voulez.</Txt>
             </div>
             <EmotionNote setModal={setModal} />
-            <Recorder question={ctx.question} setModal={setModal} onCancel={() => go("pick")}
+            <RecruiterVoice key={`${ctx.qi || 0}-${ctx.question}`} label={series?.full ? `Le recruteur · ${series.step}` : "Question du recruteur"} text={series?.full && series.i === 0 ? `${FULL_INTRO} ${ctx.question}` : ctx.question} onSpeaking={setSpeaking} />
+            <Recorder question={null} holdStart={speaking} setModal={setModal} onCancel={() => go("pick")}
               trackGaze={!!p.consent.ai} validateLabel={p.consent.ai ? "Voir mon retour" : "Garder cette réponse"}
               onDone={rec => go("processing", { recording: rec })} />
           </Card>
@@ -76,6 +79,7 @@ export default function Beneficiary({ initialCode, setModal, onCode }) {
         {view === "report" && take && <TakeReport p={p} take={take} mode={ctx.mode} go={go} series={series} nextQuestion={nextQuestion} stopSeries={stopSeries} />}
         {view === "share" && take && <Share p={p} take={take} go={go} setModal={setModal} />}
         {view === "sent" && <Sent p={p} go={go} series={series} nextQuestion={nextQuestion} />}
+        {view === "recap" && <Recap p={p} ctx={ctx} s={s} go={go} />}
       </div>
     </main>
   );
@@ -490,7 +494,11 @@ function Pick({ p, ctx, go }) {
   const n = sel.length;
   const start = () => {
     const queue = sel.map(k => all.find(x => x.key === k)?.text).filter(Boolean);
-    if (queue.length) go("record", { queue, qi: 0, question: queue[0], selection: { sel, custom }, takeId: null, preselect: null });
+    if (queue.length) go("record", { queue, qi: 0, question: queue[0], selection: { sel, custom }, takeId: null, preselect: null, full: false, steps: null, seriesTakes: {} });
+  };
+  const startFull = () => {
+    const plan = fullInterview(p.poste);
+    go("record", { queue: plan.map(x => x.text), steps: plan.map(x => x.step), full: true, qi: 0, question: plan[0].text, selection: null, takeId: null, preselect: null, seriesTakes: {} });
   };
 
   const qcard = (q, removable) => {
@@ -513,6 +521,17 @@ function Pick({ p, ctx, go }) {
           <p style={{ ...TY.small, color: T.primary, margin: 0, display: "flex", alignItems: "center", gap: 8 }}><Icon d={I.check} s={16} /> Questions choisies d'après vos réponses à l'échauffement. Vous pouvez changer.</p>
         )}
       </div>
+      <Card topbar style={{ display: "grid", gap: 12 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <IconTile icon={I.users} />
+          <h2 style={{ ...TY.h3, color: T.navy, margin: 0, flex: 1 }}>Faire un entraînement complet</h2>
+        </div>
+        <p style={{ ...TY.body, color: T.body, margin: 0 }}>
+          Une simulation d'entretien, dans l'ordre réel : accueil, présentation, motivation, expériences, qualités, mise en situation, vos questions. 7 questions liées au métier {posteLabel(p.poste) ? `de ${posteLabel(p.poste)}` : "que vous visez"}. Le recruteur lit chaque question à voix haute.
+        </p>
+        <div className="rp-wide-m"><Btn kind="secondary" icon={I.play} onClick={startFull}>Faire un entraînement complet</Btn></div>
+      </Card>
+      <h2 style={{ ...TY.h3, color: T.navy, margin: 0 }}>Ou choisissez vos questions</h2>
       <div role="group" aria-label="Questions proposées" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(min(100%,240px),1fr))", gap: GAP.stack }}>
         {qs.map(q => qcard(q))}
       </div>
@@ -575,7 +594,7 @@ function Processing({ p, ctx, go }) {
         }
         if (!alive) return;
         const id = await createTake({ code: p.code, question: ctx.question, duration: rec.duration, blob: rec.blob, transcript, segments, gaze: rec.gaze, analysis });
-        if (alive) go("choose", { takeId: id, recording: null });
+        if (alive) go("choose", { takeId: id, recording: null, seriesTakes: ctx.queue ? { ...(ctx.seriesTakes || {}), [ctx.qi || 0]: id } : null });
       } catch (e) {
         console.error(e);
         if (alive) setErr(String(e?.message || e));
@@ -635,6 +654,7 @@ function Choose({ take, go, series }) {
 
 /* ─── Rapport + actions ─── */
 function TakeReport({ p, take, mode, go, series, nextQuestion, stopSeries }) {
+  useEffect(() => { if (series && !series.hasNext && !series.full) nudgeAssistant("training"); }, []); // eslint-disable-line
   const del = async () => {
     if (!window.confirm("Supprimer définitivement cette réponse et son retour ?")) return;
     await deleteTake(take.id);
@@ -654,12 +674,13 @@ function TakeReport({ p, take, mode, go, series, nextQuestion, stopSeries }) {
       <ReportBody take={take} mode={mode} counselorName={p.counselor} />
       {series && (
         <Card style={{ ...actions, gap: 16 }} className="noprint">
-          {head(series.hasNext ? `Question ${series.i + 1} sur ${series.n} terminée` : series.n > 1 ? "C'était la dernière question de votre sélection" : "Entraînement terminé",
+          {head(series.hasNext ? `Question ${series.i + 1} sur ${series.n} terminée` : series.full ? "C'était la dernière question de l'entretien" : series.n > 1 ? "C'était la dernière question de votre sélection" : "Entraînement terminé",
             series.hasNext ? "Prenez le temps de lire ce retour. Passez à la suite quand vous voulez." : "Vous retrouvez tous vos retours dans votre espace, et vous pouvez recommencer quand vous voulez.")}
           <div className="rp-actions" style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
             {series.hasNext && <Btn kind="ghost" size="sm" onClick={stopSeries}>Arrêter ici</Btn>}
             {series.hasNext
               ? <Btn kind="objective" onClick={nextQuestion} iconRight={I.arrow}>Question suivante ({series.i + 2} sur {series.n})</Btn>
+              : series.full ? <Btn kind="objective" onClick={() => go("recap")} iconRight={I.arrow}>Voir le récapitulatif</Btn>
               : <Btn kind="secondary" size="sm" onClick={stopSeries}>Revenir à mon espace</Btn>}
           </div>
         </Card>
@@ -676,7 +697,7 @@ function TakeReport({ p, take, mode, go, series, nextQuestion, stopSeries }) {
           {take.hasVideo && <Btn kind="ghost" size="sm" onClick={() => downloadTake(take)} icon={I.arrow}>{take.mime?.startsWith("audio") ? "Télécharger ma voix" : "Télécharger ma vidéo"}</Btn>}
           <Btn kind="ghost" size="sm" onClick={() => window.print()} icon={I.print}>Imprimer</Btn>
           {!series?.hasNext && <Btn kind="secondary" size="sm" onClick={() => go("pick", { queue: null, selection: null, preselect: null })} icon={I.redo}>M'entraîner encore</Btn>}
-          {!take.shared && <Btn kind={series?.hasNext ? "secondary" : "objective"} size="sm" onClick={() => go("share")} icon={I.send}>Envoyer à mon coach</Btn>}
+          {!take.shared && <Btn kind={series?.hasNext || series?.full ? "secondary" : "objective"} size="sm" onClick={() => go("share")} icon={I.send}>Envoyer à mon coach</Btn>}
         </div>
       </Card>
       <div className="noprint">
@@ -723,11 +744,49 @@ function Sent({ p, go, series, nextQuestion }) {
   return (
     <Confirm title="Réponse envoyée" actions={<>
       <Btn kind="secondary" onClick={() => go("home", { queue: null })}>Revenir à mon espace</Btn>
-      {series?.hasNext
+      {series?.full && !series.hasNext
+        ? <Btn kind="objective" onClick={() => go("recap")} iconRight={I.arrow}>Voir le récapitulatif</Btn>
+        : series?.hasNext
         ? <Btn kind="objective" onClick={nextQuestion} iconRight={I.arrow}>Question suivante ({series.i + 2} sur {series.n})</Btn>
         : <Btn kind="objective" onClick={() => go("pick", { queue: null, selection: null, preselect: null })} icon={I.redo}>M'entraîner encore</Btn>}
     </>}>
       {p.counselor || "Votre coach"} va regarder votre réponse et ajouter ses remarques. Son rapport arrivera dans votre espace. Vous y revenez avec le même code. {PHRASES.sent}
     </Confirm>
+  );
+}
+
+/* Récapitulatif de l'entraînement complet : les réponses dans l'ordre de l'entretien, sans aucun score. */
+function Recap({ p, ctx, s, go }) {
+  useEffect(() => { nudgeAssistant("training"); }, []);
+  const steps = ctx.steps || [], qs = ctx.queue || [], ids = ctx.seriesTakes || {};
+  return (
+    <div style={{ ...wrap(W.read), ...stack(GAP.grid) }}>
+      <Card pad="none" level={2}>
+        <GradHead tag="Entraînement complet" title="Récapitulatif de votre entretien" sub="Vos réponses, dans l'ordre de l'entretien. Ouvrez chaque retour quand vous voulez, et envoyez à votre coach celles que vous choisissez." />
+      </Card>
+      <RecruiterVoice label="Fin de l'entretien" text={FULL_OUTRO} />
+      <ol style={{ listStyle: "none", margin: 0, padding: 0, ...stack(GAP.stack) }} aria-label="Vos réponses">
+        {qs.map((q, i) => {
+          const t = ids[i] ? s.takes[ids[i]] : null;
+          return (
+            <li key={i}>
+              <Card pad="sm" style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
+                <span aria-hidden style={{ ...TY.time, width: 28, height: 28, borderRadius: "50%", background: t ? T.successDk : T.surface, color: t ? T.surface : T.muted, border: t ? "none" : `1.5px solid ${T.lineStrong}`, display: "grid", placeItems: "center", flexShrink: 0 }}>{i + 1}</span>
+                <div style={{ flex: 1, minWidth: 200, ...stack(4) }}>
+                  <div style={{ ...TY.overline, color: T.primary }}>{steps[i]}</div>
+                  <div style={{ ...TY.h4, color: T.navy }}>{q}</div>
+                  <div style={{ ...TY.caption, color: T.muted }}>{t ? `${dur(t.duration)} · ${t.shared ? "envoyée à votre coach" : "gardée sur cet appareil"}` : "Pas de réponse enregistrée"}</div>
+                </div>
+                {t && <Btn kind="secondary" size="sm" onClick={() => go(t.hasVideo ? "choose" : "report", { takeId: t.id, mode: "simple", queue: null })}>Ouvrir mon retour</Btn>}
+              </Card>
+            </li>
+          );
+        })}
+      </ol>
+      <div className="rp-actions" style={actions}>
+        <Btn kind="ghost" size="sm" onClick={() => go("home", { queue: null, full: false })}>Revenir à mon espace</Btn>
+        <Btn kind="objective" icon={I.redo} onClick={() => go("pick", { queue: null, full: false, selection: null, preselect: null })}>M'entraîner encore</Btn>
+      </div>
+    </div>
   );
 }

@@ -644,6 +644,12 @@ const GStyle = () => (
     .rp-ai-fab:hover{box-shadow:${SH.btn.ai[1]};transform:translateY(-1px)}
     .rp-ai-bubble{position:fixed;right:16px;bottom:88px;z-index:${Z.nav};max-width:min(300px,calc(100vw - 32px));display:flex;align-items:center;gap:4px;padding:4px 4px 4px 16px;border:2px solid transparent;border-radius:${RAD.md}px;background:linear-gradient(${T.surface},${T.surface}) padding-box,${GRAD_AI_BORDER} border-box;box-shadow:${SH.lg};animation:rpAiIn ${MO.enter} ${MO.ease} both}
     .rp-has-fab{padding-bottom:96px!important}
+    /* Recruteur oral : indicateur discret (barres qui pulsent pendant la lecture, immobiles sinon) */
+    .rp-voice{display:inline-flex;align-items:center;gap:2px;height:16px}
+    .rp-voice i{display:block;width:3px;height:6px;border-radius:2px;background:${T.primary};opacity:.5}
+    .rp-voice.on i{opacity:1;animation:rpVoice 1s ease-in-out infinite}
+    .rp-voice.on i:nth-child(2){animation-delay:.15s}.rp-voice.on i:nth-child(3){animation-delay:.3s}.rp-voice.on i:nth-child(4){animation-delay:.45s}
+    @keyframes rpVoice{0%,100%{height:6px}50%{height:16px}}
     .rp-trustlink:hover{color:${T.primary}!important;text-decoration:underline!important}
     .rp-icbtn{width:44px;height:44px;border-radius:50%;display:inline-grid;place-items:center;cursor:pointer;flex-shrink:0;padding:0;transition:background-color ${MO.fast},border-color ${MO.fast}}
     .rp-icbtn-outline{border:1px solid ${T.line};background:${T.surface}}

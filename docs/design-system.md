@@ -449,7 +449,7 @@ Les pages publiques (accueil, à propos, solutions, ressources) utilisent les du
 
 - `transition: all` est interdit : on nomme les propriétés (`background-color`, `border-color`, `box-shadow`, `transform`, `opacity`).
 - Amplitudes : bouton 1 px vers le haut, carte cliquable 2 px, apparition 12 px. On n'anime que `transform` et `opacity`.
-- Animations en boucle limitées à deux : point d'enregistrement (`blink`) et indicateur de chargement (`spin`).
+- Animations en boucle limitées à trois : point d'enregistrement (`blink`), indicateur de chargement (`spin`) et indicateur du recruteur oral pendant la lecture (`rpVoice`, barres qui pulsent, immobiles dès que la voix se tait).
 - `prefers-reduced-motion: reduce` neutralise toutes les animations et transitions (règle globale de `GStyle`, à conserver). Le contenu doit rester complet sans animation : rien n'est révélé uniquement par le mouvement.
 - Aucune animation pendant l'enregistrement autre que le point rouge.
 
@@ -657,5 +657,7 @@ Dégradés : `GRAD` et `GRAD_AI` recomposés selon 1.3, `GRAD_NIGHT` ajouté, `G
 
 | 2026-11-20 | Assistant en panneau latéral (5.9 bis), composant `Fab`, jeton `GRAD_AI_BORDER` ; plus d'encart d'assistant dans les écrans | Demande du propriétaire |
 | 2026-11-20 | Astuces de l'échauffement dans une fenêtre `Modal`, ouverte par un lien au-dessus de la phrase | Demande du propriétaire |
+
+| 2026-11-20 | Entraînement complet (7 questions dans l'ordre réel, mise en situation selon le métier) et écran récapitulatif sans score ; recruteur oral sans visage (`RecruiterVoice` : synthèse vocale de l'appareil, sous-titre mot à mot, « Réécouter », « Couper le son », enregistrement possible seulement quand la voix a fini) | Demandes du propriétaire |
 
 Ajouter une ligne à chaque évolution d'une règle ou d'une échelle.

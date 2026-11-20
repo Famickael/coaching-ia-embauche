@@ -15,7 +15,7 @@ function pickMime(audioOnly) {
 
 /* Enregistreur : caméra + micro, ou micro seul.
    onDone({ blob, duration, gaze, audioOnly }) est appelé quand la personne valide sa prise. */
-export default function Recorder({ question, onDone, onCancel, trackGaze = true, setModal, validateLabel = "Garder cette réponse" }) {
+export default function Recorder({ question, onDone, onCancel, trackGaze = true, setModal, validateLabel = "Garder cette réponse", holdStart = false }) {
   const liveRef = useRef(null), streamRef = useRef(null), recRef = useRef(null), chunks = useRef([]);
   const gazeRef = useRef(null), t0 = useRef(0);
   const [phase, setPhase] = useState("idle"); // idle | live | recording | done | error
@@ -146,7 +146,12 @@ export default function Recorder({ question, onDone, onCancel, trackGaze = true,
 
       <div className="rp-actions" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: GAP.actions }}>
         {onCancel ? <Back onClick={() => { stop(); stopStream(); onCancel(); }} /> : <span />}
-        {phase === "live" && <Btn kind="objective" onClick={start} icon={I.rec}>Démarrer l'enregistrement</Btn>}
+        {phase === "live" && (
+          <div style={{ display: "grid", gap: 4, justifyItems: "end" }}>
+            <Btn kind="objective" onClick={start} icon={I.rec} disabled={holdStart}>Démarrer l'enregistrement</Btn>
+            {holdStart && <span role="status" style={{ ...TY.caption, color: T.muted }}>Vous pourrez démarrer quand la question aura été lue.</span>}
+          </div>
+        )}
         {phase === "recording" && <Btn kind="secondary" onClick={stop} icon={I.stop}>Arrêter l'enregistrement</Btn>}
         {phase === "done" && (
           <div className="rp-actions" style={{ display: "flex", gap: GAP.actions, flexWrap: "wrap" }}>

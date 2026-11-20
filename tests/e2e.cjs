@@ -136,6 +136,25 @@ require("fs").mkdirSync(SC, { recursive: true });
   await click("Envoyer le rapport"); await shot("11-rapport-envoye");
   await p.goto(`http://localhost:5098/#/s/${code}`); await p.waitForTimeout(500); await shot("12-espace-benef");
   await p.getByRole("button", { name: "Ouvrir", exact: true }).first().click(); await p.getByText("Lire mon retour").first().click(); await p.waitForTimeout(500); await shot("13-rapport-final");
+  // Entraînement complet : 7 questions dans l'ordre réel, contextualisées par le métier, recruteur oral, récapitulatif sans score
+  await p.goto(`http://localhost:5098/?complet=1#/s/${code}`); await p.waitForTimeout(800);
+  await click("Commencer l'entraînement");
+  await click("Faire un entraînement complet");
+  await see("Entraînement complet · question 1 sur 7"); await see(/Le recruteur · Accueil/i);
+  await see(/merci d'être là/);
+  if (await p.getByRole("button", { name: "Réécouter" }).count() !== 1 || await p.getByRole("button", { name: /Couper le son|Réactiver le son/ }).count() !== 1) throw new Error("boutons du recruteur oral absents");
+  await shot("14-complet-q1");
+  await record("c1"); await p.getByText("Lire mon retour").first().click(); await p.waitForTimeout(400);
+  await click("Question suivante (2 sur 7)");
+  await see("Entraînement complet · question 2 sur 7"); await see(/Le recruteur · Présentation/i);
+  await record("c2"); await p.getByText("Lire mon retour").first().click(); await p.waitForTimeout(400);
+  await click("Arrêter ici");
+  await see("Récapitulatif de votre entretien"); await see("Fin de l'entretien");
+  await see(/une commande a été oubliée/); // mise en situation liée au métier « serveur(se) »
+  const recap = await p.locator("main").innerText();
+  if (/score|\/ ?10|\/ ?20|\bnote\b/i.test(recap)) throw new Error("le récapitulatif ne doit contenir aucun score");
+  if ((await p.getByRole("button", { name: "Ouvrir mon retour" }).count()) !== 2) throw new Error("récapitulatif : deux réponses attendues");
+  await shot("15-recapitulatif");
   console.log("erreurs:", errors.filter(e => !/fonts.googleapis|jsdelivr|googleapis|Failed to load resource|ERR_TUNNEL/.test(e)));
   if (overflow.length) { console.error("débordement horizontal:", overflow); process.exitCode = 1; }
   await b.close();
