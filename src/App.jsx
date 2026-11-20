@@ -1,20 +1,31 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { T, FD, FB, FM, RAD, SH, sp, RepetLogo, OrgLogo, Tag, Btn, Card, Icon, I, GStyle } from "./ui.jsx";
+import { SiteStyle, ScrollProgress, SI, TT, TY, W } from "./site.jsx";
+import { dismissLoader } from "./Loader.jsx";
 import { LegalModal } from "./legal.jsx";
 import Home from "./Home.jsx";
-import HowItWorks from "./HowItWorks.jsx";
+import Solutions from "./Solutions.jsx";
+import About from "./About.jsx";
+import Resources from "./Resources.jsx";
+import Demo from "./Demo.jsx";
 import Beneficiary from "./Beneficiary.jsx";
 import Counselor from "./Counselor.jsx";
 import { useStore, getState, setLastSpace, logoutCounselor, findParcours, TRIAL_CODE } from "./lib/store.js";
 
 /* La Répét' : coach IA d'entraînement à l'entretien.
    Routes (dans l'ancre de l'adresse, pour que le bouton Retour du navigateur fonctionne) :
-     #/                 accueil
-     #/fonctionnement   fonctionnement détaillé
-     #/espace           choix de l'espace (code bénéficiaire ou coach)
-     #/s/CODE           espace bénéficiaire
-     #/beneficiaire     saisie du code
-     #/coach            espace coach (connexion simulée, identifiants pré-remplis) */
+     #/                         accueil
+     #/a-propos(/faq)           à propos (et sa FAQ)
+     #/solutions(/public)       solutions par public : beneficiaires, coachs, organismes
+     #/fonctionnement           ancienne adresse, redirigée vers #/solutions
+     #/ressources               centre de ressources (catégories, articles mis en avant, recherche)
+     #/ressources/c/CATEGORIE   liste des ressources d'une catégorie
+     #/ressources/SLUG          article
+     #/demo                     demande de démonstration
+     #/espace                   choix de l'espace (code bénéficiaire ou coach)
+     #/s/CODE                   espace bénéficiaire
+     #/beneficiaire             saisie du code
+     #/coach                    espace coach (connexion simulée, identifiants pré-remplis) */
 
 function routeFromHash() {
   const h = location.hash;
@@ -22,7 +33,16 @@ function routeFromHash() {
   if (m) return { role: "benef", code: m[1].toUpperCase() };
   if (h === "#/beneficiaire") return { role: "benef", code: null };
   if (h === "#/coach") return { role: "coach" };
-  if (h === "#/fonctionnement") return { role: "how" };
+  if (h === "#/fonctionnement") { history.replaceState(null, "", "#/solutions"); return { role: "solutions" }; }
+  let r = h.match(/^#\/solutions(?:\/([a-z-]+))?$/);
+  if (r) return { role: "solutions", section: r[1] };
+  r = h.match(/^#\/a-propos(?:\/([a-z-]+))?$/);
+  if (r) return { role: "about", section: r[1] };
+  r = h.match(/^#\/ressources\/c\/([a-z0-9-]+)$/);
+  if (r) return { role: "resources", cat: r[1] };
+  r = h.match(/^#\/ressources(?:\/([a-z0-9-]+))?$/);
+  if (r) return { role: "resources", slug: r[1] };
+  if (h === "#/demo") return { role: "demo" };
   if (h === "#/espace") return { role: "espace" };
   return { role: "home" };
 }
@@ -37,12 +57,15 @@ function openSpace() {
   go("#/espace");
 }
 
+const PUBLIC = ["home", "about", "solutions", "resources", "demo"];
+
 export default function App() {
   const s = useStore();
   const [route, setRoute] = useState(routeFromHash);
   const [modal, setModal] = useState(null); // "lifecycle" | "cgu" | "rgpd" | "emotion" | null
 
   useEffect(() => {
+    dismissLoader();
     const on = () => { setRoute(routeFromHash()); window.scrollTo({ top: 0 }); };
     window.addEventListener("hashchange", on);
     return () => window.removeEventListener("hashchange", on);
@@ -55,12 +78,16 @@ export default function App() {
   };
 
   return (
-    <div className="rp-app" style={{ background: T.bg, fontFamily: FB, color: T.ink, display: "flex", flexDirection: "column" }}>
+    <div className="rp-app" style={{ background: T.bg, fontFamily: FB, color: T.navy, display: "flex", flexDirection: "column" }}>
       <GStyle />
+      <SiteStyle />
       <Nav route={route} s={s} />
       <div style={{ flex: 1 }}>
         {route.role === "home" && <Home go={go} openSpace={openSpace} />}
-        {route.role === "how" && <HowItWorks go={go} openSpace={openSpace} />}
+        {route.role === "about" && <About go={go} openSpace={openSpace} section={route.section} />}
+        {route.role === "solutions" && <Solutions go={go} openSpace={openSpace} section={route.section} />}
+        {route.role === "resources" && <Resources go={go} openSpace={openSpace} slug={route.slug} cat={route.cat} />}
+        {route.role === "demo" && <Demo go={go} />}
         {route.role === "espace" && <Espace />}
         {route.role === "benef" && <Beneficiary key={route.code || "nocode"} initialCode={route.code} setModal={setModal} onCode={onCode} />}
         {route.role === "coach" && <Counselor />}
@@ -72,36 +99,88 @@ export default function App() {
 }
 
 /* ─── En-tête ─── */
+const LINKS = [["#/a-propos", "À propos", "about"], ["#/solutions", "Solutions", "solutions"], ["#/ressources", "Ressources", "resources"]];
+
 function Nav({ route, s }) {
   const inSpace = route.role === "benef" || route.role === "coach";
+  const isPublic = PUBLIC.includes(route.role);
   const p = route.role === "benef" ? s.parcours[s.lastSpace?.code] : null;
   const label = route.role === "coach" ? "Espace coach" : p ? `Espace de ${p.prenom}` : "Espace bénéficiaire";
+  const [menu, setMenu] = useState(false);
+  const burger = useRef(null), panel = useRef(null);
+
+  useEffect(() => { setMenu(false); }, [route]);
+  useEffect(() => {
+    if (!menu) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    panel.current?.querySelector("a,button")?.focus();
+    const key = e => {
+      if (e.key === "Escape") { setMenu(false); burger.current?.focus(); }
+      if (e.key === "Tab" && panel.current) { // focus retenu dans le panneau et le bouton menu
+        const f = [burger.current, ...panel.current.querySelectorAll("a,button")];
+        const i = f.indexOf(document.activeElement);
+        if (e.shiftKey && i <= 0) { e.preventDefault(); f[f.length - 1].focus(); }
+        else if (!e.shiftKey && i === f.length - 1) { e.preventDefault(); f[0].focus(); }
+      }
+    };
+    const close = () => { if (window.innerWidth > 1023) setMenu(false); };
+    document.addEventListener("keydown", key);
+    window.addEventListener("resize", close);
+    return () => { document.body.style.overflow = prev; document.removeEventListener("keydown", key); window.removeEventListener("resize", close); };
+  }, [menu]);
+
   return (
-    <header className="noprint" style={{ position: "sticky", top: 0, zIndex: 50, background: "rgba(248,250,252,.86)", backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)", borderBottom: `1px solid ${T.line}` }}>
-      <div className="rp-nav" style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px", height: 64, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 18, flexShrink: 0 }}>
-          <button onClick={() => go("#/")} aria-label="La Répét', accueil" style={{ background: "none", border: "none", padding: 0, cursor: "pointer", display: "flex" }}>
+    <header className="noprint" style={{ position: "sticky", top: 0, zIndex: 50, background: menu ? T.bg : "rgba(248,250,252,.9)", backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)", borderBottom: `1px solid ${T.line}` }}>
+      <div className="rp-nav" style={{ maxWidth: W.page, margin: "0 auto", padding: "0 24px", height: 64, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 20, minWidth: 0 }}>
+          <a href="#/" onClick={e => { e.preventDefault(); go("#/"); }} aria-label="La Répét', accueil" style={{ display: "flex", flexShrink: 0 }}>
             <RepetLogo s={17} tagline={false} />
-          </button>
-          <div className="rp-hide-m" style={{ width: 1, height: 30, background: T.line }} />
+          </a>
+          <div className="rp-hide-m" style={{ width: 1, height: 32, background: T.line }} />
           <span className="rp-hide-m"><OrgLogo s={10} /></span>
+          <nav aria-label="Navigation principale" className="rs-links" style={{ display: "flex", alignItems: "center", gap: 24, marginLeft: 12 }}>
+            {LINKS.map(([h, l, r]) => (
+              <a key={h} href={h} className={`navlink ${route.role === r ? "on" : ""}`} aria-current={route.role === r ? "page" : undefined}>{l}</a>
+            ))}
+          </nav>
         </div>
-        <nav style={{ display: "flex", alignItems: "center", gap: 14 }}>
-          <a href="#/fonctionnement" className={`navlink rp-hide-xs ${inSpace ? "rp-hide-m" : ""} ${route.role === "how" ? "on" : ""}`}>Fonctionnement</a>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
           {inSpace ? (
-            <div style={{ display: "flex", alignItems: "center", gap: 8, background: "#fff", border: `1px solid ${T.line}`, borderRadius: RAD.pill, padding: "4px 4px 4px 12px", boxShadow: SH.xs }}>
-              <Icon d={I.user} s={15} c={T.primary} />
-              <span style={{ font: `600 13px ${FB}`, color: T.navy, whiteSpace: "nowrap", maxWidth: 150, overflow: "hidden", textOverflow: "ellipsis" }}>{label}</span>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, background: T.surface, border: `1px solid ${T.line}`, borderRadius: RAD.pill, padding: "4px 4px 4px 12px", boxShadow: SH.xs }}>
+              <Icon d={I.user} s={16} c={T.primary} />
+              <span style={{ ...TY.label, color: T.navy, whiteSpace: "nowrap", maxWidth: 150, overflow: "hidden", textOverflow: "ellipsis" }}>{label}</span>
               <button onClick={() => logout(route.role)} aria-label="Se déconnecter" title="Se déconnecter"
-                style={{ width: 32, height: 32, borderRadius: "50%", border: "none", background: `${T.primary}10`, display: "grid", placeItems: "center", cursor: "pointer" }}>
-                <Icon d={I.logout} s={15} c={T.primary} />
+                style={{ width: 32, height: 32, borderRadius: "50%", border: "none", background: TT.primaryBg, display: "grid", placeItems: "center", cursor: "pointer" }}>
+                <Icon d={I.logout} s={16} c={T.primary} />
               </button>
             </div>
-          ) : (
-            <Btn kind="primary" size="sm" onClick={openSpace}><span className="rp-hide-m" style={{ display: "inline-flex" }}><Icon d={I.user} s={16} c="#fff" /></span>Mon espace</Btn>
-          )}
-        </nav>
+          ) : (<>
+            <span className="rs-demo"><Btn kind="secondary" size="sm" onClick={() => go("#/demo")}>Demander une démo</Btn></span>
+            <Btn kind="primary" size="sm" onClick={openSpace}><span className="rp-hide-m" style={{ display: "inline-flex" }}><Icon d={I.user} s={16} c={T.surface} /></span>Mon espace</Btn>
+            <button ref={burger} type="button" className="rs-burger rs-icbtn" aria-expanded={menu} aria-controls="rs-menu" aria-label={menu ? "Fermer le menu" : "Ouvrir le menu"} onClick={() => setMenu(m => !m)}>
+              <Icon d={menu ? I.close : SI.menu} s={20} />
+            </button>
+          </>)}
+        </div>
       </div>
+      {isPublic && <ScrollProgress />}
+      {menu && (
+        <div id="rs-menu" ref={panel} className="rs-menu" role="dialog" aria-modal="true" aria-label="Menu">
+          <nav aria-label="Navigation principale" onClick={() => setMenu(false)}>
+            <a href="#/" className="rs-mlink" aria-current={route.role === "home" ? "page" : undefined}>Accueil<Icon d={SI.chevronR} s={20} c={T.faint} /></a>
+            {LINKS.map(([h, l, r]) => (
+              <a key={h} href={h} className="rs-mlink" aria-current={route.role === r ? "page" : undefined}>{l}<Icon d={SI.chevronR} s={20} c={T.faint} /></a>
+            ))}
+          </nav>
+          <div style={{ display: "grid", gap: 12, marginTop: 24 }}>
+            <Btn kind="secondary" full onClick={() => { setMenu(false); go("#/demo"); }}>Demander une démo</Btn>
+          </div>
+          <div style={{ marginTop: 24, display: "flex", alignItems: "center", gap: 12 }}>
+            <span style={{ ...TY.caption, color: T.muted }}>Déployé par</span><OrgLogo s={9} />
+          </div>
+        </div>
+      )}
     </header>
   );
 }
@@ -158,29 +237,34 @@ function Espace() {
 
 function Footer({ setModal }) {
   const trust = [
-    [I.lock, "La vidéo reste sur votre appareil", T.success],
+    [I.lock, "La vidéo reste sur votre appareil", TT.successDk],
     [I.send, "Envoi au coach seulement si vous le décidez", T.blue],
     [I.ban, "Sans note ni classement", T.violet],
     [I.shield, "Aucune émotion déduite", T.accent],
   ];
+  const pages = [["#/a-propos", "À propos"], ["#/solutions", "Solutions"], ["#/ressources", "Ressources"], ["#/a-propos/faq", "FAQ"], ["#/demo", "Demander une démo"]];
   const links = [["cgu", "Conditions d'utilisation"], ["rgpd", "Protection des données"], ["lifecycle", "Cycle de vie de la vidéo"]];
-  const lk = { font: `500 12px ${FB}`, color: T.primary, background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline", textUnderlineOffset: 2 };
+  const lk = { ...TY.caption, fontWeight: 600, color: T.primary, background: "none", border: "none", cursor: "pointer", padding: "12px 0", textDecoration: "underline", textUnderlineOffset: 3 };
   return (
-    <footer className="noprint" style={{ borderTop: `1px solid ${T.line}`, background: "#fff", marginTop: sp(10) }}>
-      <div className="rp-pad" style={{ maxWidth: 1200, margin: "0 auto", padding: "24px 24px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 18 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 18, flexWrap: "wrap" }}>
+    <footer className="noprint" style={{ borderTop: `1px solid ${T.line}`, background: T.surface, marginTop: sp(10) }}>
+      <div className="rp-pad" style={{ maxWidth: W.page, margin: "0 auto", padding: "24px 24px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 20 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 20, flexWrap: "wrap" }}>
           <RepetLogo s={14} tagline={false} />
-          <div style={{ width: 1, height: 26, background: T.line }} />
+          <div style={{ width: 1, height: 24, background: T.line }} />
           <OrgLogo s={9} />
         </div>
-        <div className="rp-trust" style={{ display: "flex", gap: 18, font: `500 12px ${FB}`, color: T.body, flexWrap: "wrap" }}>
-          {trust.map(([ic, l, c]) => <span key={l} style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><Icon d={ic} s={14} c={c} /> {l}</span>)}
+        <div className="rp-trust" style={{ display: "flex", gap: 20, ...TY.caption, color: T.body, flexWrap: "wrap" }}>
+          {trust.map(([ic, l, c]) => <span key={l} style={{ display: "inline-flex", alignItems: "center", gap: 8 }}><Icon d={ic} s={16} c={c} /> {l}</span>)}
         </div>
       </div>
       <div style={{ borderTop: `1px solid ${T.lineLt}` }}>
-        <div className="rp-pad" style={{ maxWidth: 1200, margin: "0 auto", padding: "14px 24px 16px", display: "flex", justifyContent: "flex-end", alignItems: "center", flexWrap: "wrap", gap: 18 }}>
-          <a href="#/fonctionnement" style={{ ...lk, display: "inline-block" }}>Fonctionnement</a>
-          {links.map(([k, l]) => <button key={k} onClick={() => setModal(k)} style={lk}>{l}</button>)}
+        <div className="rp-pad" style={{ maxWidth: W.page, margin: "0 auto", padding: "4px 24px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", columnGap: 24 }}>
+          <nav aria-label="Pages du site" style={{ display: "flex", flexWrap: "wrap", columnGap: 20 }}>
+            {pages.map(([h, l]) => <a key={h} href={h} style={{ ...lk, display: "inline-block" }}>{l}</a>)}
+          </nav>
+          <div style={{ display: "flex", flexWrap: "wrap", columnGap: 20 }}>
+            {links.map(([k, l]) => <button key={k} onClick={() => setModal(k)} style={lk}>{l}</button>)}
+          </div>
         </div>
       </div>
     </footer>
