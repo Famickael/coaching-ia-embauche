@@ -1,5 +1,8 @@
 import React, { useEffect, useRef, useState } from "react";
-import { T, GRAD_SOFT, GRAD_AI, FD, FB, FM, RAD, SH, Card, Tag, Btn, Back, Icon, I, Rail, GradHead, RepetMark } from "./ui.jsx";
+import {
+  T, TY, RAD, SH, PAD, GAP, W, Card, Tag, Btn, Back, Link, IconBtn, IconTile, Icon, I, Rail, GradHead, RepetMark, Txt, Notice, Empty, Confirm,
+  Field, Input, Textarea, CheckTile, Chip,
+} from "./ui.jsx";
 import Recorder from "./Recorder.jsx";
 import WarmupStage from "./WarmupStage.jsx";
 import Assistant from "./Assistant.jsx";
@@ -11,8 +14,11 @@ import { QUESTIONS, fill, WARMUP_PHRASES, WARMUP_PROMPTS, fillPhrase, randomPhra
 import { searchJobs, norm } from "./lib/jobs.js";
 import { FEELINGS, feelingAck } from "./lib/assistant.js";
 
-const wrap = w => ({ maxWidth: w, margin: "0 auto" });
+const wrap = w => ({ maxWidth: w, margin: "0 auto", width: "100%" });
 const dateFr = iso => new Date(iso).toLocaleString("fr-FR", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" });
+const stack = (gap = GAP.stack) => ({ display: "grid", gap });
+const actions = { display: "flex", justifyContent: "space-between", alignItems: "center", gap: GAP.actions, flexWrap: "wrap" };
+const PAGE = { padding: PAD.page };
 
 export default function Beneficiary({ initialCode, setModal, onCode }) {
   const s = useStore();
@@ -26,8 +32,8 @@ export default function Beneficiary({ initialCode, setModal, onCode }) {
   useEffect(() => { if (code && !p) setCode(null); }, [p, code]); // parcours supprimé par le coach
   useEffect(() => { onCode && onCode(code); }, [code]); // mémorise l'espace ouvert (bouton « Mon espace »)
 
-  if (!p) return <main className="rp-pad" style={{ padding: "36px 24px 64px" }}><CodeEntry initial={initialCode} onOk={c => { setCode(c); setView("home"); }} /></main>;
-  if (!p.consent) return <main className="rp-pad" style={{ padding: "36px 24px 64px" }}><Consent p={p} setModal={setModal} onBack={() => setCode(null)} /></main>;
+  if (!p) return <main className="rp-page" style={PAGE}><CodeEntry initial={initialCode} onOk={c => { setCode(c); setView("home"); }} /></main>;
+  if (!p.consent) return <main className="rp-page" style={PAGE}><Consent p={p} setModal={setModal} onBack={() => setCode(null)} /></main>;
 
   const go = (v, patch) => { if (patch) setCtx(c => ({ ...c, ...patch })); setView(v); window.scrollTo({ top: 0 }); };
   const flowSteps = ["Question", "Entraînement", "Analyse", "Retour"];
@@ -39,17 +45,19 @@ export default function Beneficiary({ initialCode, setModal, onCode }) {
   const stopSeries = () => go("home", { queue: null, qi: 0 });
 
   return (
-    <main className="rp-pad" style={{ padding: "36px 24px 64px" }}>
-      {flowIdx !== undefined && <div style={{ ...wrap(view === "report" && ctx.mode === "video" ? 1000 : 820), marginBottom: 28 }} className="noprint"><Rail step={flowIdx} steps={flowSteps} /></div>}
+    <main className="rp-page" style={PAGE}>
+      {flowIdx !== undefined && <div style={{ ...wrap(view === "report" && ctx.mode === "video" ? W.wide : W.read), marginBottom: GAP.block }} className="noprint"><Rail step={flowIdx} steps={flowSteps} /></div>}
       <div key={view} className="up">
         {view === "home" && <Home p={p} takes={takesOf(p.code, s)} go={go} counselor={p.counselor} onQuit={() => setCode(null)} />}
         {view === "warmup" && <Warmup p={p} go={go} setModal={setModal} />}
         {view === "pick" && <Pick p={p} ctx={ctx} go={go} />}
         {view === "record" && (
-          <Card pad={28} style={{ ...wrap(820), boxShadow: SH.sm }}>
-            <Tag tone="primary">{series && series.n > 1 ? `Entraînement · question ${series.i + 1} sur ${series.n}` : "Entraînement"}</Tag>
-            <h1 style={{ font: `800 24px ${FD}`, margin: "12px 0 6px", color: T.navy, letterSpacing: "-.02em" }}>À vous. Reprenez autant que vous voulez.</h1>
-            <p style={{ font: `400 14px/1.55 ${FB}`, color: T.body, margin: "0 0 16px" }}>Aucun signal ne vous interrompt pendant l'enregistrement. Le retour vient après, et c'est vous qui décidez de le partager.</p>
+          <Card pad="lg" level={2} style={{ ...wrap(W.read), ...stack(16) }}>
+            <div><Tag tone="primary">{series && series.n > 1 ? `Entraînement · question ${series.i + 1} sur ${series.n}` : "Entraînement"}</Tag></div>
+            <div style={stack(8)}>
+              <Txt v="h1" as="h1" color={T.navy}>À vous. Reprenez autant que vous voulez.</Txt>
+              <Txt v="body" color={T.body}>Aucun signal ne vous interrompt pendant l'enregistrement. Le retour vient après, et c'est vous qui décidez de le partager.</Txt>
+            </div>
             <EmotionNote setModal={setModal} />
             <Recorder question={ctx.question} setModal={setModal} onCancel={() => go("pick")}
               trackGaze={!!p.consent.ai} validateLabel={p.consent.ai ? "Voir mon retour" : "Enregistrer ma réponse"}
@@ -76,20 +84,22 @@ function CodeEntry({ initial, onOk }) {
     if (p) onOk(p.code); else setErr("Ce code n'existe pas ou n'est plus actif. Vérifiez-le auprès de votre coach.");
   };
   return (
-    <div style={{ ...wrap(460), textAlign: "center" }}>
-      <div style={{ display: "inline-flex", marginBottom: 24 }}><RepetMark s={58} /></div>
-      <h1 style={{ font: `800 30px ${FD}`, letterSpacing: "-.03em", color: T.navy, margin: "0 0 12px" }}>Bienvenue sur La Répét'</h1>
-      <p style={{ font: `400 16px/1.6 ${FB}`, color: T.body, margin: "0 0 28px" }}>Saisissez le code transmis par votre coach, ou ouvrez directement le lien qu'il vous a envoyé.</p>
-      <Card pad={28} style={{ boxShadow: SH.sm }}>
-        <form onSubmit={submit}>
-          <label htmlFor="code" style={{ font: `600 13px ${FB}`, color: T.navy, display: "block", textAlign: "left", marginBottom: 8 }}>Votre code d'accès</label>
-          <input id="code" value={code} autoComplete="off" maxLength={6} onChange={e => { setCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "")); setErr(""); }} placeholder="6 caractères"
-            style={{ width: "100%", height: 56, padding: "0 18px", borderRadius: RAD.md, border: `1.5px solid ${err ? T.errorDk : T.line}`, font: `700 22px ${FM}`, letterSpacing: ".25em", textAlign: "center", color: T.navy, background: T.bg }} />
-          {err && <div role="alert" style={{ font: `500 13px ${FB}`, color: T.errorDk, marginTop: 8, textAlign: "left" }}>{err}</div>}
-          <div style={{ marginTop: 20 }}><Btn kind="objective" size="lg" full disabled={code.length < 6} iconRight={I.arrow}>Accéder à mon espace</Btn></div>
+    <div style={{ ...wrap(W.narrow), textAlign: "center", display: "grid", gap: GAP.grid, justifyItems: "center" }}>
+      <RepetMark s={56} />
+      <div style={stack(12)}>
+        <Txt v="h1" as="h1" color={T.navy}>Bienvenue sur La Répét'</Txt>
+        <Txt v="bodyLg" color={T.body}>Saisissez le code transmis par votre coach, ou ouvrez directement le lien qu'il vous a envoyé.</Txt>
+      </div>
+      <Card pad="lg" level={2} style={{ width: "100%", textAlign: "left" }}>
+        <form onSubmit={submit} style={stack(GAP.grid)}>
+          <Field id="code" label="Votre code d'accès" error={err}>
+            <Input id="code" variant="code" error={err} value={code} autoComplete="off" maxLength={6} placeholder="6 caractères"
+              onChange={e => { setCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "")); setErr(""); }} />
+          </Field>
+          <Btn kind="objective" size="lg" full disabled={code.length < 6} iconRight={I.arrow}>Accéder à mon espace</Btn>
         </form>
       </Card>
-      <p style={{ font: `400 12.5px ${FB}`, color: T.muted, marginTop: 20 }}>Aucun compte à créer. Ce code vous est personnel.</p>
+      <Txt v="caption" color={T.muted}>Aucun compte à créer. Ce code vous est personnel.</Txt>
     </div>
   );
 }
@@ -98,30 +108,27 @@ function CodeEntry({ initial, onOk }) {
 function Consent({ p, setModal, onBack }) {
   const [c, setC] = useState({ local: false, ai: true });
   const box = (k, title, text, required) => (
-    <div onClick={() => setC(x => ({ ...x, [k]: !x[k] }))} role="checkbox" aria-checked={c[k]} tabIndex={0}
-      onKeyDown={e => (e.key === " " || e.key === "Enter") && (e.preventDefault(), setC(x => ({ ...x, [k]: !x[k] })))}
-      style={{ display: "flex", gap: 13, padding: 16, borderRadius: RAD.md, border: `1.5px solid ${c[k] ? T.primary : T.line}`, background: c[k] ? GRAD_SOFT : "#fff", cursor: "pointer", marginBottom: 10 }}>
-      <div style={{ width: 22, height: 22, borderRadius: RAD.xs, flexShrink: 0, marginTop: 1, background: c[k] ? T.primary : "#fff", border: `2px solid ${c[k] ? T.primary : T.faint}`, display: "grid", placeItems: "center" }}>{c[k] && <Icon d={I.check} s={13} c="#fff" />}</div>
-      <div>
-        <div style={{ font: `700 14.5px ${FB}`, color: T.navy, marginBottom: 2 }}>{title} {required && <span style={{ font: `400 11px ${FB}`, color: T.muted }}>· nécessaire</span>}</div>
-        <div style={{ font: `400 13px/1.55 ${FB}`, color: T.body }}>{text}</div>
-      </div>
-    </div>
+    <CheckTile on={c[k]} onToggle={() => setC(x => ({ ...x, [k]: !x[k] }))}>
+      <span style={{ ...TY.bodyStrong, color: T.navy }}>{title} {required && <span style={{ ...TY.caption, color: T.muted }}>· nécessaire</span>}</span>
+      <span style={{ ...TY.small, color: T.body }}>{text}</span>
+    </CheckTile>
   );
-  const link = (k, l) => <button type="button" onClick={e => { e.stopPropagation(); setModal(k); }} style={{ font: `600 13px ${FB}`, color: T.primary, background: "none", border: "none", padding: 0, cursor: "pointer", textDecoration: "underline" }}>{l}</button>;
+  const link = (k, l) => <Link onClick={() => setModal(k)}>{l}</Link>;
   return (
-    <Card pad={0} style={{ ...wrap(680), overflow: "hidden", boxShadow: SH.sm }}>
+    <Card pad="none" level={2} style={wrap(W.read)}>
       <GradHead tag={`Bonjour ${p.prenom}`} title="Avant de commencer" sub="Cet espace est le vôtre. Vous vous entraînez à votre rythme, rien n'est noté et rien n'est partagé sans votre accord." />
-      <div className="rp-card-pad" style={{ padding: "24px 32px 8px" }}>
-        {box("local", "Enregistrer et analyser mes entraînements sur cet appareil", "La vidéo et le son restent sur votre appareil. Ils ne sont envoyés à votre coach que si vous le décidez, réponse par réponse.", true)}
-        {box("ai", "Recevoir un retour de l'assistant", "Un retour écrit qui décrit des faits (rythme, pauses, structure, direction du regard). Il ne note pas et ne déduit aucune émotion. Sans cette option, vous pouvez quand même vous enregistrer et vous revoir.")}
-        <div style={{ font: `400 13px/1.6 ${FB}`, color: T.body, margin: "12px 0 4px" }}>
-          En continuant, vous confirmez avoir pris connaissance des {link("cgu", "conditions d'utilisation")}, de la {link("rgpd", "notice de protection des données")} et du {link("lifecycle", "cycle de vie de la vidéo")}. Vous pouvez retirer votre consentement à tout moment depuis votre espace, sans justification.
+      <div className="rp-pad-lg" style={{ padding: PAD.lg, ...stack(GAP.grid) }}>
+        <div style={stack(GAP.stack)}>
+          {box("local", "Enregistrer et analyser mes entraînements sur cet appareil", "La vidéo et le son restent sur votre appareil. Ils ne sont envoyés à votre coach que si vous le décidez, réponse par réponse.", true)}
+          {box("ai", "Recevoir un retour de l'assistant", "Un retour écrit qui décrit des faits (rythme, pauses, structure, direction du regard). Il ne note pas et ne déduit aucune émotion. Sans cette option, vous pouvez quand même vous enregistrer et vous revoir.")}
         </div>
-      </div>
-      <div className="rp-card-pad" style={{ padding: "18px 32px 28px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-        <Back onClick={onBack} />
-        <Btn kind="objective" disabled={!c.local} onClick={() => updateParcours(p.code, { consent: { at: new Date().toISOString(), local: true, ai: c.ai } })}>Je consens et je commence&nbsp;<Icon d={I.arrow} s={18} c="#fff" /></Btn>
+        <p style={{ ...TY.small, color: T.body, margin: 0 }}>
+          En continuant, vous confirmez avoir pris connaissance des {link("cgu", "conditions d'utilisation")}, de la {link("rgpd", "notice de protection des données")} et du {link("lifecycle", "cycle de vie de la vidéo")}. Vous pouvez retirer votre consentement à tout moment depuis votre espace, sans justification.
+        </p>
+        <div className="rp-actions" style={actions}>
+          <Back onClick={onBack} />
+          <Btn kind="objective" disabled={!c.local} onClick={() => updateParcours(p.code, { consent: { at: new Date().toISOString(), local: true, ai: c.ai } })} iconRight={I.arrow}>Je consens et je commence</Btn>
+        </div>
       </div>
     </Card>
   );
@@ -129,13 +136,10 @@ function Consent({ p, setModal, onBack }) {
 
 function EmotionNote({ setModal }) {
   return (
-    <div style={{ display: "flex", gap: 11, alignItems: "flex-start", background: GRAD_SOFT, borderRadius: RAD.md, padding: "12px 15px", marginBottom: 16 }}>
-      <Icon d={I.shield} s={18} c={T.violet} />
-      <div style={{ font: `400 13px/1.55 ${FB}`, color: T.primaryDk }}>
-        <strong>On ne juge pas vos émotions.</strong> L'assistant ne cherche pas à savoir si vous êtes stressé·e : il décrit seulement des faits.{" "}
-        <button onClick={() => setModal("emotion")} style={{ font: `600 13px ${FB}`, color: T.violet, background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline" }}>Pourquoi ?</button>
-      </div>
-    </div>
+    <Notice tone="ai" icon={I.shield}>
+      <strong>On ne juge pas vos émotions.</strong> L'assistant ne cherche pas à savoir si vous êtes stressé·e : il décrit seulement des faits.{" "}
+      <Link onClick={() => setModal("emotion")}>Pourquoi ?</Link>
+    </Notice>
   );
 }
 
@@ -146,13 +150,13 @@ function Home({ p, takes, go, counselor, onQuit }) {
     if (window.confirm("Retirer votre consentement supprime tous vos entraînements et vos rapports sur cet appareil. Continuer ?")) { clearWarmupDebrief(p.code); await withdrawConsent(p.code); }
   };
   return (
-    <div style={wrap(820)}>
-      <Card pad={0} style={{ boxShadow: SH.sm, marginBottom: 18 }}>
+    <div style={{ ...wrap(W.read), ...stack(GAP.block) }}>
+      <Card pad="none" level={2}>
         <GradHead tag={counselor ? `Accompagnement avec ${counselor}` : "Votre espace"} title={`Bonjour ${p.prenom}`}
           sub="Choisissez le métier que vous visez, puis démarrez votre entraînement : les questions s'adaptent à ce métier. Vous pouvez d'abord vous échauffer pour vous mettre en voix." />
-        <div className="rp-card-pad" style={{ padding: "22px 28px 26px" }}>
+        <div className="rp-pad-md" style={{ padding: PAD.md, ...stack(GAP.grid) }}>
           <JobField p={p} />
-          <div className="rp-stack" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginTop: 18 }}>
+          <div className="rp-stack" style={{ gap: GAP.stack }}>
             <ChoiceTile icon={I.mic} title="Échauffement" tipLabel="En savoir plus sur l'échauffement" tipId="tip-warmup"
               tip="L'échauffement n'est ni enregistré ni analysé. Il sert à vous mettre en voix : vous dites une phrase à voix haute, plusieurs fois, avec des astuces et des relances. Rien n'est gardé quand vous quittez l'écran."
               text="Quelques minutes pour vous mettre en voix, une phrase à la fois. Ni enregistré, ni analysé.">
@@ -170,46 +174,52 @@ function Home({ p, takes, go, counselor, onQuit }) {
       </Card>
 
       {reports.length > 0 && (
-        <div style={{ background: `${T.accent}10`, border: `1px solid ${T.accent}33`, borderRadius: RAD.md, padding: "14px 18px", marginBottom: 18, font: `500 14px ${FB}`, color: T.navy }}>
+        <Notice tone="success">
           {counselor || "Votre coach"} vous a envoyé {reports.length > 1 ? `${reports.length} rapports` : "un rapport"}. Ouvrez l'entraînement concerné pour le lire.
-        </div>
+        </Notice>
       )}
 
-      <h2 style={{ font: `800 20px ${FD}`, color: T.navy, margin: "8px 0 12px" }}>Mes entraînements</h2>
-      {takes.length === 0 && <Card><div style={{ font: `400 14px ${FB}`, color: T.body }}>Vous n'avez pas encore d'entraînement enregistré. Lancez-vous quand vous êtes prêt·e.</div></Card>}
-      {takes.map(t => {
-        const st = t.report ? ["Rapport reçu", "appui"] : t.shared ? ["Envoyé, en attente de relecture", "primary"] : ["Sur cet appareil uniquement", "muted"];
-        return (
-          <Card key={t.id} hover style={{ marginBottom: 10, display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
-            <div style={{ width: 42, height: 42, borderRadius: RAD.sm, background: GRAD_AI, display: "grid", placeItems: "center", flexShrink: 0 }}><Icon d={t.hasVideo && !t.mime?.startsWith("audio") ? I.play : I.mic} s={17} c="#fff" /></div>
-            <div style={{ flex: 1, minWidth: 200 }}>
-              <div style={{ font: `700 14.5px ${FD}`, color: T.navy }}>{t.question}</div>
-              <div style={{ font: `400 12.5px ${FB}`, color: T.muted }}>{dateFr(t.createdAt)} · {Math.round(t.duration)} s</div>
-            </div>
-            <Tag tone={st[1]}>{st[0]}</Tag>
-            <Btn kind="secondary" size="sm" onClick={() => go(t.hasVideo ? "choose" : "report", { takeId: t.id, mode: "simple", queue: null })}>Ouvrir</Btn>
-          </Card>
-        );
-      })}
+      <section style={stack(16)}>
+        <Txt v="h2" as="h2" color={T.navy}>Mes entraînements</Txt>
+        {takes.length === 0 && <Empty icon={I.play} text="Vous n'avez pas encore d'entraînement enregistré. Lancez-vous quand vous êtes prêt·e." />}
+        {takes.length > 0 && (
+          <div style={stack(GAP.stack)}>
+            {takes.map(t => {
+              const st = t.report ? ["Rapport reçu", "success"] : t.shared ? ["Envoyé, en attente de relecture", "primary"] : ["Sur cet appareil uniquement", "muted"];
+              return (
+                <Card key={t.id} pad="sm" hover style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
+                  <IconTile icon={t.hasVideo && !t.mime?.startsWith("audio") ? I.play : I.mic} />
+                  <div style={{ flex: 1, minWidth: 200, ...stack(4) }}>
+                    <div style={{ ...TY.h4, color: T.navy }}>{t.question}</div>
+                    <div style={{ ...TY.caption, color: T.muted }}>{dateFr(t.createdAt)} · {Math.round(t.duration)} s</div>
+                  </div>
+                  <Tag tone={st[1]}>{st[0]}</Tag>
+                  <Btn kind="secondary" size="sm" onClick={() => go(t.hasVideo ? "choose" : "report", { takeId: t.id, mode: "simple", queue: null })}>Ouvrir</Btn>
+                </Card>
+              );
+            })}
+          </div>
+        )}
+      </section>
 
-      <div style={{ marginTop: 28, paddingTop: 18, borderTop: `1px solid ${T.line}`, display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }} className="noprint">
-        <button onClick={onQuit} style={{ font: `500 13px ${FB}`, color: T.muted, background: "none", border: "none", cursor: "pointer" }}>← Changer de code</button>
-        <button onClick={withdraw} style={{ font: `500 13px ${FB}`, color: T.errorDk, background: "none", border: "none", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6, textAlign: "left" }}><Icon d={I.trash} s={14} c={T.error} /> Retirer mon consentement et supprimer mes données</button>
+      <div style={{ paddingTop: 16, borderTop: `1px solid ${T.line}`, ...actions }} className="noprint">
+        <Back onClick={onQuit}>Changer de code</Back>
+        <Btn kind="danger" size="sm" icon={I.trash} onClick={withdraw}>Retirer mon consentement et supprimer mes données</Btn>
       </div>
     </div>
   );
 }
 
-/* Tuile de choix (échauffement / entraînement) avec bulle d'information. */
+/* Tuile de choix (échauffement / entraînement) avec bulle d'information : bloc interne, pas une carte dans la carte. */
 function ChoiceTile({ icon, title, text, tip, tipLabel, tipId, children }) {
   return (
-    <div style={{ position: "relative", border: `1px solid ${T.line}`, borderRadius: RAD.md, padding: 16, display: "flex", flexDirection: "column", gap: 10, background: T.bg, minWidth: 0 }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-        <div aria-hidden style={{ width: 34, height: 34, borderRadius: RAD.sm, background: "#fff", border: `1px solid ${T.line}`, display: "grid", placeItems: "center", flexShrink: 0 }}><Icon d={icon} s={16} c={T.primary} /></div>
-        <h2 style={{ font: `800 16px ${FD}`, color: T.navy, margin: 0 }}>{title}</h2>
+    <div style={{ position: "relative", borderRadius: RAD.md, padding: PAD.sm, display: "flex", flexDirection: "column", gap: 12, background: T.bg, minWidth: 0 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        <IconTile icon={icon} bg={T.surface} />
+        <h2 style={{ ...TY.h3, color: T.navy, margin: 0, flex: 1 }}>{title}</h2>
         <InfoTip label={tipLabel} id={tipId}>{tip}</InfoTip>
       </div>
-      <p style={{ font: `400 13.5px/1.55 ${FB}`, color: T.body, margin: 0, flex: 1 }}>{text}</p>
+      <p style={{ ...TY.small, color: T.body, margin: 0, flex: 1 }}>{text}</p>
       <div className="rp-wide-m">{children}</div>
     </div>
   );
@@ -231,12 +241,9 @@ function InfoTip({ label, id, children }) {
     <span ref={ref} style={{ display: "inline-flex" }}
       onPointerEnter={e => e.pointerType === "mouse" && setHover(true)} onPointerLeave={e => e.pointerType === "mouse" && setHover(false)}
       onKeyDown={e => { if (e.key === "Escape") { setPinned(false); setHover(false); } }}>
-      <button type="button" aria-label={label} aria-expanded={open} aria-controls={id} onClick={() => setPinned(v => !v)}
-        style={{ width: 30, height: 30, borderRadius: "50%", border: "none", background: open ? `${T.primary}14` : "transparent", display: "grid", placeItems: "center", cursor: "pointer", padding: 0 }}>
-        <Icon d={I.info} s={18} c={T.primary} />
-      </button>
+      <IconBtn icon={I.info} label={label} aria-expanded={open} aria-controls={id} onClick={() => setPinned(v => !v)} />
       <span id={id} role="note" hidden={!open}
-        style={{ position: "absolute", left: 10, right: 10, top: 56, zIndex: 20, background: "#fff", border: `1px solid ${T.line}`, borderRadius: RAD.sm, boxShadow: SH.lg, padding: "12px 14px", font: `400 13px/1.55 ${FB}`, color: T.navy, display: open ? "block" : "none" }}>
+        style={{ position: "absolute", left: 8, right: 8, top: 64, zIndex: 20, background: T.surface, border: `1px solid ${T.line}`, borderRadius: RAD.sm, boxShadow: SH.lg, padding: "12px 16px", ...TY.small, color: T.navy, display: open ? "block" : "none" }}>
         {children}
       </span>
     </span>
@@ -275,37 +282,36 @@ function JobField({ p }) {
   };
 
   return (
-    <div style={{ position: "relative" }}>
-      <label htmlFor="job" style={{ font: `700 14px ${FD}`, color: T.navy, display: "block", marginBottom: 4 }}>Métier visé</label>
-      <div id="job-help" style={{ font: `400 12.5px ${FB}`, color: T.muted, marginBottom: 8 }}>Commencez à taper puis choisissez dans la liste, ou écrivez librement votre métier.</div>
-      <div style={{ position: "relative" }}>
-        <span aria-hidden style={{ position: "absolute", left: 14, top: 15, pointerEvents: "none" }}><Icon d={I.search} s={18} c={T.faint} /></span>
-        <input id="job" role="combobox" aria-autocomplete="list" aria-expanded={open && items.length > 0} aria-controls="job-list"
-          aria-activedescendant={open && active >= 0 ? `job-opt-${active}` : undefined} aria-describedby="job-help"
-          value={val} autoComplete="off" autoCapitalize="none" spellCheck={false} placeholder="Par exemple : agent d'accueil"
-          onChange={e => { setVal(e.target.value); setOpen(true); setActive(-1); setStatus(""); }}
-          onFocus={() => { clearTimeout(blurT.current); setOpen(true); }}
-          onClick={() => setOpen(true)}
-          onBlur={() => { blurT.current = setTimeout(() => commit(valRef.current), 160); }}
-          onKeyDown={onKey}
-          style={{ width: "100%", height: 50, padding: "0 16px 0 42px", borderRadius: RAD.md, border: `1.5px solid ${T.line}`, font: `500 16px ${FB}`, color: T.navy, background: "#fff" }} />
-        {open && items.length > 0 && (
-          <ul id="job-list" role="listbox" aria-label="Métiers proposés"
-            style={{ position: "absolute", left: 0, right: 0, top: "calc(100% + 6px)", zIndex: 30, margin: 0, padding: 6, listStyle: "none", background: "#fff", border: `1px solid ${T.line}`, borderRadius: RAD.md, boxShadow: SH.lg, maxHeight: 264, overflowY: "auto" }}>
-            {items.map((it, i) => (
-              <li key={labelOf(it) + i} id={`job-opt-${i}`} role="option" aria-selected={i === active} className="rp-opt"
-                onPointerDown={e => e.preventDefault()} onMouseDown={e => e.preventDefault()}
-                onClick={() => { clearTimeout(blurT.current); commit(labelOf(it)); }}
-                onMouseMove={() => active !== i && setActive(i)}
-                style={{ padding: "10px 12px", borderRadius: RAD.sm, cursor: "pointer", font: `${typeof it === "string" ? 500 : 600} 14.5px ${FB}`, color: typeof it === "string" ? T.navy : T.primary, background: i === active ? `${T.primary}12` : undefined }}>
-                {typeof it === "string" ? it : `Utiliser « ${it.free} »`}
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-      <div role="status" aria-live="polite" style={{ font: `500 12.5px ${FB}`, color: T.accent, marginTop: status ? 8 : 0, display: "flex", alignItems: "center", gap: 6 }}>
-        {status && <><Icon d={I.check} s={14} c={T.accent} />{status}</>}
+    <div style={{ position: "relative", ...stack(8) }}>
+      <Field id="job" label="Métier visé" hint="Commencez à taper puis choisissez dans la liste, ou écrivez librement votre métier.">
+        <div style={{ position: "relative" }}>
+          <Input id="job" icon={I.search} hint role="combobox" aria-autocomplete="list" aria-expanded={open && items.length > 0} aria-controls="job-list"
+            aria-activedescendant={open && active >= 0 ? `job-opt-${active}` : undefined}
+            value={val} autoComplete="off" autoCapitalize="none" spellCheck={false} placeholder="Par exemple : agent d'accueil"
+            onChange={e => { setVal(e.target.value); setOpen(true); setActive(-1); setStatus(""); }}
+            onFocus={() => { clearTimeout(blurT.current); setOpen(true); }}
+            onClick={() => setOpen(true)}
+            onBlur={() => { blurT.current = setTimeout(() => commit(valRef.current), 160); }}
+            onKeyDown={onKey} />
+          {open && items.length > 0 && (
+            <ul id="job-list" role="listbox" aria-label="Métiers proposés"
+              style={{ position: "absolute", left: 0, right: 0, top: "calc(100% + 8px)", zIndex: 30, margin: 0, padding: 4, listStyle: "none", background: T.surface, border: `1px solid ${T.line}`, borderRadius: RAD.md, boxShadow: SH.lg, maxHeight: 264, overflowY: "auto" }}>
+              {items.map((it, i) => (
+                // design-lint-disable-next-line K4 -- option d'une liste combobox ARIA : le clavier passe par le champ (aria-activedescendant), le clic complète
+                <li key={labelOf(it) + i} id={`job-opt-${i}`} role="option" aria-selected={i === active} className="rp-opt"
+                  onPointerDown={e => e.preventDefault()} onMouseDown={e => e.preventDefault()}
+                  onClick={() => { clearTimeout(blurT.current); commit(labelOf(it)); }}
+                  onMouseMove={() => active !== i && setActive(i)}
+                  style={{ padding: "12px 12px", borderRadius: RAD.sm, cursor: "pointer", ...(typeof it === "string" ? TY.body : TY.bodyStrong), color: typeof it === "string" ? T.navy : T.primary, background: i === active ? T.primaryBg : undefined }}>
+                  {typeof it === "string" ? it : `Utiliser « ${it.free} »`}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </Field>
+      <div role="status" aria-live="polite" style={{ ...TY.small, color: T.successDk, display: "flex", alignItems: "center", gap: 8 }}>
+        {status && <><Icon d={I.check} s={16} />{status}</>}
       </div>
     </div>
   );
@@ -334,25 +340,24 @@ function Warmup({ p, go, setModal }) {
   if (stage === "debrief") return <WarmupDebrief p={p} go={go} again={() => { setStage("practice"); shuffle(); window.scrollTo({ top: 0 }); }} />;
 
   return (
-    <div style={wrap(980)}>
-      <Card pad={28} style={{ boxShadow: SH.sm, marginBottom: 16 }}>
-        <Tag tone="warning">Échauffement · ni enregistré, ni analysé</Tag>
-        <h1 style={{ font: `800 24px ${FD}`, margin: "12px 0 6px", color: T.navy, letterSpacing: "-.02em" }}>Mettez-vous en voix</h1>
-        <p style={{ font: `400 14.5px/1.6 ${FB}`, color: T.body, margin: "0 0 18px", maxWidth: 680 }}>
-          Quelques minutes pour vous habituer à parler à voix haute avant l'entraînement. L'exercice se concentre sur <strong style={{ color: T.navy }}>une seule phrase à la fois</strong> : dites-la, redites-la en suivant la relance, puis changez de phrase quand vous voulez. Rien n'est enregistré ni analysé.
-        </p>
+    <div style={{ ...wrap(W.wide), ...stack(GAP.grid) }}>
+      <Card pad="lg" level={2} style={stack(16)}>
+        <div><Tag tone="primary">Échauffement · ni enregistré, ni analysé</Tag></div>
+        <div style={stack(8)}>
+          <Txt v="h1" as="h1" color={T.navy}>Mettez-vous en voix</Txt>
+          <Txt v="body" color={T.body} style={{ maxWidth: W.form }}>
+            Quelques minutes pour vous habituer à parler à voix haute avant l'entraînement. L'exercice se concentre sur <strong style={{ color: T.navy }}>une seule phrase à la fois</strong> : dites-la, redites-la en suivant la relance, puis changez de phrase quand vous voulez. Rien n'est enregistré ni analysé.
+          </Txt>
+        </div>
 
-        <div style={{ background: GRAD_SOFT, borderRadius: RAD.md, padding: "16px 18px", marginBottom: 16 }}>
-          <div style={{ font: `700 11px ${FB}`, color: T.primary, textTransform: "uppercase", letterSpacing: ".06em", marginBottom: 8 }}>Votre phrase</div>
+        <div style={{ background: T.primaryBg, borderRadius: RAD.md, padding: "16px 20px", ...stack(12) }}>
+          <div style={{ ...TY.overline, color: T.primary }}>Votre phrase</div>
           <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
-            <p aria-live="polite" data-testid="warmup-phrase" style={{ font: `700 19px/1.45 ${FD}`, color: T.navy, margin: 0, flex: 1, minWidth: 0 }}>« {phrase} »</p>
-            <button type="button" onClick={shuffle} aria-label="Changer de phrase" title="Changer de phrase"
-              style={{ width: 42, height: 42, flexShrink: 0, borderRadius: "50%", border: `1.5px solid ${T.primaryLt}`, background: "#fff", display: "grid", placeItems: "center", cursor: "pointer" }}>
-              <Icon d={I.shuffle} s={18} c={T.primary} />
-            </button>
+            <p aria-live="polite" data-testid="warmup-phrase" style={{ ...TY.h2, color: T.navy, margin: 0, flex: 1, minWidth: 0 }}>« {phrase} »</p>
+            <IconBtn icon={I.shuffle} label="Changer de phrase" variant="outline" onClick={shuffle} />
           </div>
-          <div style={{ marginTop: 12, paddingTop: 12, borderTop: `1px solid ${T.primary}1a`, display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-            <div style={{ flex: 1, minWidth: 200, font: `500 13.5px/1.5 ${FB}`, color: T.primaryDk }} aria-live="polite">
+          <div style={{ paddingTop: 12, borderTop: `1px solid ${T.line}`, display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+            <div style={{ flex: 1, minWidth: 200, ...TY.small, color: T.navy }} aria-live="polite">
               <strong>Relance {prompt + 1}/{WARMUP_PROMPTS.length} :</strong> {WARMUP_PROMPTS[prompt]}
             </div>
             <Btn kind="ghost" size="sm" onClick={() => setPrompt(i => (i + 1) % WARMUP_PROMPTS.length)} icon={I.redo}>Relance suivante</Btn>
@@ -362,17 +367,17 @@ function Warmup({ p, go, setModal }) {
         <WarmupStage setModal={setModal} />
       </Card>
 
-      <div className="rp-split" style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) minmax(0,1.15fr)", gap: 16, alignItems: "start" }}>
-        <Card pad={22}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
-            <Icon d={I.bulb} s={18} c={T.primary} />
-            <h2 style={{ font: `800 16px ${FD}`, color: T.navy, margin: 0 }}>Astuces pour bien démarrer</h2>
+      <div className="rp-split">
+        <Card style={stack(12)}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <Icon d={I.bulb} s={20} c={T.primary} />
+            <h2 style={{ ...TY.h3, color: T.navy, margin: 0 }}>Astuces pour bien démarrer</h2>
           </div>
-          <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "grid", gap: 10 }}>
+          <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "grid", gap: 12 }}>
             {WARMUP_TIPS.map(([t, d]) => (
-              <li key={t} style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
-                <span aria-hidden style={{ marginTop: 2 }}><Icon d={I.check} s={15} c={T.accent} /></span>
-                <span style={{ font: `400 13.5px/1.5 ${FB}`, color: T.body }}><strong style={{ color: T.navy }}>{t}.</strong> {d}</span>
+              <li key={t} style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
+                <span style={{ marginTop: 2, display: "inline-flex" }}><Icon d={I.check} s={16} c={T.primary} /></span>
+                <span style={{ ...TY.small, color: T.body }}><strong style={{ color: T.navy }}>{t}.</strong> {d}</span>
               </li>
             ))}
           </ul>
@@ -381,7 +386,7 @@ function Warmup({ p, go, setModal }) {
           intro="Bonjour ! Une question sur l'échauffement, le site ou la préparation de votre entretien ? Posez-la ici, vous pouvez ensuite me demander un exemple ou plus de détails." />
       </div>
 
-      <div style={{ marginTop: 18, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+      <div className="rp-actions" style={actions}>
         <Back onClick={() => go("home")} />
         <Btn kind="objective" onClick={finish} iconRight={I.arrow}>J'ai terminé l'échauffement</Btn>
       </div>
@@ -390,16 +395,6 @@ function Warmup({ p, go, setModal }) {
 }
 
 const OPINIONS = ["Utile", "Rassurant", "Trop court", "Pas assez guidé", "Je ne sais pas encore"];
-
-function Chip({ on, onClick, role = "radio", children }) {
-  return (
-    <button type="button" role={role} aria-checked={on} onClick={onClick}
-      style={{ font: `600 13px ${FB}`, padding: "9px 14px", borderRadius: RAD.pill, cursor: "pointer", textAlign: "left",
-        border: `1.5px solid ${on ? T.primary : T.line}`, background: on ? `${T.primary}12` : "#fff", color: on ? T.primaryDk : T.body, display: "inline-flex", alignItems: "center", gap: 6 }}>
-      {on && <Icon d={I.check} s={13} c={T.primary} />}{children}
-    </button>
-  );
-}
 
 /* Questionnaire de fin d'échauffement : réponses gardées sur l'appareil, jamais envoyées au coach. */
 function WarmupDebrief({ p, go, again }) {
@@ -410,47 +405,43 @@ function WarmupDebrief({ p, go, again }) {
   const [work, setWork] = useState(() => prev?.work || []);
   useEffect(() => { saveWarmupDebrief(p.code, { feeling, opinion, comment: comment.trim(), work }); }, [feeling, opinion, comment, work]); // eslint-disable-line
   const toggleWork = id => setWork(w => (w.includes(id) ? w.filter(x => x !== id) : [...w, id]));
-  const q = (n, t, id) => <h2 id={id} style={{ font: `800 16px ${FD}`, color: T.navy, margin: "0 0 10px" }}>{n}. {t}</h2>;
+  const q = (n, t, id) => <h2 id={id} style={{ ...TY.h3, color: T.navy, margin: 0 }}>{n}. {t}</h2>;
   const pre = questionsForTopics(work);
 
   return (
-    <div style={wrap(760)}>
-      <Card pad={28} style={{ boxShadow: SH.sm }}>
-        <Tag tone="success">Échauffement terminé</Tag>
-        <h1 style={{ font: `800 24px ${FD}`, margin: "12px 0 6px", color: T.navy, letterSpacing: "-.02em" }}>Quatre questions rapides</h1>
-        <p style={{ font: `400 14px/1.6 ${FB}`, color: T.body, margin: "0 0 22px" }}>Vos réponses restent sur cet appareil : elles ne sont pas envoyées à votre coach. Toutes les questions sont facultatives.</p>
+    <div style={wrap(W.read)}>
+      <Card pad="lg" level={2} style={stack(GAP.grid)}>
+        <div style={stack(12)}>
+          <div><Tag tone="success">Échauffement terminé</Tag></div>
+          <Txt v="h1" as="h1" color={T.navy}>Quatre questions rapides</Txt>
+          <Txt v="body" color={T.body}>Vos réponses restent sur cet appareil : elles ne sont pas envoyées à votre coach. Toutes les questions sont facultatives.</Txt>
+        </div>
 
-        <section style={{ marginBottom: 22 }}>
+        <section style={stack(12)}>
           {q(1, "Comment vous êtes-vous senti·e ?", "dq1")}
-          <div role="radiogroup" aria-labelledby="dq1" style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-            {FEELINGS.map(f => <Chip key={f.id} on={feeling === f.id} onClick={() => setFeeling(v => (v === f.id ? null : f.id))}>{f.label}</Chip>)}
+          <div role="radiogroup" aria-labelledby="dq1" className="rs-chips">
+            {FEELINGS.map(f => <Chip key={f.id} role="radio" on={feeling === f.id} onClick={() => setFeeling(v => (v === f.id ? null : f.id))}>{f.label}</Chip>)}
           </div>
           <div aria-live="polite">
-            {feeling && (
-              <div style={{ marginTop: 10, display: "flex", gap: 10, alignItems: "flex-start", background: T.violetBg, borderRadius: RAD.sm, padding: "10px 13px", font: `400 13.5px/1.55 ${FB}`, color: T.navy }}>
-                <span aria-hidden style={{ marginTop: 1 }}><Icon d={I.chat} s={15} c={T.violet} /></span>
-                <span><strong style={{ color: T.violet }}>Assistant :</strong> {feelingAck(feeling)}</span>
-              </div>
-            )}
+            {feeling && <Notice tone="ai" icon={I.chat}><strong style={{ color: T.violet }}>Assistant :</strong> {feelingAck(feeling)}</Notice>}
           </div>
         </section>
 
-        <section style={{ marginBottom: 22 }}>
+        <section style={stack(12)}>
           {q(2, "Qu'avez-vous pensé de cet échauffement ?", "dq2")}
-          <div role="radiogroup" aria-labelledby="dq2" style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-            {OPINIONS.map(o => <Chip key={o} on={opinion === o} onClick={() => setOpinion(v => (v === o ? null : o))}>{o}</Chip>)}
+          <div role="radiogroup" aria-labelledby="dq2" className="rs-chips">
+            {OPINIONS.map(o => <Chip key={o} role="radio" on={opinion === o} onClick={() => setOpinion(v => (v === o ? null : o))}>{o}</Chip>)}
           </div>
           <label htmlFor="dq2-text" className="rp-sr">Un commentaire sur l'échauffement (facultatif)</label>
-          <input id="dq2-text" value={comment} onChange={e => setComment(e.target.value)} maxLength={300} placeholder="Un commentaire, si vous le souhaitez (facultatif)"
-            style={{ marginTop: 10, width: "100%", height: 46, padding: "0 14px", borderRadius: RAD.md, border: `1.5px solid ${T.line}`, font: `400 15px ${FB}`, color: T.navy }} />
+          <Input id="dq2-text" value={comment} onChange={e => setComment(e.target.value)} maxLength={300} placeholder="Un commentaire, si vous le souhaitez (facultatif)" />
         </section>
 
-        <section style={{ marginBottom: 22 }}>
+        <section style={stack(12)}>
           {q(3, "Qu'aimeriez-vous travailler ensuite ?", "dq3")}
-          <div role="group" aria-labelledby="dq3" style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+          <div role="group" aria-labelledby="dq3" className="rs-chips">
             {WORK_TOPICS.map(t => <Chip key={t.id} role="checkbox" on={work.includes(t.id)} onClick={() => toggleWork(t.id)}>{t.label}</Chip>)}
           </div>
-          <p style={{ font: `400 12.5px ${FB}`, color: T.muted, margin: "8px 0 0" }}>
+          <p style={{ ...TY.caption, color: T.muted, margin: 0 }}>
             {pre.length ? `${pre.length} question${pre.length > 1 ? "s" : ""} seront présélectionnées pour votre entraînement. Vous pourrez modifier ce choix.` : "Vos choix présélectionneront des questions pour votre entraînement."}
           </p>
         </section>
@@ -460,8 +451,8 @@ function WarmupDebrief({ p, go, again }) {
             placeholder="Par exemple : comment parler de mes qualités ?" />
         </section>
 
-        <div style={{ marginTop: 22, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+        <div className="rp-actions" style={actions}>
+          <div className="rp-actions" style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
             <Btn kind="ghost" size="sm" onClick={again} icon={I.redo}>Refaire un échauffement</Btn>
             <Btn kind="ghost" size="sm" onClick={() => go("home")}>Revenir à mon espace</Btn>
           </div>
@@ -500,56 +491,45 @@ function Pick({ p, ctx, go }) {
   const qcard = (q, removable) => {
     const idx = sel.indexOf(q.key), on = idx >= 0;
     return (
-      <div key={q.key} role="checkbox" aria-checked={on} tabIndex={0} onClick={() => toggle(q.key)}
-        onKeyDown={e => (e.key === " " || e.key === "Enter") && (e.preventDefault(), toggle(q.key))}
-        style={{ position: "relative", display: "flex", gap: 12, alignItems: "flex-start", padding: 14, borderRadius: RAD.md, cursor: "pointer", minWidth: 0,
-          border: `1.5px solid ${on ? T.primary : T.line}`, background: on ? GRAD_SOFT : "#fff", boxShadow: on ? "none" : SH.xs, transition: "border-color .15s, background .15s" }}>
-        <div aria-hidden style={{ width: 24, height: 24, borderRadius: RAD.xs, flexShrink: 0, marginTop: 1, background: on ? T.primary : "#fff", border: `2px solid ${on ? T.primary : T.faint}`, display: "grid", placeItems: "center", color: "#fff", font: `700 12px ${FB}` }}>
-          {on ? idx + 1 : ""}
-        </div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ font: `600 11px ${FB}`, color: T.primary, textTransform: "uppercase", letterSpacing: ".05em", marginBottom: 4 }}>{q.theme}</div>
-          <div style={{ font: `600 14px/1.45 ${FB}`, color: T.navy, overflowWrap: "anywhere" }}>{q.text}</div>
-        </div>
-        {removable && (
-          <button type="button" aria-label={`Retirer la question : ${q.text}`} onClick={e => { e.stopPropagation(); remove(q.key); }}
-            style={{ width: 30, height: 30, flexShrink: 0, borderRadius: "50%", border: "none", background: "transparent", display: "grid", placeItems: "center", cursor: "pointer" }}>
-            <Icon d={I.close} s={16} c={T.muted} />
-          </button>
-        )}
-      </div>
+      <CheckTile key={q.key} on={on} onToggle={() => toggle(q.key)} mark={idx + 1}
+        after={removable && <IconBtn icon={I.close} label={`Retirer la question : ${q.text}`} tone="muted" size={16} onClick={() => remove(q.key)} />}>
+        <span style={{ ...TY.overline, color: T.primary }}>{q.theme}</span>
+        <span style={{ ...TY.bodyStrong, color: T.navy, overflowWrap: "anywhere" }}>{q.text}</span>
+      </CheckTile>
     );
   };
 
   return (
-    <div style={wrap(820)}>
-      <h1 style={{ font: `800 26px ${FD}`, color: T.navy, margin: "0 0 6px", letterSpacing: "-.02em" }}>Sur quelles questions voulez-vous vous entraîner ?</h1>
-      <p style={{ font: `400 15px/1.55 ${FB}`, color: T.body, margin: "0 0 6px" }}>Sélectionnez une ou plusieurs questions, dans l'ordre où vous voulez y répondre. Vous pouvez aussi ajouter les vôtres.</p>
-      {!ctx.selection && ctx.preselect?.length > 0 && (
-        <p style={{ font: `500 13px ${FB}`, color: T.accent, margin: "0 0 6px", display: "flex", alignItems: "center", gap: 6 }}><Icon d={I.check} s={14} c={T.accent} /> Présélection d'après votre échauffement : vous pouvez la modifier.</p>
-      )}
-      <div role="group" aria-label="Questions proposées" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(min(100%,250px),1fr))", gap: 10, margin: "14px 0 18px" }}>
+    <div style={{ ...wrap(W.read), ...stack(GAP.grid) }}>
+      <div style={stack(8)}>
+        <Txt v="h1" as="h1" color={T.navy}>Sur quelles questions voulez-vous vous entraîner ?</Txt>
+        <Txt v="bodyLg" color={T.body}>Sélectionnez une ou plusieurs questions, dans l'ordre où vous voulez y répondre. Vous pouvez aussi ajouter les vôtres.</Txt>
+        {!ctx.selection && ctx.preselect?.length > 0 && (
+          <p style={{ ...TY.small, color: T.primary, margin: 0, display: "flex", alignItems: "center", gap: 8 }}><Icon d={I.check} s={16} /> Présélection d'après votre échauffement : vous pouvez la modifier.</p>
+        )}
+      </div>
+      <div role="group" aria-label="Questions proposées" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(min(100%,240px),1fr))", gap: GAP.stack }}>
         {qs.map(q => qcard(q))}
       </div>
 
-      <Card pad={18} style={{ marginBottom: 16 }}>
+      <Card style={stack(GAP.stack)}>
         <form onSubmit={add}>
-          <label htmlFor="own" style={{ font: `700 14px ${FD}`, color: T.navy, display: "block", marginBottom: 8 }}>Ajouter ma question</label>
-          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-            <input id="own" value={own} onChange={e => setOwn(e.target.value)} maxLength={240} placeholder="Par exemple : pourquoi avez-vous quitté votre dernier emploi ?"
-              style={{ flex: "1 1 240px", minWidth: 0, height: 48, padding: "0 16px", borderRadius: RAD.md, border: `1.5px solid ${T.line}`, font: `400 15px ${FB}`, color: T.navy }} />
-            <Btn kind="secondary" disabled={own.trim().length < 5} icon={I.plus}>Ajouter</Btn>
-          </div>
+          <Field id="own" label="Ajouter ma question">
+            <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+              <Input id="own" value={own} onChange={e => setOwn(e.target.value)} maxLength={240} placeholder="Par exemple : pourquoi avez-vous quitté votre dernier emploi ?" style={{ flex: "1 1 240px", width: "auto", minWidth: 0 }} />
+              <Btn kind="secondary" disabled={own.trim().length < 5} icon={I.plus}>Ajouter</Btn>
+            </div>
+          </Field>
         </form>
         {custom.length > 0 && (
-          <div role="group" aria-label="Mes questions" style={{ display: "grid", gap: 8, marginTop: 14 }}>
+          <div role="group" aria-label="Mes questions" style={stack(8)}>
             {custom.map(q => qcard(q, true))}
           </div>
         )}
       </Card>
 
-      <div className="rp-sel" style={{ background: "#fff", border: `1px solid ${T.line}`, borderRadius: RAD.md, boxShadow: SH.lg, padding: "12px 14px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
-        <div aria-live="polite" style={{ font: `600 13.5px ${FB}`, color: n ? T.navy : T.muted }}>
+      <div className="rp-sel" style={{ background: T.surface, border: `1px solid ${T.line}`, borderRadius: RAD.md, boxShadow: SH.lg, padding: "12px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+        <div aria-live="polite" style={{ ...TY.label, color: n ? T.navy : T.muted }}>
           {n ? `${n} question${n > 1 ? "s" : ""} sélectionnée${n > 1 ? "s" : ""}` : "Aucune question sélectionnée"}
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
@@ -557,7 +537,7 @@ function Pick({ p, ctx, go }) {
           <Btn kind="objective" disabled={!n} onClick={start} iconRight={I.arrow}>{n ? `Commencer (${n} question${n > 1 ? "s" : ""})` : "Commencer"}</Btn>
         </div>
       </div>
-      <div style={{ marginTop: 10 }}><Back onClick={() => go("home")} /></div>
+      <div><Back onClick={() => go("home")} /></div>
     </div>
   );
 }
@@ -600,19 +580,19 @@ function Processing({ p, ctx, go }) {
   }, [attempt]);
 
   return (
-    <Card pad={48} topbar="ai" style={{ ...wrap(560), textAlign: "center", boxShadow: SH.sm }}>
+    <Card pad="lg" level={2} topbar="ai" style={{ ...wrap(W.form), textAlign: "center", display: "grid", justifyItems: "center", gap: 12 }}>
       {!err ? (<>
-        <div style={{ position: "relative", width: 72, height: 72, margin: "0 auto 24px" }}>
-          <div style={{ position: "absolute", inset: 0, borderRadius: "50%", background: GRAD_AI, opacity: 0.18 }} />
-          <div style={{ position: "absolute", inset: 6, border: `4px solid ${T.lineLt}`, borderTopColor: T.violet, borderRadius: "50%", animation: "spin .9s linear infinite" }} />
+        <div style={{ position: "relative", width: 72, height: 72, marginBottom: 12 }}>
+          <div style={{ position: "absolute", inset: 0, borderRadius: "50%", background: T.violetBg }} />
+          <div style={{ position: "absolute", inset: 8, border: `4px solid ${T.lineLt}`, borderTopColor: T.violet, borderRadius: "50%", animation: "spin .9s linear infinite" }} />
         </div>
-        <h2 style={{ font: `800 20px ${FD}`, margin: "0 0 10px", color: T.navy }}>{stage}</h2>
-        <p style={{ font: `400 14px/1.6 ${FB}`, color: T.body, margin: 0 }}>Aucune émotion n'est déduite : le retour décrit uniquement des faits observables.</p>
+        <Txt v="h2" as="h1" color={T.navy} role="status">{stage}</Txt>
+        <Txt v="body" color={T.body}>Aucune émotion n'est déduite : le retour décrit uniquement des faits observables.</Txt>
       </>) : (<>
-        <h2 style={{ font: `800 20px ${FD}`, margin: "0 0 10px", color: T.navy }}>La transcription n'a pas pu aboutir</h2>
-        <p style={{ font: `400 14px/1.6 ${FB}`, color: T.body, margin: "0 0 6px" }}>Vérifiez votre connexion (le modèle se télécharge au premier usage) puis réessayez.</p>
-        <p style={{ font: `400 12px ${FM}`, color: T.muted, margin: "0 0 18px" }}>{err}</p>
-        <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
+        <Txt v="h2" as="h1" color={T.navy}>La transcription n'a pas pu aboutir</Txt>
+        <Txt v="body" color={T.body}>Vérifiez votre connexion (le modèle se télécharge au premier usage) puis réessayez.</Txt>
+        <p style={{ ...TY.mono, color: T.muted, margin: 0 }}>{err}</p>
+        <div className="rp-actions" style={{ display: "flex", gap: GAP.actions, justifyContent: "center", flexWrap: "wrap", marginTop: 8 }}>
           <Btn kind="secondary" onClick={() => go("record")}>Refaire l'enregistrement</Btn>
           <Btn kind="ai" onClick={() => setAttempt(a => a + 1)}>Réessayer</Btn>
         </div>
@@ -623,26 +603,26 @@ function Processing({ p, ctx, go }) {
 
 /* ─── Choix du mode de restitution ─── */
 function Choose({ take, go, series }) {
-  const opt = (mode, title, sub, body, accent) => (
-    <Card hover onClick={() => go("report", { mode })} pad={26} style={{ display: "flex", flexDirection: "column", borderColor: accent ? `${T.violet}44` : T.line }}>
-      <h3 style={{ font: `800 19px ${FD}`, margin: "0 0 2px", color: T.navy }}>{title}</h3>
-      <div style={{ font: `600 13px ${FB}`, color: accent ? T.violet : T.primary, marginBottom: 10 }}>{sub}</div>
-      <p style={{ font: `400 14px/1.6 ${FB}`, color: T.body, margin: "0 0 16px", flex: 1 }}>{body}</p>
-      <Btn kind={accent ? "ai" : "secondary"} full size="sm">Choisir</Btn>
+  const opt = (mode, title, sub, body, ai) => (
+    <Card hover onClick={() => go("report", { mode })} style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      <span style={{ ...TY.h2, color: T.navy }}>{title}</span>
+      <span style={{ ...TY.label, color: ai ? T.violet : T.primary }}>{sub}</span>
+      <span style={{ ...TY.body, color: T.body, flex: 1, marginBottom: 8 }}>{body}</span>
+      <Btn as="span" kind={ai ? "ai" : "secondary"} full size="sm">Choisir</Btn>
     </Card>
   );
   return (
-    <div style={wrap(720)}>
-      <div style={{ textAlign: "center", marginBottom: 26 }}>
+    <div style={{ ...wrap(W.read), ...stack(GAP.grid) }}>
+      <div style={{ textAlign: "center", display: "grid", gap: 12, justifyItems: "center" }}>
         <Tag tone="success">{series && series.n > 1 ? `Question ${series.i + 1} sur ${series.n} · votre retour est prêt` : "Votre retour est prêt"}</Tag>
-        <h1 style={{ font: `800 27px ${FD}`, margin: "14px 0 8px", color: T.navy, letterSpacing: "-.02em" }}>Comment préférez-vous le découvrir ?</h1>
-        <p style={{ font: `400 15px/1.6 ${FB}`, color: T.body, margin: 0 }}>Les deux contiennent le même retour. Vous pourrez changer d'avis.</p>
+        <Txt v="h1" as="h1" color={T.navy}>Comment préférez-vous le découvrir ?</Txt>
+        <Txt v="bodyLg" color={T.body}>Les deux contiennent le même retour. Vous pourrez changer d'avis.</Txt>
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(260px,1fr))", gap: 16 }}>
+      <div className="rp-stack" style={{ alignItems: "stretch" }}>
         {opt("simple", "Un rapport écrit", "Sans me revoir", "Vous lisez les observations tranquillement, sous forme de texte. Idéal si vous n'aimez pas vous revoir.")}
         {opt("video", "Me revoir en vidéo", "Avec les repères au bon moment", "Chaque observation est placée sur la barre de lecture. Cliquez un repère ou une observation : la lecture s'y place.", true)}
       </div>
-      <div style={{ marginTop: 16 }}><Back onClick={() => go("home")} /></div>
+      <div><Back onClick={() => go("home")} /></div>
     </div>
   );
 }
@@ -655,24 +635,23 @@ function TakeReport({ p, take, mode, go, series, nextQuestion, stopSeries }) {
     await deleteTake(take.id);
     if (series?.hasNext) nextQuestion(); else go("home", { queue: null });
   };
+  const head = (t, d) => <div style={stack(4)}><div style={{ ...TY.h3, color: T.navy }}>{t}</div><div style={{ ...TY.small, color: T.body }}>{d}</div></div>;
   return (
-    <div style={wrap(mode === "video" ? 1000 : 760)}>
-      <Card pad={0} style={{ overflow: "hidden", marginBottom: 16, boxShadow: SH.sm }}>
+    <div style={{ ...wrap(mode === "video" ? W.wide : W.read), ...stack(16) }}>
+      <Card pad="none" level={2}>
         <GradHead tag={take.report ? "Rapport de votre coach" : "Votre retour"} title={take.question}
           sub={`${dateFr(take.createdAt)} · ${Math.round(take.duration)} s. Ce retour décrit des faits, il ne note pas.`}
           action={take.hasVideo && (
-            <button className="noprint" onClick={() => go("report", { mode: mode === "video" ? "simple" : "video" })} style={{ font: `600 12px ${FB}`, color: "#fff", background: "rgba(255,255,255,.18)", border: "1px solid rgba(255,255,255,.3)", borderRadius: RAD.pill, padding: "8px 14px", cursor: "pointer" }}>
+            <Btn kind="ghostDark" size="sm" className="noprint" onClick={() => go("report", { mode: mode === "video" ? "simple" : "video" })}>
               {mode === "video" ? "Plutôt un rapport écrit" : "Plutôt me revoir en vidéo"}
-            </button>)} />
+            </Btn>)} />
       </Card>
       <ReportBody take={take} mode={mode} counselorName={p.counselor} />
       {series && (
-        <Card style={{ marginTop: 16, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12, borderColor: `${T.accent}55` }} className="noprint">
-          <div>
-            <div style={{ font: `700 15px ${FD}`, color: T.navy }}>{series.hasNext ? `Question ${series.i + 1} sur ${series.n} terminée` : series.n > 1 ? "C'était la dernière question de votre sélection" : "Entraînement terminé"}</div>
-            <div style={{ font: `400 13px ${FB}`, color: T.body }}>{series.hasNext ? "Prenez le temps de lire ce retour, puis passez à la suite quand vous êtes prêt·e." : "Vous retrouvez tous vos retours dans votre espace, et vous pouvez recommencer quand vous voulez."}</div>
-          </div>
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+        <Card style={{ ...actions, gap: 16 }} className="noprint">
+          {head(series.hasNext ? `Question ${series.i + 1} sur ${series.n} terminée` : series.n > 1 ? "C'était la dernière question de votre sélection" : "Entraînement terminé",
+            series.hasNext ? "Prenez le temps de lire ce retour, puis passez à la suite quand vous êtes prêt·e." : "Vous retrouvez tous vos retours dans votre espace, et vous pouvez recommencer quand vous voulez.")}
+          <div className="rp-actions" style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
             {series.hasNext && <Btn kind="ghost" size="sm" onClick={stopSeries}>Arrêter ici</Btn>}
             {series.hasNext
               ? <Btn kind="objective" onClick={nextQuestion} iconRight={I.arrow}>Question suivante ({series.i + 2}/{series.n})</Btn>
@@ -680,26 +659,25 @@ function TakeReport({ p, take, mode, go, series, nextQuestion, stopSeries }) {
           </div>
         </Card>
       )}
-      <Card style={{ marginTop: 16, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12, background: take.shared ? T.successBg : "#fff" }} className="noprint">
-        <div>
-          <div style={{ font: `700 15px ${FD}`, color: T.navy }}>{take.report ? "Rapport reçu" : take.shared ? "Réponse envoyée à votre coach" : `Prêt·e à en parler avec ${p.counselor || "votre coach"} ?`}</div>
-          <div style={{ font: `400 13px ${FB}`, color: T.body }}>{take.shared ? "Vous pouvez continuer à vous entraîner et envoyer une nouvelle réponse à tout moment." : "Cette réponse reste sur votre appareil tant que vous ne l'envoyez pas."}</div>
+      <Card style={{ ...actions, gap: 16 }} className="noprint">
+        <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+          {take.shared && <span style={{ color: T.successDk, display: "inline-flex", marginTop: 2 }}><Icon d={I.check} s={20} /></span>}
+          {head(take.report ? "Rapport reçu" : take.shared ? "Réponse envoyée à votre coach" : `Prêt·e à en parler avec ${p.counselor || "votre coach"} ?`,
+            take.shared ? "Vous pouvez continuer à vous entraîner et envoyer une nouvelle réponse à tout moment." : "Cette réponse reste sur votre appareil tant que vous ne l'envoyez pas.")}
         </div>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <Btn kind="ghost" size="sm" onClick={del} icon={I.trash}>Supprimer</Btn>
+        <div className="rp-actions" style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <Btn kind="danger" size="sm" onClick={del} icon={I.trash}>Supprimer</Btn>
           <Btn kind="ghost" size="sm" onClick={() => window.print()} icon={I.print}>Imprimer ou PDF</Btn>
           {!series?.hasNext && <Btn kind="secondary" size="sm" onClick={() => go("pick", { queue: null, selection: null, preselect: null })} icon={I.redo}>M'entraîner encore</Btn>}
           {!take.shared && <Btn kind={series?.hasNext ? "secondary" : "objective"} size="sm" onClick={() => go("share")} icon={I.send}>Envoyer à mon coach</Btn>}
         </div>
       </Card>
-      <div style={{ marginTop: 16 }} className="noprint">
+      <div className="noprint">
         {ask
           ? <Assistant context="feedback" poste={p.poste} id="asst-feedback" title="Une question sur ce retour ?" intro="Je peux vous expliquer un repère du retour ou vous donner des conseils pour votre prochain essai. Je ne vois pas votre vidéo." />
-          : <button type="button" onClick={() => setAsk(true)} style={{ display: "inline-flex", alignItems: "center", gap: 8, font: `600 13.5px ${FB}`, color: T.violet, background: T.violetBg, border: `1px solid ${T.violet}33`, borderRadius: RAD.pill, padding: "10px 16px", cursor: "pointer" }}>
-              <Icon d={I.chat} s={16} c={T.violet} /> Une question sur ce retour ? Demandez à l'assistant
-            </button>}
+          : <Chip tone="ai" check={false} onClick={() => setAsk(true)}><Icon d={I.chat} s={16} /> Une question sur ce retour ? Demandez à l'assistant</Chip>}
       </div>
-      <div style={{ marginTop: 12 }} className="noprint"><Back onClick={() => go("home", { queue: null })} /></div>
+      <div className="noprint"><Back onClick={() => go("home", { queue: null })} /></div>
     </div>
   );
 }
@@ -707,16 +685,18 @@ function TakeReport({ p, take, mode, go, series, nextQuestion, stopSeries }) {
 function Share({ p, take, go }) {
   const [note, setNote] = useState("");
   return (
-    <Card pad={32} style={{ ...wrap(640), boxShadow: SH.sm }}>
-      <Tag tone="success">Partage · vous décidez</Tag>
-      <h1 style={{ font: `800 24px ${FD}`, margin: "12px 0 6px", color: T.navy }}>Envoyer cette réponse à {p.counselor || "votre coach"}</h1>
-      <p style={{ font: `400 14.5px/1.6 ${FB}`, color: T.body, margin: "0 0 18px" }}>Votre réponse enregistrée et le retour de l'assistant seront transmis uniquement à votre coach. Vous pouvez la supprimer à tout moment.</p>
-      <label htmlFor="note" style={{ font: `600 13px ${FB}`, color: T.navy, display: "block", marginBottom: 8 }}>Un mot pour votre coach (facultatif)</label>
-      <textarea id="note" value={note} onChange={e => setNote(e.target.value)} placeholder="Par exemple : j'ai l'impression de parler trop vite, qu'en pensez-vous ?"
-        style={{ width: "100%", minHeight: 90, padding: 14, borderRadius: RAD.md, border: `1.5px solid ${T.line}`, font: `400 14px/1.5 ${FB}`, color: T.navy, resize: "vertical", marginBottom: 20 }} />
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+    <Card pad="lg" level={2} style={{ ...wrap(W.form), ...stack(GAP.grid) }}>
+      <div style={stack(12)}>
+        <div><Tag tone="primary">Partage · vous décidez</Tag></div>
+        <Txt v="h1" as="h1" color={T.navy}>Envoyer cette réponse à {p.counselor || "votre coach"}</Txt>
+        <Txt v="body" color={T.body}>Votre réponse enregistrée et le retour de l'assistant seront transmis uniquement à votre coach. Vous pouvez la supprimer à tout moment.</Txt>
+      </div>
+      <Field id="note" label="Un mot pour votre coach (facultatif)">
+        <Textarea id="note" value={note} onChange={e => setNote(e.target.value)} placeholder="Par exemple : j'ai l'impression de parler trop vite, qu'en pensez-vous ?" />
+      </Field>
+      <div className="rp-actions" style={actions}>
         <Back onClick={() => go("report")} />
-        <Btn kind="objective" onClick={() => { updateTake(take.id, { shared: true, sharedAt: new Date().toISOString(), note: note.trim() }); go("sent"); }}>Envoyer&nbsp;<Icon d={I.send} s={16} c="#fff" /></Btn>
+        <Btn kind="objective" onClick={() => { updateTake(take.id, { shared: true, sharedAt: new Date().toISOString(), note: note.trim() }); go("sent"); }} icon={I.send}>Envoyer</Btn>
       </div>
     </Card>
   );
@@ -724,16 +704,13 @@ function Share({ p, take, go }) {
 
 function Sent({ p, go, series, nextQuestion }) {
   return (
-    <Card pad={40} style={{ ...wrap(580), textAlign: "center", boxShadow: SH.sm }}>
-      <div style={{ width: 60, height: 60, borderRadius: "50%", background: T.successBg, display: "grid", placeItems: "center", margin: "0 auto 16px" }}><Icon d={I.check} s={28} c={T.success} /></div>
-      <h1 style={{ font: `800 24px ${FD}`, color: T.navy, margin: "0 0 10px" }}>Réponse envoyée</h1>
-      <p style={{ font: `400 15px/1.65 ${FB}`, color: T.body, margin: "0 auto 22px", maxWidth: 430 }}>{p.counselor || "Votre coach"} va relire votre réponse et y ajouter ses remarques. Vous retrouverez son rapport dans votre espace, avec ce même code, et vous en parlerez ensemble en atelier.</p>
-      <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
-        <Btn kind="secondary" onClick={() => go("home", { queue: null })}>Revenir à mon espace</Btn>
-        {series?.hasNext
-          ? <Btn kind="objective" onClick={nextQuestion} iconRight={I.arrow}>Question suivante ({series.i + 2}/{series.n})</Btn>
-          : <Btn kind="objective" onClick={() => go("pick", { queue: null, selection: null, preselect: null })} icon={I.redo}>M'entraîner à nouveau</Btn>}
-      </div>
-    </Card>
+    <Confirm title="Réponse envoyée" actions={<>
+      <Btn kind="secondary" onClick={() => go("home", { queue: null })}>Revenir à mon espace</Btn>
+      {series?.hasNext
+        ? <Btn kind="objective" onClick={nextQuestion} iconRight={I.arrow}>Question suivante ({series.i + 2}/{series.n})</Btn>
+        : <Btn kind="objective" onClick={() => go("pick", { queue: null, selection: null, preselect: null })} icon={I.redo}>M'entraîner à nouveau</Btn>}
+    </>}>
+      {p.counselor || "Votre coach"} va relire votre réponse et y ajouter ses remarques. Vous retrouverez son rapport dans votre espace, avec ce même code, et vous en parlerez ensemble en atelier.
+    </Confirm>
   );
 }

@@ -158,7 +158,7 @@ function checkFile(file) {
     // K1 élément natif
     each(/<(input|textarea|select|button)\b([^>]*)/g, m => { if (m[1] === "input" && /type="file"/.test(m[2])) return; report(m.index, "K1", m[0], "Btn, Bare, Input, Textarea, Select de ui.jsx"); });
     // K4 onClick sur élément non interactif
-    each(/<(div|span|p|li)\b[^>]*?\bonClick=/g, m => report(m.index, "K4", m[0].slice(0, 60), "button (Bare) ou Card cliquable"));
+    each(/<(div|span|p|li)\b(?:=>|[^>])*?\bonClick=/g, m => report(m.index, "K4", m[0].slice(0, 60), "button (Bare) ou Card cliquable"));
     // K5 icône espacée à la main
     each(/&nbsp;\s*<Icon|<Icon[^>]*\/>\s*&nbsp;/g, m => report(m.index, "K5", m[0], "propriété icon / iconRight de Btn"));
   }

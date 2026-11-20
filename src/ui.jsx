@@ -161,10 +161,10 @@ function Btn({ children, onClick, kind = "primary", size = "md", disabled, full,
   }[kind] || {};
   const sz = BTN_SIZE[size] || BTN_SIZE.md;
   const st = {
-    ...sz.ty, height: sz.h, padding: `0 ${sz.px}px`, borderRadius: RAD.md, cursor: disabled ? "not-allowed" : "pointer",
+    ...sz.ty, lineHeight: 1.25, minHeight: sz.h, padding: `8px ${sz.px}px`, borderRadius: RAD.md, cursor: disabled ? "not-allowed" : "pointer",
     transition: `background-color ${MO.fast} ${MO.ease}, border-color ${MO.fast} ${MO.ease}, color ${MO.fast} ${MO.ease}, box-shadow ${MO.base} ${MO.ease}, transform ${MO.base} ${MO.ease}`,
     width: full ? "100%" : "auto", transform: h && sh ? "translateY(-1px)" : "none", boxShadow: sh ? sh[h ? 1 : 0] : "none",
-    display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8, whiteSpace: "nowrap", flexShrink: 0, textDecoration: "none",
+    display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8, textAlign: "center", flexShrink: 0, maxWidth: "100%", textDecoration: "none",
     ...k, ...(disabled ? { background: T.line, color: T.muted, border: "none", boxShadow: "none", transform: "none" } : {}), ...style,
   };
   const content = <>{icon && <Icon d={icon} s={sz.ic} />}{children}{iconRight && <Icon d={iconRight} s={sz.ic} />}</>;
@@ -824,7 +824,7 @@ const GStyle = () => (
       .ty-display{font-size:${TY_MOBILE.display}px!important} .ty-xl{font-size:${TY_MOBILE.xl}px!important} .ty-h1{font-size:${TY_MOBILE.h1}px!important} .ty-lead{font-size:${TY_MOBILE.lead}px!important}
       .rp-pad-sm{padding:${PAD_MOBILE.sm}px!important} .rp-pad-md{padding:${PAD_MOBILE.md}px!important} .rp-pad-lg{padding:${PAD_MOBILE.lg}px!important}
       .rp-page{padding:${PAD_MOBILE.page}!important}
-      .rp-btn-sm{height:44px!important}
+      .rp-btn-sm{min-height:44px!important}
       .rp-actions{flex-direction:column-reverse;align-items:stretch!important}
       .rp-actions>*{width:100%}
       .rp-actions>.rp-back{width:auto;align-self:flex-start}
