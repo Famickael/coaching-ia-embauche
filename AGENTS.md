@@ -45,6 +45,7 @@ npm ci
 npm run build
 npm run test:analysis
 node tests/assistant.test.mjs
+npm run test:design   # référentiel UI/UX (docs/design-system.md, section 11), bloquant
 npm run test:site     # pages publiques, si Chromium est disponible
 # si Chromium est disponible :
 npm run test:e2e

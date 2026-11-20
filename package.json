@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "test:analysis": "node tests/analysis.test.mjs",
     "test:e2e": "node tests/run-e2e.mjs",
-    "test:site": "node tests/run-site-e2e.mjs"
+    "test:site": "node tests/run-site-e2e.mjs",
+    "test:design": "node tests/design-lint.mjs"
   },
   "dependencies": {
     "@huggingface/transformers": "^3.8.1",

@@ -114,14 +114,13 @@ src/
   Solutions.jsx       « Solutions » (ancienne page Fonctionnement) : déroulé, par public, ce que l'assistant observe ou non, onglets organisme, garanties
   Resources.jsx       centre de ressources : hub (catégories, à la une, recherche, filtre, glossaire), liste par catégorie, article (gabarits guide et cas)
   Demo.jsx            « Demander une démo » : formulaire sans serveur, confirmation, mailto: si VITE_CONTACT_EMAIL est défini
-  site.jsx            pages publiques : jetons du référentiel v3 pas encore dans ui.jsx (TY, TT, ON, W, MO), styles rs-*, composants
-                      (Section, PageHero, Accordion, Tabs, Field/Input/Select/Checkbox, ScrollProgress)
   Loader.jsx          retrait de l'écran de chargement (balisage et styles en ligne dans index.html)
   content/
     resources.js      catégories, chargement des articles Markdown (import.meta.glob), lecture de l'en-tête, découpage en blocs
     resources/*.md    articles du centre de ressources (un fichier par article)
   motion.jsx          apparition au défilement (IntersectionObserver), compteur, respect de « réduire les animations »
-  ui.jsx              design system v2 : jetons (couleurs, dégradés, rayons, ombres), logos, Btn, Card, Tag, Icon, Rail, GradHead
+  tokens.js           jetons du référentiel v3 (couleurs, typographie, espacements, rayons, ombres, mouvement, contrastes)
+  ui.jsx              composants de base (réexporte les jetons) : logos, Txt, Btn, Card, Tag, Notice, Modal, champs, Rail, GradHead, styles globaux
   legal.jsx           modales : cycle de vie de la vidéo, émotions, CGU, notice RGPD
   Beneficiary.jsx     espace bénéficiaire : code, consentement, espace, échauffement, question, enregistrement, traitement, rapport, partage
   Counselor.jsx       espace coach : identification locale, liste et indicateurs, création de parcours, détail, relecture
@@ -193,7 +192,7 @@ Ces règles traduisent le cadre réglementaire (AI Act, RGPD) et les partis pris
 7. **Indicateurs agrégés uniquement**, aucune mesure de performance individuelle (ni bénéficiaire, ni coach).
 8. **Minimisation** : prénom et initiale, poste visé ; aucun identifiant administratif ni adresse électronique.
 
-Référentiel UI/UX complet : `docs/design-system.md`. Couleurs (design system v2) : bleu `#386097` dominant (structure, navigation), bleu clair `#3893CD` secondaire, sarcelle `#0B7A75` pour l'action principale et les points d'appui (une seule action pleine par écran ; « appui » et « à explorer » se distinguent aussi par le libellé, l'icône et la forme du repère, jamais par la couleur seule), violet `#5C4BB9` réservé à l'IA et aux points à explorer, vert `#41C77A` pour la validation. Typographies : Manrope (titres), Inter (texte), JetBrains Mono (chiffres).
+Référentiel UI/UX complet (couleurs, typographie, espacements, composants) : `docs/design-system.md`, source unique de vérité. Les jetons sont dans `src/tokens.js`, les composants dans `src/ui.jsx` ; `npm run test:design` vérifie automatiquement le respect du référentiel.
 
 ---
 
@@ -222,6 +221,7 @@ Limites connues :
 ```bash
 npm run test:analysis                                   # analyse et garde-fou, sans navigateur
 node tests/assistant.test.mjs                           # assistant local : conformité de toutes les réponses, relances
+npm run test:design                                     # référentiel UI/UX : couleurs, typographie, espacements, composants (bloquant)
 npx playwright install chromium && npm run test:e2e     # parcours complet dans Chromium
 # ou, avec un Chromium déjà installé : CHROMIUM_PATH=/chemin/vers/chromium npm run test:e2e
 E2E_VIEWPORT=390x844 npm run test:e2e                 # même parcours en taille téléphone, échoue si une page déborde en largeur
@@ -242,6 +242,6 @@ Contexte utile pour reprendre ce dépôt :
 - **Ce qui a été vérifié.** Compilation (`npm run build`), test unitaire de l'analyse, test de bout en bout complet dans Chromium avec caméra simulée et transcription simulée.
 - **Ce qui n'a pas pu être vérifié.** Le téléchargement et l'exécution réels de Whisper et de MediaPipe (réseau de l'environnement de développement restreint) : à tester en premier dans un vrai navigateur, avec une vraie caméra et un vrai micro (`npm run dev`, puis un parcours complet).
 - **Affichage mobile.** Les styles en ligne ne gèrent pas les media queries : l'adaptation au téléphone passe par des classes `rp-*` définies dans `GStyle` (`ui.jsx`, sous 760 px), qui surchargent les styles en ligne.
-- **Où intervenir.** Logique métier dans `src/lib/`, écrans dans `Beneficiary.jsx` et `Counselor.jsx`, composants visuels dans `ui.jsx`. Les styles sont écrits en ligne avec les jetons de `ui.jsx` (`T`, `RAD`, `SH`, `FD`, `FB`, `FM`) ; conserver ce système plutôt que d'introduire une autre bibliothèque.
+- **Où intervenir.** Logique métier dans `src/lib/`, écrans dans `Beneficiary.jsx` et `Counselor.jsx`, composants visuels dans `ui.jsx`. Les styles sont écrits en ligne avec les jetons de `src/tokens.js` (`T`, `TY`, `PAD`, `GAP`, `W`, `RAD`, `SH`, `MO`), réexportés par `ui.jsx` ; conserver ce système plutôt que d'introduire une autre bibliothèque, et passer `npm run test:design`.
 - **Langue et ton.** Interface en français, vouvoiement côté bénéficiaire, ton positif et non évaluatif (« vous pouvez renforcer… » plutôt que « insuffisant »). Pas de tiret cadratin dans les textes d'interface.
 - **Prochaine étape suggérée.** Point 1 de « Passage en production » : un backend minimal (par exemple Supabase ou une API Node hébergée en France) branché derrière les fonctions de `store.js`, sans changer les écrans.
