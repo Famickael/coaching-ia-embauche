@@ -41,6 +41,8 @@ export const GRAD_MAIN = `linear-gradient(135deg, ${T.blue} 0%, ${T.violet} 100%
 export const GRAD_COACH = `linear-gradient(135deg, ${T.blue} 0%, ${T.accent} 100%)`;
 export const GRAD_AI = `linear-gradient(135deg, ${T.blueDk} 0%, ${T.violet} 100%)`;
 export const GRAD_SOFT = `linear-gradient(135deg, rgba(56,96,151,.08), rgba(92,75,185,.07))`;
+/* Bordure animée du panneau de l'assistant (bleu vers violet, rôle IA). */
+export const GRAD_AI_BORDER = `linear-gradient(120deg, ${T.blueDk} 0%, ${T.violet} 50%, ${T.blueDk} 100%)`;
 export const GRAD_NIGHT = `linear-gradient(160deg, ${T.navy} 0%, ${T.primaryDk} 60%, ${T.violet} 100%)`;
 /* Profondeur et marque (v3.1, demande du propriétaire) : titre d'accroche et fonds des sections clés. */
 export const GRAD_TITLE = `linear-gradient(120deg, ${T.navy} 0%, ${T.primary} 100%)`;        // début du titre d'accroche (texte, AA)

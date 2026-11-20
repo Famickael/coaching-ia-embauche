@@ -34,6 +34,19 @@ require("fs").mkdirSync(SC, { recursive: true });
   await boxes.nth(0).click(); await boxes.nth(1).click(); await shot("03-consentement");
   await click("Je suis d'accord, je commence");
   const see = (t, timeout = 5000) => p.getByText(t).first().waitFor({ timeout });
+  // Assistant de préparation d'entretien : panneau latéral
+  const panel = () => p.getByRole("dialog", { name: "Assistant de préparation d'entretien" });
+  const fab = () => p.getByRole("button", { name: "Ouvrir l'assistant de préparation d'entretien" });
+  const ask = async (q, expected) => { const i = p.locator("#asst-panel-input"); await i.fill(q); await i.press("Enter"); await see(expected); };
+  const closePanel = async how => {
+    if (how === "escape") await p.keyboard.press("Escape"); else await p.getByRole("button", { name: "Fermer l'assistant" }).click();
+    await panel().waitFor({ state: "hidden" });
+    if (!(await fab().evaluate(el => el === document.activeElement))) throw new Error("le focus ne revient pas au bouton de l'assistant");
+  };
+  // Bulle d'invitation à l'ouverture de l'espace, refermable
+  await see("Une question pour préparer votre entretien ?", 4000);
+  await shot("03a-bulle-assistant");
+  await p.getByRole("button", { name: "Fermer la bulle" }).click();
 
   // Espace : choix du métier (combobox) et bulles d'information
   const job = p.getByRole("combobox", { name: "Métier visé" });
@@ -58,18 +71,28 @@ require("fs").mkdirSync(SC, { recursive: true });
   await shot("03d-echauffement");
   await click("Passer en voix seule"); await see("Voix seule · rien n'est enregistré");
   await click("Passer en vidéo"); await p.waitForTimeout(500);
-  const ask = async (id, q, expected) => { const i = p.locator(`#${id}-input`); await i.fill(q); await i.press("Enter"); await see(expected); };
-  await ask("asst-warmup", "Comment me présenter en entretien ?", /deux minutes environ/);
-  await ask("asst-warmup", "un exemple ?", /Je m'appelle Camille/);
-  await p.locator("#asst-warmup-title").scrollIntoViewIfNeeded(); await shot("03e-echauffement-assistant");
+  await click("Voir les astuces pour bien démarrer");
+  await p.getByRole("dialog", { name: "Astuces pour bien démarrer" }).waitFor(); await shot("03d2-astuces");
+  await p.keyboard.press("Escape");
+  await fab().click(); await panel().waitFor();
+  if (!(await p.locator("#asst-panel-input").evaluate(el => el === document.activeElement))) throw new Error("le focus n'est pas dans le champ de l'assistant");
+  await ask("Comment me présenter en entretien ?", /deux minutes environ/);
+  await ask("un exemple ?", /Je m'appelle Camille/);
+  if (await p.locator("#asst-panel [role=log][aria-live=polite]").count() !== 1) throw new Error("réponses de l'assistant sans aria-live");
+  await shot("03e-echauffement-assistant");
+  await closePanel("escape");
   await click("Terminer l'échauffement");
   await p.getByRole("radio", { name: "Un peu de tension" }).click(); await see(/Merci pour votre réponse/);
   await p.getByRole("radio", { name: "Utile" }).click();
   await p.getByRole("checkbox", { name: "Me présenter" }).click();
   await p.getByRole("checkbox", { name: "Expliquer ma motivation" }).click();
-  await ask("asst-debrief", "Comment expliquer un trou dans mon CV ?", /simple et honnête/);
-  await ask("asst-debrief", "et pour le salaire ?", /fourchette/);
+  if (await p.getByRole("textbox", { name: "Votre question à l'assistant" }).count() !== 0) throw new Error("le questionnaire ne doit plus contenir d'assistant en ligne");
   await shot("03f-questionnaire");
+  await click("Poser ma question à l'assistant"); await panel().waitFor();
+  await ask("Comment expliquer un trou dans mon CV ?", /simple et honnête/);
+  await ask("et pour le salaire ?", /fourchette/);
+  await shot("03f2-questionnaire-assistant");
+  await p.getByRole("button", { name: "Fermer l'assistant" }).click(); await panel().waitFor({ state: "hidden" });
   await click("Commencer l'entraînement");
 
   // Sélection de 2 questions (une de la banque, une personnelle)
@@ -91,8 +114,10 @@ require("fs").mkdirSync(SC, { recursive: true });
   await record(1); await shot("06-choix");
   await p.getByText("Lire mon retour").first().click(); await p.waitForTimeout(500);
   await click("Une question sur ce retour ? Demandez à l'assistant");
-  await p.getByRole("button", { name: "Je parle trop vite, que faire ?" }).click(); await see(/120 à 160 mots/);
+  await panel().waitFor();
+  await panel().getByRole("button", { name: "Je parle trop vite, que faire ?" }).click(); await see(/120 à 160 mots/);
   await shot("06b-rapport-q1");
+  await closePanel("button");
   await click("Question suivante (2 sur 2)");
   await see("Entraînement · question 2 sur 2"); await see("« Pourquoi avez-vous quitté votre dernier emploi ? »");
   await record(2);
@@ -110,7 +135,7 @@ require("fs").mkdirSync(SC, { recursive: true });
   await shot("10-relecture-conseiller");
   await click("Envoyer le rapport"); await shot("11-rapport-envoye");
   await p.goto(`http://localhost:5098/#/s/${code}`); await p.waitForTimeout(500); await shot("12-espace-benef");
-  await click("Ouvrir"); await p.getByText("Lire mon retour").first().click(); await p.waitForTimeout(500); await shot("13-rapport-final");
+  await p.getByRole("button", { name: "Ouvrir", exact: true }).first().click(); await p.getByText("Lire mon retour").first().click(); await p.waitForTimeout(500); await shot("13-rapport-final");
   console.log("erreurs:", errors.filter(e => !/fonts.googleapis|jsdelivr|googleapis|Failed to load resource|ERR_TUNNEL/.test(e)));
   if (overflow.length) { console.error("débordement horizontal:", overflow); process.exitCode = 1; }
   await b.close();

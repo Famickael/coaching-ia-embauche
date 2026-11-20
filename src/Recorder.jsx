@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { T, ON, TY, RAD, W, GAP, GRAD_NIGHT, Btn, Back, Icon, I } from "./ui.jsx";
 import { startGaze } from "./lib/gaze.js";
 import { PHRASES } from "./content/legal.js";
+import { setRecording, nudgeAssistant } from "./Assistant.jsx";
 
 const MAX_SEC = 180;
 
@@ -23,7 +24,7 @@ export default function Recorder({ question, onDone, onCancel, trackGaze = true,
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
 
-  useEffect(() => () => { stopStream(); if (result?.url) URL.revokeObjectURL(result.url); }, []); // eslint-disable-line
+  useEffect(() => () => { stopStream(); setRecording(false); if (result?.url) URL.revokeObjectURL(result.url); }, []); // eslint-disable-line
 
   function stopStream() { streamRef.current?.getTracks().forEach(t => t.stop()); streamRef.current = null; }
 
@@ -36,6 +37,7 @@ export default function Recorder({ question, onDone, onCancel, trackGaze = true,
       streamRef.current = stream;
       setAudioOnly(audio);
       setPhase("live");
+      setRecording(true); // bouton flottant masqué tant que la caméra ou le micro est ouvert : il ne couvre aucune commande
       setTimeout(() => { if (liveRef.current && !audio) { liveRef.current.srcObject = stream; liveRef.current.play().catch(() => {}); } }, 0);
     } catch (e) {
       setError(e?.name === "NotAllowedError"
@@ -58,6 +60,7 @@ export default function Recorder({ question, onDone, onCancel, trackGaze = true,
       setResult({ blob, duration, gaze, url: URL.createObjectURL(blob) });
       setPhase("done");
       stopStream();
+      nudgeAssistant("record"); // la bulle apparaît quand on quitte l'enregistreur
     };
     rec.start(1000);
     recRef.current = rec;
@@ -65,6 +68,7 @@ export default function Recorder({ question, onDone, onCancel, trackGaze = true,
     setSec(0);
     if (trackGaze && !audioOnly && liveRef.current) gazeRef.current = startGaze(liveRef.current, t0.current);
     setPhase("recording");
+    setRecording(true);
   }
 
   function stop() { if (recRef.current?.state === "recording") recRef.current.stop(); }

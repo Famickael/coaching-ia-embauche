@@ -1,11 +1,11 @@
 import React, { useEffect, useRef, useState } from "react";
 import {
   T, TY, RAD, SH, PAD, GAP, W, Card, Tag, Btn, Back, Link, IconBtn, IconTile, Icon, I, Rail, GradHead, RepetMark, Txt, Notice, Empty, Confirm,
-  Field, Input, Textarea, CheckTile, Chip,
+  Field, Input, Textarea, CheckTile, Chip, Modal,
 } from "./ui.jsx";
 import Recorder from "./Recorder.jsx";
 import WarmupStage from "./WarmupStage.jsx";
-import Assistant from "./Assistant.jsx";
+import AssistantDock, { openAssistant, nudgeAssistant } from "./Assistant.jsx";
 import { ReportBody } from "./Report.jsx";
 import { useStore, getState, TRIAL_CODE, findParcours, updateParcours, takesOf, createTake, updateTake, unshareTake, deleteTake, saveWarmupDebrief, loadWarmupDebrief, loadVideoUrl } from "./lib/store.js";
 import { PHRASES, SUMMARY, PAGES, LEGAL_VERSION } from "./content/legal.js";
@@ -49,8 +49,10 @@ export default function Beneficiary({ initialCode, setModal, onCode }) {
   const nextQuestion = () => go("record", { qi: series.i + 1, question: ctx.queue[series.i + 1], takeId: null, recording: null });
   const stopSeries = () => go("home", { queue: null, qi: 0 });
 
+  const asstCtx = { warmup: "warmup", record: "record", processing: "record", choose: "feedback", report: "feedback", share: "feedback" }[view] || "general";
   return (
-    <main className="rp-page" style={PAGE}>
+    <main className="rp-page rp-has-fab" style={PAGE}>
+      <AssistantDock poste={p.poste} context={asstCtx} />
       {flowIdx !== undefined && <div style={{ ...wrap(view === "report" && ctx.mode === "video" ? W.wide : W.read), marginBottom: GAP.block }} className="noprint"><Rail step={flowIdx} steps={flowSteps} /></div>}
       <div key={view} className="up">
         {view === "home" && <Home p={p} takes={takesOf(p.code, s)} go={go} counselor={p.counselor} />}
@@ -339,6 +341,7 @@ function Warmup({ p, go, setModal }) {
   const [stage, setStage] = useState("practice"); // practice | debrief
   const [pi, setPi] = useState(() => randomPhraseIndex());
   const [prompt, setPrompt] = useState(0);
+  const [tips, setTips] = useState(false);
   const phrase = fillPhrase(WARMUP_PHRASES[pi], p);
   const shuffle = () => { setPi(i => randomPhraseIndex(i)); setPrompt(0); };
   const finish = () => { updateParcours(p.code, { warmupDone: true }); setStage("debrief"); window.scrollTo({ top: 0 }); };
@@ -346,7 +349,7 @@ function Warmup({ p, go, setModal }) {
   if (stage === "debrief") return <WarmupDebrief p={p} go={go} again={() => { setStage("practice"); shuffle(); window.scrollTo({ top: 0 }); }} />;
 
   return (
-    <div style={{ ...wrap(W.wide), ...stack(GAP.grid) }}>
+    <div style={{ ...wrap(W.read), ...stack(GAP.grid) }}>
       <Card pad="lg" level={2} style={stack(16)}>
         <div><Tag tone="primary">Échauffement · rien n'est enregistré</Tag></div>
         <div style={stack(8)}>
@@ -356,6 +359,7 @@ function Warmup({ p, go, setModal }) {
           </Txt>
         </div>
 
+        <div><Link onClick={() => setTips(true)} style={{ display: "inline-flex", alignItems: "center", gap: 8, minHeight: 44 }}><Icon d={I.bulb} s={16} />Voir les astuces pour bien démarrer</Link></div>
         <div style={{ background: T.primaryBg, borderRadius: RAD.md, padding: "16px 20px", ...stack(12) }}>
           <div style={{ ...TY.overline, color: T.primary }}>Votre phrase</div>
           <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
@@ -373,24 +377,18 @@ function Warmup({ p, go, setModal }) {
         <WarmupStage setModal={setModal} />
       </Card>
 
-      <div className="rp-split">
-        <Card style={stack(12)}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <Icon d={I.bulb} s={20} c={T.primary} />
-            <h2 style={{ ...TY.h3, color: T.navy, margin: 0 }}>Astuces pour bien démarrer</h2>
-          </div>
+      {tips && (
+        <Modal close={() => setTips(false)} title="Astuces pour bien démarrer" icon={I.bulb} footer={<div style={{ display: "flex", justifyContent: "flex-end" }}><Btn kind="primary" size="sm" onClick={() => setTips(false)}>Fermer</Btn></div>}>
           <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "grid", gap: 12 }}>
             {WARMUP_TIPS.map(([t, d]) => (
               <li key={t} style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
-                <span style={{ marginTop: 2, display: "inline-flex" }}><Icon d={I.check} s={16} c={T.primary} /></span>
-                <span style={{ ...TY.small, color: T.body }}><strong style={{ color: T.navy }}>{t}.</strong> {d}</span>
+                <span style={{ marginTop: 2, display: "inline-flex", color: T.primary }}><Icon d={I.check} s={16} /></span>
+                <span style={{ ...TY.body, color: T.body }}><strong style={{ color: T.navy }}>{t}.</strong> {d}</span>
               </li>
             ))}
           </ul>
-        </Card>
-        <Assistant context="warmup" poste={p.poste} id="asst-warmup"
-          intro="Bonjour ! Posez-moi une question sur l'échauffement ou sur votre entretien. Vous pouvez ensuite me demander un exemple." />
-      </div>
+        </Modal>
+      )}
 
       <div className="rp-actions" style={actions}>
         <Back onClick={() => go("home")} />
@@ -413,6 +411,7 @@ function WarmupDebrief({ p, go, again }) {
   const toggleWork = id => setWork(w => (w.includes(id) ? w.filter(x => x !== id) : [...w, id]));
   const q = (n, t, id) => <h2 id={id} style={{ ...TY.h3, color: T.navy, margin: 0 }}>{n}. {t}</h2>;
   const pre = questionsForTopics(work);
+  useEffect(() => { nudgeAssistant("warmup"); }, []);
 
   return (
     <div style={wrap(W.read)}>
@@ -452,9 +451,9 @@ function WarmupDebrief({ p, go, again }) {
           </p>
         </section>
 
-        <section>
-          <Assistant context="debrief" poste={p.poste} id="asst-debrief" title="4. Avez-vous une question ?" maxHeight={320}
-            placeholder="Par exemple : comment parler de mes qualités ?" />
+        <section style={stack(8)}>
+          <h2 style={{ ...TY.h3, color: T.navy, margin: 0 }}>4. Avez-vous une question ?</h2>
+          <div><Btn kind="secondary" size="sm" icon={I.chat} onClick={() => openAssistant("debrief")}>Poser ma question à l'assistant</Btn></div>
         </section>
 
         <div className="rp-actions" style={actions}>
@@ -636,7 +635,6 @@ function Choose({ take, go, series }) {
 
 /* ─── Rapport + actions ─── */
 function TakeReport({ p, take, mode, go, series, nextQuestion, stopSeries }) {
-  const [ask, setAsk] = useState(false);
   const del = async () => {
     if (!window.confirm("Supprimer définitivement cette réponse et son retour ?")) return;
     await deleteTake(take.id);
@@ -682,9 +680,7 @@ function TakeReport({ p, take, mode, go, series, nextQuestion, stopSeries }) {
         </div>
       </Card>
       <div className="noprint">
-        {ask
-          ? <Assistant context="feedback" poste={p.poste} id="asst-feedback" title="Une question sur ce retour ?" intro="Je peux vous expliquer un repère du retour ou vous donner des conseils pour votre prochain essai. Je ne vois pas votre vidéo." />
-          : <Chip tone="ai" check={false} onClick={() => setAsk(true)}><Icon d={I.chat} s={16} /> Une question sur ce retour ? Demandez à l'assistant</Chip>}
+        <Chip tone="ai" check={false} onClick={() => openAssistant("feedback")}><Icon d={I.chat} s={16} /> Une question sur ce retour ? Demandez à l'assistant</Chip>
       </div>
       <div className="noprint"><Back onClick={() => go("home", { queue: null })} /></div>
     </div>

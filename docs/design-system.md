@@ -392,6 +392,10 @@ Le commentaire du coach est un cas nommé (`Quote`) : fond `primaryBg`, filet ga
 
 `Card pad="lg"`, contenu centré : pastille d'icône 48 (`primaryBg`, icône 24 `primary`), titre `TY.h3`, une phrase `TY.body` (ce qui apparaîtra ici et comment), une action au plus. Même gabarit pour « Aucun parcours », « Aucune prise partagée », « Pas encore de prise ».
 
+### 5.9 bis Assistant de préparation d'entretien (`AssistantDock`, `src/Assistant.jsx`)
+
+Panneau latéral non modal (`role="dialog"`, `aria-modal="false"`), ouvert depuis le bouton flottant `Fab` (56 × 56, `GRAD_AI`, en bas à droite) ou par `openAssistant(contexte)` depuis un écran. Ordinateur : à droite, sous l'en-tête, largeur 400 au plus. Mobile (≤ 760) : feuille en bas de 62 % de la hauteur, la page reçoit un espace équivalent en bas pour que rien ne reste caché dessous. Bordure de 2 px en dégradé `GRAD_AI_BORDER` (bleu vers violet), animée une fois à l'apparition (neutralisée par « réduire les animations »). En-tête sans icône : titre « Assistant de préparation d'entretien », mention « Assistant automatique · ce n'est pas une personne ». Focus envoyé dans le champ à l'ouverture, rendu au bouton flottant à la fermeture, Échap ferme, réponses dans un `role="log"` `aria-live="polite"`. Bouton flottant et bulle masqués tant que la caméra ou le micro de l'enregistreur est ouvert. Bulle d'invitation (« Une question pour préparer votre entretien ? ») : à l'ouverture de la page, à la fin d'un enregistrement ou d'un entraînement, une fois par raison et par session ; « Fermer la bulle » la coupe pour la session.
+
 ### 5.10 Autres éléments normalisés
 
 | Élément | Règle |
@@ -650,5 +654,8 @@ Dégradés : `GRAD` et `GRAD_AI` recomposés selon 1.3, `GRAD_NIGHT` ajouté, `G
 | 2026-11-20 | `PACE.scene` 11 500 ms, `PACE.accroche` 5 000 ms | Demande du propriétaire : laisser le temps de lire les scènes |
 | 2026-11-20 | En-tête des espaces : lien « Vos données » et menu « Mes paramètres » (bouton `aria-expanded`, `role="menu"`, flèches, Début, Fin, Échap) à la place de la pastille d'espace | Conformité et demande du propriétaire |
 | 2026-11-20 | Pied de page en trois groupes de liens (Vos données, Le site, Informations légales) ; engagements cliquables | docs/conformite.md, 4.3 |
+
+| 2026-11-20 | Assistant en panneau latéral (5.9 bis), composant `Fab`, jeton `GRAD_AI_BORDER` ; plus d'encart d'assistant dans les écrans | Demande du propriétaire |
+| 2026-11-20 | Astuces de l'échauffement dans une fenêtre `Modal`, ouverte par un lien au-dessus de la phrase | Demande du propriétaire |
 
 Ajouter une ligne à chaque évolution d'une règle ou d'une échelle.

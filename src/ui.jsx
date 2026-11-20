@@ -1,7 +1,7 @@
 import React, { useEffect, useId, useRef, useState } from "react";
 import {
   T, ON, GRAD, GRAD_MAIN, GRAD_COACH, GRAD_AI, GRAD_SOFT, GRAD_PAGE, FD, FB, FM, TY, PAD, PAD_MOBILE, GAP, W, RAD, SH, MO, Z,
-  TONE, HEADER_H, HEADER_H_M, TY_MOBILE,
+  TONE, HEADER_H, HEADER_H_M, TY_MOBILE, GRAD_AI_BORDER,
 } from "./tokens.js";
 import { Reveal } from "./motion.jsx";
 
@@ -188,6 +188,11 @@ const IconBtn = React.forwardRef(function IconBtn({ icon, label, onClick, varian
       <Icon d={icon} s={size} />
     </button>
   );
+});
+
+/* Bouton flottant de l'assistant (56 × 56, dégradé IA) : aria-label obligatoire. */
+const Fab = React.forwardRef(function Fab({ icon, label, className, ...rest }, ref) {
+  return <button ref={ref} type="button" aria-label={label} title={label} className={["rp-ai-fab", className].filter(Boolean).join(" ")} {...rest}><Icon d={icon} s={24} /></button>;
 });
 
 /* Lien (référentiel 5.2) : souligné, primary, taille héritée. href → <a>, sinon bouton. */
@@ -629,6 +634,16 @@ const GStyle = () => (
     .rs-on-dark .rp-link:hover{color:${ON.text}!important}
     .rp-back:hover{color:${T.primary}!important}
     .rp-menuitem:hover,.rp-menuitem:focus-visible{background:${T.primaryBg}}
+    /* Assistant de préparation d'entretien : panneau latéral, bouton flottant, bulle */
+    .rp-ai-panel{position:fixed;right:16px;top:${HEADER_H + 16}px;bottom:16px;width:min(400px,calc(100vw - 32px));z-index:${Z.nav + 2};display:flex;flex-direction:column;border:2px solid transparent;border-radius:${RAD.lg}px;background:linear-gradient(${T.surface},${T.surface}) padding-box,${GRAD_AI_BORDER} border-box;background-size:100% 100%,300% 300%;background-position:0 0,0 50%;box-shadow:${SH.lg};overflow:hidden}
+    .rp-ai-panel[hidden]{display:none}
+    .rp-ai-panel.is-in{animation:rpAiIn ${MO.enter} ${MO.ease} both,rpAiBorder 1.4s ${MO.ease} both}
+    @keyframes rpAiIn{from{opacity:0;transform:translateX(24px)}to{opacity:1;transform:none}}
+    @keyframes rpAiBorder{from{background-position:0 0,100% 50%}to{background-position:0 0,0 50%}}
+    .rp-ai-fab{position:fixed;right:16px;bottom:16px;z-index:${Z.nav};width:56px;height:56px;border-radius:50%;border:none;cursor:pointer;display:grid;place-items:center;color:${T.surface};background:${GRAD_AI};box-shadow:${SH.btn.ai[0]};transition:box-shadow ${MO.base} ${MO.ease},transform ${MO.base} ${MO.ease}}
+    .rp-ai-fab:hover{box-shadow:${SH.btn.ai[1]};transform:translateY(-1px)}
+    .rp-ai-bubble{position:fixed;right:16px;bottom:88px;z-index:${Z.nav};max-width:min(300px,calc(100vw - 32px));display:flex;align-items:center;gap:4px;padding:4px 4px 4px 16px;border:2px solid transparent;border-radius:${RAD.md}px;background:linear-gradient(${T.surface},${T.surface}) padding-box,${GRAD_AI_BORDER} border-box;box-shadow:${SH.lg};animation:rpAiIn ${MO.enter} ${MO.ease} both}
+    .rp-has-fab{padding-bottom:96px!important}
     .rp-trustlink:hover{color:${T.primary}!important;text-decoration:underline!important}
     .rp-icbtn{width:44px;height:44px;border-radius:50%;display:inline-grid;place-items:center;cursor:pointer;flex-shrink:0;padding:0;transition:background-color ${MO.fast},border-color ${MO.fast}}
     .rp-icbtn-outline{border:1px solid ${T.line};background:${T.surface}}
@@ -840,6 +855,9 @@ const GStyle = () => (
       .rp-wide-m>button{width:100%}
       .rp-trust{display:grid!important;grid-template-columns:1fr;gap:0 16px!important}
       .rp-fgroups{grid-template-columns:minmax(0,1fr)!important;gap:16px!important}
+      .rp-ai-panel{left:0;right:0;top:auto;bottom:0;width:auto;height:62vh;height:62svh;border-radius:${RAD.lg}px ${RAD.lg}px 0 0}
+      @keyframes rpAiIn{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
+      html.rp-asst-open .rp-app{padding-bottom:62vh;padding-bottom:62svh}
       .rp-flow{flex-direction:column;gap:20px!important;overflow:visible!important}
       .rp-flow-step{flex:none!important;min-width:0!important}
       .rs-menu{top:${HEADER_H_M}px;padding:16px 16px 40px}
@@ -871,7 +889,7 @@ const GStyle = () => (
 );
 
 export {
-  ORG_NAME, LOGO_SYM, LOGO_WORD, RepetMark, RepetLogo, OrgLogo, Halo, img, Icon, I, SI, Txt, Eyebrow, Bare, Btn, IconBtn, Link, Back,
+  ORG_NAME, LOGO_SYM, LOGO_WORD, RepetMark, RepetLogo, OrgLogo, Halo, img, Icon, I, SI, Txt, Eyebrow, Bare, Btn, IconBtn, Fab, Link, Back,
   Tag, Card, Notice, Quote, IconTile, Empty, Confirm, ConfirmMark, TimeChip, fmtTime, Field, Input, Textarea, Select, Checkbox, CheckTile,
   Chip, Toggle, Rail, GradHead, Modal, Section, PageHero, Accordion, Tabs, ScrollProgress, GStyle,
 };
