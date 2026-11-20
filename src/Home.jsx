@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { T, Bare, GRAD, GRAD_TITLE, GRAD_ACCROCHE, GRAD_HERO, GRAD_SECTION, GLOW, PACE, RAD, SH, RepetMark, Halo, Tag, Btn, Card, Icon, I, ON, TY, W, MO, SI, img, Eyebrow, Section, IconTile, Link, HEADER_H, HEADER_H_M } from "./ui.jsx";
+import { T, Bare, HL, GRAD_NIGHT, GRAD, GRAD_TITLE, GRAD_ACCROCHE, GRAD_HERO, GRAD_SECTION, GLOW, PACE, RAD, SH, RepetMark, Halo, Tag, Btn, Card, Icon, I, ON, TY, W, MO, SI, img, Eyebrow, Section, IconTile, Link, HEADER_H, HEADER_H_M } from "./ui.jsx";
 import { useReducedMotion, useCount, useInView, Reveal } from "./motion.jsx";
 
 /* Page d'accueil : héros (accroche qui change, scènes en boucle), strate épinglée « un seul dispositif »,
@@ -317,7 +317,6 @@ const VisFrame = ({ children }) => (
   <div aria-hidden style={{ position: "absolute", inset: 0, background: T.surface, borderRadius: RAD.xl, boxShadow: SH.glow, border: `1px solid ${T.line}`, overflow: "hidden" }}>{children}</div>
 );
 const visBox = { height: "100%", padding: 24, display: "flex", flexDirection: "column", justifyContent: "center", gap: 12 };
-const GRAD_NIGHT = `linear-gradient(160deg, ${T.navy}, ${T.primaryDk} 60%, ${T.violet})`;
 
 function VisCamera() {
   return (
@@ -562,7 +561,7 @@ function Features() {
         </FCard>
         <FCard title="Une transcription repérée" text="Votre réponse est transcrite sur votre appareil. Les passages utiles sont repérés, sans jugement.">
           <p style={{ ...TY.small, color: T.navy, margin: 0 }}>
-            Bonjour, je m'appelle Sami. <span className="rs-fhl h2" style={{ backgroundImage: `linear-gradient(${T.violetBg},${T.violetBg})` }}>Euh</span>, j'ai <span className="rs-fhl" style={{ backgroundImage: `linear-gradient(${T.accentBg},${T.accentBg})` }}>géré la caisse d'une supérette pendant trois ans</span>.
+            Bonjour, je m'appelle Sami. <span className="rs-fhl h2" style={{ backgroundImage: HL.ai }}>Euh</span>, j'ai <span className="rs-fhl" style={{ backgroundImage: HL.appui }}>géré la caisse d'une supérette pendant trois ans</span>.
           </p>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 12 }}>
             <span className="rs-ftag"><Tag tone="appui" icon={I.check}>Exemple concret</Tag></span>

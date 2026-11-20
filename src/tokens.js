@@ -32,7 +32,6 @@ export const T = {
 export const ON = {
   text: "#FFFFFF", chip: "rgba(255,255,255,.2)", line: "rgba(255,255,255,.3)",
   glow: "rgba(255,255,255,.16)", scrim: "rgba(0,0,0,.5)",
-  soft: "rgba(255,255,255,.08)",          // fond de bloc translucide sur GRAD_NIGHT (scène vidéo simulée)
 };
 
 /* Dégradés (section 1.3). */

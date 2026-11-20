@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { T, RAD, SH, Btn, Tag, Icon, I, TY, W, SI, img, Eyebrow, Section, PageHero, Chip, IconTile, Input } from "./ui.jsx";
+import { T, GRAD_PAGE, RAD, SH, Btn, Tag, Icon, I, TY, W, SI, img, Eyebrow, Section, PageHero, Chip, IconTile, Input } from "./ui.jsx";
 import { Reveal } from "./motion.jsx";
 import { FinalBand } from "./Home.jsx";
 import { ARTICLES, CATEGORIES, TYPES, findArticle, findCategory, search } from "./content/resources.js";
@@ -240,7 +240,7 @@ function Article({ a, go, openSpace }) {
   return (
     <main>
       <article>
-        <header style={{ background: `linear-gradient(180deg, ${T.primaryBg}, ${T.bg})` }}>
+        <header style={{ background: GRAD_PAGE }}>
           <div className="rs-pad" style={{ ...wrap, padding: "48px 24px 0" }}>
             <div className="up" style={{ display: "grid", gap: 16, maxWidth: W.read }}>
               <div style={{ ...TY.small }}><Crumbs items={[["#/ressources", "Ressources"], [`#/ressources/c/${a.category}`, catTitle(a.category)]]} /></div>

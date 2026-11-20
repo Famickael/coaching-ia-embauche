@@ -109,7 +109,6 @@ Le violet présent dans `GRAD` et `GRAD_MAIN` est la seule exception à « viole
 | `ON.line` | `rgba(255,255,255,.3)` | Bordure sur fond sombre |
 | `ON.glow` | `rgba(255,255,255,.16)` | Halo décoratif |
 | `ON.scrim` | `rgba(0,0,0,.5)` | Fond de pastille posée sur la vidéo (minuteur) |
-| `ON.soft` | `rgba(255,255,255,.08)` | Fond de bloc translucide sur `GRAD_NIGHT` |
 
 ### 1.5 Combinaisons texte/fond autorisées (ratios calculés, WCAG 2.1)
 
@@ -635,12 +634,15 @@ Dégradés : `GRAD` et `GRAD_AI` recomposés selon 1.3, `GRAD_NIGHT` ajouté, `G
 | 2026-11-20 | Icônes du pied de page en couleur (exception documentée en section 1) | Préférence explicite du propriétaire |
 | 2026-11-20 | Implémentation : jetons dans `src/tokens.js`, composants dans `src/ui.jsx` ; `site.jsx` supprimé (plus de doublon `TT`, `TY`, `W`, `MO`, `Field`…) | Une seule définition par jeton et par composant |
 | 2026-11-20 | `tests/design-lint.mjs` (`npm run test:design`) bloquant, ajouté à `CLAUDE.md` et `AGENTS.md` | Garantie automatique |
-| 2026-11-20 | Nouveaux jetons : `T.glass` (en-tête), `T.studio` (fond uni caméra), `ON.soft`, `HL.*`, `GRAD_PAGE`, `TY.pageTitle`, `TY.quote`, `TY.strong`, `TY.inherit`, `SH.btn.*`, `PACE`, `HEADER_H` | Valeurs présentes dans des rendus validés, désormais nommées |
+| 2026-11-20 | Nouveaux jetons : `T.glass` (en-tête), `T.studio` (fond uni caméra), `HL.*`, `GRAD_PAGE`, `TY.pageTitle`, `TY.quote`, `TY.strong`, `TY.inherit`, `SH.btn.*`, `PACE`, `HEADER_H` | Valeurs présentes dans des rendus validés, désormais nommées |
 | 2026-11-20 | Composants ajoutés : `Bare` (bouton nu pour options, repères, onglets), `CheckTile` (tuile à cocher), `Chip` (`role` radio ou checkbox, `tone="ai"` pour les suggestions de l'assistant) | Supprimer tout `button` natif des écrans (règle K1) |
 | 2026-11-20 | Bouton « Arrêter » : le glyphe ■ devient l'icône `I.stop` ; boutons d'envoi : icône à gauche (seule la flèche de progression va à droite) | Section 5.1, pas de glyphe en guise d'icône |
 | 2026-11-20 | Pied de page : bloc de liens de navigation retiré (pages déjà dans l'en-tête) ; FAQ et liens légaux conservés | Demande du propriétaire |
 | 2026-11-20 | Emplacement du logo d'organisme (« Famickael », cadre pointillé) retiré de l'en-tête, du menu mobile et du pied de page ; `OrgLogo` reste dans `ui.jsx` pour un usage futur | Demande du propriétaire |
 | 2026-11-20 | v3.1 : profondeur et marque (`GRAD_TITLE`, `GRAD_ACCROCHE`, `GRAD_HERO`, `GRAD_SECTION`, `GLOW`, `SH.glow`, `SH.glowAi`) et transitions plus calmes (`MO.reveal`, `MO.slow`, `MO.fade`, `MO.soft`, `PACE`) sur les pages publiques | Demande du propriétaire : plus de dégradés et d'effets, fondus plus lents |
+| 2026-11-20 | Titres d'étape de la strate épinglée en `TY.h1` (28, mobile 24) au lieu de 24 ; chiffres de la carte de chronologie en `TY.num` ; chapeau de la phrase en `TY.lead` | Une seule échelle |
+| 2026-11-20 | « Se connecter » (coach) et « Générer le code » en `objective` ; « Échauffement · ni enregistré, ni analysé » et « Partage · vous décidez » en étiquette `primary` (contexte), « Rapport reçu » en `success` | Rôles des couleurs (1.1, 5.4) |
+| 2026-11-20 | Page « Mon espace » ramenée à `W.read` ; liste déroulante des métiers : seule dérogation (K4, option de combobox ARIA) | Largeurs et sémantique |
 | 2026-11-20 | Écran de chargement : 1,9 s minimum, fondu 0,6 s ; 0,6 s si « réduire les animations » | Demande du propriétaire : laisser voir l'animation |
 
 Ajouter une ligne à chaque évolution d'une règle ou d'une échelle.
