@@ -10,7 +10,7 @@ export default function HowItWorks({ go, openSpace }) {
     <main className="rp-pad" style={{ maxWidth: 1200, margin: "0 auto", padding: "36px 24px 0" }}>
       <Reveal>
         <div style={{ borderRadius: RAD.lg, overflow: "hidden" }}>
-          <GradHead soft tag="Fonctionnement" title="De la première prise au débriefing" sub="Qui fait quoi, ce que l'assistant observe, et où vont les données." />
+          <GradHead soft tag="Fonctionnement" title="Du premier entraînement au débriefing" sub="Qui fait quoi, ce que l'assistant observe, et où vont les données." />
         </div>
       </Reveal>
 
@@ -18,7 +18,7 @@ export default function HowItWorks({ go, openSpace }) {
         <Reveal><Flow /></Reveal>
       </Section>
 
-      <Section eyebrow="L'assistant" title="Ce que l'assistant observe" sub="Des faits situés dans la prise, présentés comme des repères et jamais comme une note.">
+      <Section eyebrow="L'assistant" title="Ce que l'assistant observe" sub="Des faits situés dans l'entretien, présentés comme des repères et jamais comme une note.">
         <div className="rp-stack" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(250px,1fr))", gap: sp(4) }}>
           {OBSERVE.map(([t, ex], i) => (
             <Reveal key={t} delay={(i % 4) * 70} style={{ height: "100%" }}>
@@ -60,7 +60,7 @@ export default function HowItWorks({ go, openSpace }) {
 }
 
 const OBSERVE = [
-  ["Débit", "Environ 140 mots par minute sur l'ensemble de la prise."],
+  ["Débit", "Environ 140 mots par minute sur l'ensemble de l'entretien."],
   ["Pauses", "3 pauses de plus de 2 secondes, la plus longue à 0:42."],
   ["Exemples concrets", "Vous citez une expérience précise : « deux ans à l'accueil d'une mairie »."],
   ["Mots d'appui", "« euh » revient 4 fois, surtout en début de phrase."],
@@ -72,7 +72,7 @@ const OBSERVE = [
 const PRINC = [
   ["01", "Décrire, jamais noter", "« Vous regardez vers le bas 40 % du temps » plutôt que « contact visuel insuffisant ». La personne observe, et décide elle-même quoi en faire."],
   ["02", "Des conventions, pas des vérités", "Chaque repère est une convention de secteur, variable selon le poste et la culture, jamais une qualité personnelle universelle."],
-  ["03", "L'humain garde la main", "Le coach relit les prises que la personne choisit de lui envoyer : il contextualise, nuance et annote avant de renvoyer le rapport."],
+  ["03", "L'humain garde la main", "Le coach relit les entretiens que la personne choisit de lui envoyer : il contextualise, nuance et annote avant de renvoyer le rapport."],
   ["04", "On commence en douceur", "Un échauffement sans analyse ni conservation. Puis, au moment du retour, la personne choisit : un rapport écrit, ou se revoir en vidéo."],
 ];
 
@@ -100,8 +100,8 @@ function Flow() {
   const steps = [
     { n: 1, who: "Coach", t: "crée un parcours", d: "et génère un lien", c: T.primary },
     { n: 2, who: "Bénéficiaire", t: "ouvre le lien", d: "saisit son code", c: T.blue },
-    { n: 3, who: "Bénéficiaire", t: "s'entraîne seul", d: "l'assistant décrit la prise", c: T.violet },
-    { n: 4, who: "Bénéficiaire", t: "partage sa prise", d: "quand il le décide", c: T.accent },
+    { n: 3, who: "Bénéficiaire", t: "s'entraîne seul", d: "l'assistant décrit l'entretien", c: T.violet },
+    { n: 4, who: "Bénéficiaire", t: "partage son entretien", d: "quand il le décide", c: T.accent },
     { n: 5, who: "Coach", t: "annote", d: "contextualise, nuance", c: T.primary },
     { n: 6, who: "Ensemble", t: "débriefing en atelier", d: "en présentiel", c: T.blue },
     { n: 7, who: "Bénéficiaire", t: "peut recommencer", d: "même après l'atelier", c: T.accent },

@@ -204,13 +204,12 @@ const GStyle = () => (
     .hc .hc-mask{transform-origin:right;transform:scaleX(1)}
     .hc .hc-head{opacity:0}
     .hc .hc-pin{transform:translateX(-50%) scale(0)}
-    .hc .hc-row,.hc .hc-facts,.hc .hc-note{opacity:0}
+    .hc .hc-row,.hc .hc-facts{opacity:0}
     .hc.is-in .hc-mask{animation:hcMask 2.4s linear .3s both}
     .hc.is-in .hc-head{animation:hcHead 2.6s linear .3s both}
     .hc.is-in .hc-pin{animation:hcPop .24s cubic-bezier(.34,1.56,.64,1) both}
     .hc.is-in .hc-row{animation:hcUp .3s cubic-bezier(.2,.7,.3,1) both}
     .hc.is-in .hc-facts{animation:hcFade .3s ease 2.7s both}
-    .hc.is-in .hc-note{animation:hcFade .3s ease 3.3s both}
     /* scène collante du défilement */
     .sc{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:56px}
     .sc-scene{grid-column:2;grid-row:1;position:-webkit-sticky;position:sticky;top:max(96px,calc(50vh - 200px));top:max(96px,calc(50svh - 200px));align-self:start;height:400px}
@@ -322,7 +321,4 @@ function GradHead({ tag, title, sub, action, soft }) {
 }
 
 
-// « Analyse sur votre appareil » n'est vrai que sans transcription ni reformulation par un serveur.
-const LOCAL_ONLY = !import.meta.env.VITE_STT_ENDPOINT && !import.meta.env.VITE_LLM_ENDPOINT;
-
-export { LOCAL_ONLY, T, GRAD_MAIN, GRAD_PREMIUM, GRAD_COACH, GRAD_AI, GRAD, GRAD_SOFT, GRAD_AI_SOFT, FD, FB, FM, RAD, SH, sp, RepetMark, RepetLogo, OrgLogo, ORG_NAME, Halo, Tag, Btn, Card, Back, Icon, I, GStyle, Rail, GradHead, LOGO_SYM, LOGO_WORD };
+export { T, GRAD_MAIN, GRAD_PREMIUM, GRAD_COACH, GRAD_AI, GRAD, GRAD_SOFT, GRAD_AI_SOFT, FD, FB, FM, RAD, SH, sp, RepetMark, RepetLogo, OrgLogo, ORG_NAME, Halo, Tag, Btn, Card, Back, Icon, I, GStyle, Rail, GradHead, LOGO_SYM, LOGO_WORD };

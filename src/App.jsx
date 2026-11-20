@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { T, FD, FB, FM, RAD, SH, sp, RepetLogo, OrgLogo, Tag, Btn, Card, Icon, I, GStyle, LOCAL_ONLY } from "./ui.jsx";
+import { T, FD, FB, FM, RAD, SH, sp, RepetLogo, OrgLogo, Tag, Btn, Card, Icon, I, GStyle } from "./ui.jsx";
 import { LegalModal } from "./legal.jsx";
 import Home from "./Home.jsx";
 import HowItWorks from "./HowItWorks.jsx";
@@ -134,7 +134,7 @@ function Espace() {
           <Card pad={28} topbar="coach" style={{ boxShadow: SH.sm, display: "flex", flexDirection: "column" }}>
             <div><Tag tone="primary">Coach</Tag></div>
             <h2 style={{ font: `800 21px ${FD}`, color: T.navy, margin: "12px 0 6px" }}>Je suis coach</h2>
-            <p style={{ font: `400 14px/1.6 ${FB}`, color: T.body, margin: "0 0 18px", flex: 1 }}>Créez des parcours, transmettez les codes et relisez les prises que l'on vous envoie.</p>
+            <p style={{ font: `400 14px/1.6 ${FB}`, color: T.body, margin: "0 0 18px", flex: 1 }}>Créez des parcours, transmettez les codes et relisez les entretiens que l'on vous envoie.</p>
             <div><Btn kind="secondary" onClick={() => go("#/coach")}>Accéder à l'espace coach&nbsp;<Icon d={I.arrow} s={17} c={T.primary} /></Btn></div>
           </Card>
         </div>
@@ -147,10 +147,10 @@ function Espace() {
 
 function Footer({ setModal }) {
   const trust = [
-    [I.lock, LOCAL_ONLY ? "Analyse sur votre appareil" : "Vidéo conservée sur votre appareil"],
-    [I.send, "Envoi au coach seulement si vous le décidez"],
-    [I.ban, "Sans note ni classement"],
-    [I.shield, "Aucune émotion déduite"],
+    [I.lock, "La vidéo reste sur votre appareil", T.success],
+    [I.send, "Envoi au coach seulement si vous le décidez", T.blue],
+    [I.ban, "Sans note ni classement", T.violet],
+    [I.shield, "Aucune émotion déduite", T.accent],
   ];
   const links = [["cgu", "Conditions d'utilisation"], ["rgpd", "Protection des données"], ["lifecycle", "Cycle de vie de la vidéo"]];
   const lk = { font: `500 12px ${FB}`, color: T.primary, background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline", textUnderlineOffset: 2 };
@@ -163,7 +163,7 @@ function Footer({ setModal }) {
           <OrgLogo s={9} />
         </div>
         <div className="rp-trust" style={{ display: "flex", gap: 18, font: `500 12px ${FB}`, color: T.body, flexWrap: "wrap" }}>
-          {trust.map(([ic, l]) => <span key={l} style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><Icon d={ic} s={14} c={T.primary} /> {l}</span>)}
+          {trust.map(([ic, l, c]) => <span key={l} style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><Icon d={ic} s={14} c={c} /> {l}</span>)}
         </div>
       </div>
       <div style={{ borderTop: `1px solid ${T.lineLt}` }}>

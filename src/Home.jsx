@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { T, GRAD, GRAD_MAIN, FD, FB, FM, RAD, SH, sp, RepetMark, Halo, Tag, Btn, Card, Icon, I, LOCAL_ONLY } from "./ui.jsx";
+import { T, GRAD, GRAD_MAIN, FD, FB, FM, RAD, SH, sp, RepetMark, Halo, Tag, Btn, Card, Icon, I } from "./ui.jsx";
 import { useInView, useReducedMotion, useCount, Reveal } from "./motion.jsx";
 
 /* Page d'accueil : à quoi sert l'outil, raconté au fil du défilement.
@@ -52,7 +52,7 @@ function Hero({ go }) {
             Répétez votre entretien d'embauche,<br /><span style={{ paddingBottom: ".08em", background: GRAD_MAIN, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>sans pression.</span>
           </h1>
           <p style={{ font: `400 19px/1.6 ${FB}`, color: T.body, maxWidth: 520, margin: `0 0 ${sp(8)}px` }}>
-            La Répét' vous permet de vous entraîner en autonomie, face à votre caméra. Un assistant <strong style={{ color: T.primary }}>décrit votre prise sans la noter</strong>, puis votre coach vous aide à aller plus loin.
+            La Répét' vous permet de vous entraîner en autonomie, face à votre caméra. Un assistant <strong style={{ color: T.primary }}>décrit votre entretien sans le noter</strong>, puis votre coach vous aide à aller plus loin.
           </p>
           <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
             <Btn kind="objective" size="lg" onClick={() => go("#/espace")}>J'ai un code&nbsp;<Icon d={I.arrow} s={18} c="#fff" /></Btn>
@@ -68,8 +68,8 @@ function Hero({ go }) {
   );
 }
 
-/* Carte d'exemple : la frise de la prise se remplit, les repères et les observations apparaissent.
-   Aucune note, aucune jauge : uniquement le temps de la prise et des faits. */
+/* Carte d'aperçu : la chronologie de l'entretien se remplit, les repères et les observations apparaissent.
+   Aucune note, aucune jauge : uniquement le temps de l'entretien et des faits. */
 const SEGS = [[0, 11], [13, 27], [29, 41], [44, 58], [60, 70], [73, 86], [88, 100]];
 const OBS = [
   { at: 4, time: "0:04", ap: true, d: 400, t: "Ouverture", txt: "Vous entrez directement dans le sujet." },
@@ -83,22 +83,23 @@ export const Pin = ({ ap, s = 14 }) => (
 
 function HeroCard() {
   const reduced = useReducedMotion();
+  // La carte flotte doucement (animation « float »), coupée si l'appareil demande moins d'animations.
   const [ref, v] = useInView({ threshold: 0.4 });
   const wpm = useCount(148, v, 2700, reduced), pauses = useCount(6, v, 2700, reduced);
   const lab = { font: `600 10.5px ${FB}`, textTransform: "uppercase", letterSpacing: ".06em", color: T.muted };
   return (
-    <div style={{ position: "relative" }}>
+    <div style={{ position: "relative", animation: reduced ? "none" : "float 6s ease-in-out infinite" }}>
       <div ref={ref} className={`hc ${v ? "is-in" : ""}`} role="img"
-        aria-label="Aperçu d'un retour : frise d'une prise de 1 minute 32 avec trois repères, 148 mots par minute, 6 pauses. Aucune note.">
+        aria-label="Aperçu d'un retour : chronologie d'un entretien de 1 minute 32 avec trois repères, 148 mots par minute, 6 pauses. Aucune note.">
         <Card pad={0} style={{ overflow: "hidden", boxShadow: SH.lg, borderRadius: RAD.xl }}>
           <div aria-hidden>
             <div style={{ background: GRAD, padding: "16px 20px", display: "flex", alignItems: "center", gap: 10 }}>
               <RepetMark s={28} white />
-              <div style={{ font: `700 15px ${FD}`, color: "#fff", letterSpacing: "-.01em" }}>Prise du 12 mars · Parlez-moi de vous</div>
+              <div style={{ font: `700 15px ${FD}`, color: "#fff", letterSpacing: "-.01em" }}>Entretien du 12 mars</div>
             </div>
 
             <div style={{ padding: "18px 22px 8px" }}>
-              <div style={lab}>Frise de la prise</div>
+              <div style={lab}>Chronologie de l'entretien</div>
               <div style={{ position: "relative", marginTop: 26 }}>
                 <div style={{ position: "relative", height: 10, borderRadius: 5, background: T.lineLt, overflow: "hidden" }}>
                   {SEGS.map(([a, b]) => <span key={a} style={{ position: "absolute", top: 0, bottom: 0, left: `${a}%`, width: `${b - a}%`, background: T.primary, borderRadius: 3 }} />)}
@@ -123,7 +124,6 @@ function HeroCard() {
                 </div>
               ))}
             </div>
-            <div className="hc-note" style={{ font: `500 11px ${FB}`, color: T.muted, textAlign: "center", padding: "8px 0 2px" }}>Des faits, pas une note.</div>
 
             <div style={{ padding: "6px 22px 18px" }}>
               {OBS.map((o, i) => {
@@ -148,7 +148,7 @@ function HeroCard() {
       </div>
       <div className="rp-float" style={{ position: "absolute", bottom: -18, left: -18, background: "#fff", borderRadius: RAD.md, padding: "10px 14px", boxShadow: SH.lg, display: "flex", alignItems: "center", gap: 8 }}>
         <div style={{ width: 28, height: 28, borderRadius: "50%", background: T.accentBg, display: "grid", placeItems: "center" }}><Icon d={I.lock} s={14} c={T.accent} /></div>
-        <div style={{ font: `700 12px ${FB}`, color: T.primary }}>{LOCAL_ONLY ? "Analysé sur votre appareil" : "Vidéo conservée sur votre appareil"}</div>
+        <div style={{ font: `700 12px ${FB}`, color: T.primary }}>La vidéo reste sur votre appareil</div>
       </div>
     </div>
   );
@@ -157,8 +157,8 @@ function HeroCard() {
 /* ─── Défilement raconté : une répétition en quatre temps ─── */
 const STEPS = [
   { k: "Vous", c: T.accent, t: "Vous vous entraînez quand vous voulez", d: "Choisissez une question, lancez la caméra ou le micro seul, et répondez. Vous pouvez recommencer autant de fois que vous le souhaitez.", V: VisCamera },
-  { k: "L'assistant", c: T.violet, t: "L'assistant décrit ce qu'il observe", d: "Débit, pauses, exemples concrets, mots d'appui, structure, direction du regard : des faits situés dans votre prise. Jamais de note, jamais d'émotion déduite.", V: VisTranscript },
-  { k: "Vous", c: T.accent, t: "Vous décidez de ce que vous partagez", d: "Votre vidéo reste sur votre appareil. Elle n'est envoyée à votre coach que si vous le choisissez, prise par prise.", V: VisShare },
+  { k: "L'assistant", c: T.violet, t: "L'assistant décrit ce qu'il observe", d: "Débit, pauses, exemples concrets, mots d'appui, structure, direction du regard : des faits situés dans votre réponse. Jamais de note, jamais d'émotion déduite.", V: VisTranscript },
+  { k: "Vous", c: T.accent, t: "Vous décidez de ce que vous partagez", d: "Votre vidéo reste sur votre appareil. Elle n'est envoyée à votre coach que si vous le choisissez, entretien par entretien.", V: VisShare },
   { k: "Votre coach", c: T.primary, t: "Votre coach annote, vous en reparlez ensemble", d: "Votre coach relit, nuance et commente des moments précis. Son rapport sert de base à votre débriefing en atelier.", V: VisCoach },
 ];
 
@@ -274,7 +274,7 @@ function VisShare() {
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <div style={{ width: 42, height: 42, borderRadius: RAD.sm, background: `${T.primary}12`, display: "grid", placeItems: "center", flexShrink: 0 }}><Icon d={I.play} s={16} c={T.primary} /></div>
           <div>
-            <div style={{ font: `700 15px ${FD}`, color: T.navy }}>Prise du 12 mars</div>
+            <div style={{ font: `700 15px ${FD}`, color: T.navy }}>Entretien du 12 mars</div>
             <div style={{ font: `500 12px ${FM}`, color: T.muted }}>1 min 32</div>
           </div>
         </div>
@@ -358,7 +358,7 @@ function ForWho({ go }) {
         <Reveal delay={90} style={{ height: "100%" }}>
           <Card topbar="coach" style={{ height: "100%", display: "flex", flexDirection: "column", gap: 10 }}>
             <h3 style={{ font: `700 20px ${FD}`, margin: "6px 0 0", color: T.navy }}>Vous êtes coach</h3>
-            <p style={{ font: `400 15px/1.6 ${FB}`, color: T.body, margin: 0, flex: 1 }}>Créez un parcours, transmettez le code, relisez les prises que l'on vous envoie.</p>
+            <p style={{ font: `400 15px/1.6 ${FB}`, color: T.body, margin: 0, flex: 1 }}>Créez un parcours, transmettez le code, relisez les entretiens que l'on vous envoie.</p>
             <div><Btn kind="secondary" onClick={() => go("#/coach")}>Espace coach</Btn></div>
           </Card>
         </Reveal>
@@ -368,7 +368,7 @@ function ForWho({ go }) {
 }
 
 /* ─── Bandeau final ─── */
-export function FinalBand({ title = "Prêt pour une première répétition ?", text = "Cinq minutes et votre code suffisent pour une première prise.", children, openSpace, go }) {
+export function FinalBand({ title = "Prêt pour une première répétition ?", text = "Cinq minutes et votre code suffisent pour un premier entretien.", children, openSpace, go }) {
   return (
     <section style={{ padding: `${sp(18)}px 0 ${sp(20)}px` }}>
       <Reveal>
