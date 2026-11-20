@@ -1,7 +1,6 @@
 import React, { useMemo, useState } from "react";
-import { T, RAD, SH, Btn, Tag, Icon, I } from "./ui.jsx";
+import { T, GRAD_PAGE, RAD, SH, Btn, Tag, Icon, I, TY, W, SI, img, Eyebrow, Section, PageHero, Chip, IconTile, Input } from "./ui.jsx";
 import { Reveal } from "./motion.jsx";
-import { TT, TY, W, SI, img, Eyebrow, Section, PageHero, Chip, IconTile, Input } from "./site.jsx";
 import { FinalBand } from "./Home.jsx";
 import { ARTICLES, CATEGORIES, TYPES, findArticle, findCategory, search } from "./content/resources.js";
 
@@ -53,7 +52,7 @@ function Hub({ go, openSpace }) {
               return (
                 <Reveal key={c.id} delay={(i % 3) * 70} style={{ height: "100%" }}>
                   <a href={`#/ressources/c/${c.id}`} className="rs-card-btn" style={{ height: "100%", textDecoration: "none" }}>
-                    <div style={{ position: "relative", aspectRatio: "16 / 9", background: TT.primaryBg }}>
+                    <div style={{ position: "relative", aspectRatio: "16 / 9", background: T.primaryBg }}>
                       <img src={img(`categories/${c.id}.webp`)} alt="" width={800} height={450} loading="lazy" decoding="async" style={{ display: "block", width: "100%", height: "100%", objectFit: "cover" }} />
                     </div>
                     <div style={{ padding: 24, display: "grid", gap: 8 }}>
@@ -104,7 +103,7 @@ const Empty = ({ text }) => (
 function ArticleCard({ a }) {
   return (
     <a href={`#/ressources/${a.slug}`} className="rs-card-btn" style={{ height: "100%", textDecoration: "none", display: "flex", flexDirection: "column" }}>
-      <div style={{ aspectRatio: "16 / 9", background: TT.primaryBg }}>
+      <div style={{ aspectRatio: "16 / 9", background: T.primaryBg }}>
         <img src={img(a.image)} alt="" width={1200} height={675} loading="lazy" decoding="async" style={{ display: "block", width: "100%", height: "100%", objectFit: "cover" }} />
       </div>
       <div style={{ padding: 24, display: "flex", flexDirection: "column", gap: 8, flex: 1 }}>
@@ -112,7 +111,7 @@ function ArticleCard({ a }) {
           <Tag tone={a.type === "cas" ? "ai" : "primary"}>{TYPES[a.type]}</Tag>
           <span style={{ ...TY.caption, color: T.muted }}>{catTitle(a.category)}</span>
         </div>
-        <h3 style={{ ...TY.h3, fontSize: 18, color: T.navy, margin: 0 }}>{a.title}</h3>
+        <h3 style={{ ...TY.h3, color: T.navy, margin: 0 }}>{a.title}</h3>
         <p style={{ ...TY.body, color: T.body, margin: 0, flex: 1 }}>{a.summary}</p>
         <span style={{ ...TY.caption, color: T.muted, display: "inline-flex", alignItems: "center", gap: 4 }}><Icon d={SI.clock} s={16} c={T.muted} /> {a.readingTime} min de lecture</span>
       </div>
@@ -185,9 +184,9 @@ function inline(text) {
 
 const CALLOUT = {
   conseil: { label: "Conseil", icon: I.bulb, fg: T.accent, bg: T.accentBg },
-  exemple: { label: "Exemple", icon: I.chat, fg: T.primary, bg: TT.primaryBg },
-  attention: { label: "Point d'attention", icon: I.info, fg: TT.warningDk, bg: T.warningBg },
-  "a-retenir": { label: "À retenir", icon: I.check, fg: T.primary, bg: TT.primaryBg },
+  exemple: { label: "Exemple", icon: I.chat, fg: T.primary, bg: T.primaryBg },
+  attention: { label: "Point d'attention", icon: I.info, fg: T.warningDk, bg: T.warningBg },
+  "a-retenir": { label: "À retenir", icon: I.check, fg: T.primary, bg: T.primaryBg },
 };
 
 function Blocks({ blocks }) {
@@ -241,16 +240,16 @@ function Article({ a, go, openSpace }) {
   return (
     <main>
       <article>
-        <header style={{ background: `linear-gradient(180deg, ${TT.primaryBg}, ${T.bg})` }}>
+        <header style={{ background: GRAD_PAGE }}>
           <div className="rs-pad" style={{ ...wrap, padding: "48px 24px 0" }}>
             <div className="up" style={{ display: "grid", gap: 16, maxWidth: W.read }}>
               <div style={{ ...TY.small }}><Crumbs items={[["#/ressources", "Ressources"], [`#/ressources/c/${a.category}`, catTitle(a.category)]]} /></div>
               <div><Tag tone={cas ? "ai" : "primary"}>{TYPES[a.type]}</Tag></div>
-              <h1 className="ty-xl" style={{ ...TY.xl, fontSize: 38, color: T.navy, margin: 0 }}>{a.title}</h1>
+              <h1 className="ty-xl" style={{ ...TY.pageTitle, color: T.navy, margin: 0 }}>{a.title}</h1>
               <p className="ty-lead" style={{ ...TY.lead, color: T.body, margin: 0 }}>{a.summary}</p>
               {meta}
             </div>
-            <div style={{ marginTop: 32, borderRadius: RAD.lg, overflow: "hidden", aspectRatio: "1200 / 630", background: TT.primaryBg, boxShadow: SH.sm }}>
+            <div style={{ marginTop: 32, borderRadius: RAD.lg, overflow: "hidden", aspectRatio: "1200 / 630", background: T.primaryBg, boxShadow: SH.sm }}>
               <img src={img(a.image)} alt={a.imageAlt} width={1200} height={630} decoding="async" style={{ display: "block", width: "100%", height: "100%", objectFit: "cover" }} />
             </div>
           </div>
@@ -282,7 +281,7 @@ function Article({ a, go, openSpace }) {
                 </nav>
               )}
             </aside>
-            <div className="rs-prose" style={{ maxWidth: 720 }}><Blocks blocks={a.blocks} /></div>
+            <div className="rs-prose" style={{ maxWidth: W.read }}><Blocks blocks={a.blocks} /></div>
           </div>
         </div>
       </article>
@@ -295,12 +294,12 @@ function Article({ a, go, openSpace }) {
         )}
         {cas ? (
           <FinalBand title="Envisager ce dispositif chez vous ?" text="Parlons de vos ateliers, de vos publics et de votre hébergement.">
-            <Btn kind="white" size="lg" onClick={() => go("#/demo")}>Demander une démo <Icon d={I.arrow} s={20} c={T.primary} /></Btn>
+            <Btn kind="white" size="lg" onClick={() => go("#/demo")} iconRight={I.arrow}>Demander une démo</Btn>
             <Btn kind="ghostDark" size="lg" onClick={() => go("#/solutions/organismes")}>Pour les organismes</Btn>
           </FinalBand>
         ) : (
           <FinalBand title="Mettez ces conseils en pratique" text="Ouvrez votre espace et répétez à voix haute, à votre rythme." openSpace={openSpace} go={go}>
-            <Btn kind="white" size="lg" onClick={openSpace}>Ouvrir mon espace <Icon d={I.arrow} s={20} c={T.primary} /></Btn>
+            <Btn kind="white" size="lg" onClick={openSpace} iconRight={I.arrow}>Ouvrir mon espace</Btn>
             <Btn kind="ghostDark" size="lg" onClick={() => go("#/ressources")}>Toutes les ressources</Btn>
           </FinalBand>
         )}

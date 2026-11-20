@@ -1,0 +1,220 @@
+/* Vérification automatique du référentiel UI/UX (docs/design-system.md, section 11).
+   Script Node sans dépendance : node tests/design-lint.mjs (npm run test:design).
+   Lit les échelles dans src/tokens.js (aucune valeur dupliquée ici), parcourt src/**\/*.{js,jsx},
+   liste toutes les violations au format « fichier:ligne  règle  extrait  correction attendue »
+   et sort avec le code 1 s'il y en a, ou si les dérogations dépassent MAX_WAIVERS. */
+import { readFileSync, readdirSync, statSync } from "fs";
+import { join, relative, dirname } from "path";
+import { fileURLToPath, pathToFileURL } from "url";
+
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
+const tokens = await import(pathToFileURL(join(ROOT, "src/tokens.js")).href);
+const { SPACE, SIZES, WEIGHTS, PAIRS, FD, FB, FM } = tokens;
+const MAX_WAIVERS = 5;
+const TOKEN_FILES = new Set(["src/tokens.js", "src/ui.jsx"]);
+const BTN_KINDS = ["objective", "ai", "primary", "secondary", "ghost", "danger", "white", "ghostDark"];
+const BTN_SIZES = ["sm", "md", "lg"];
+const TAG_TONES = ["primary", "appui", "ai", "success", "warning", "error", "muted"];
+const CARD_PADS = ["none", "sm", "md", "lg"];
+
+/* ─── Fichiers ─── */
+const walk = d => readdirSync(d).flatMap(f => {
+  const p = join(d, f);
+  return statSync(p).isDirectory() ? walk(p) : [p];
+});
+const srcFiles = walk(join(ROOT, "src")).filter(f => /\.(js|jsx)$/.test(f)).map(f => relative(ROOT, f).split("\\").join("/")).sort();
+const docFiles = readdirSync(join(ROOT, "docs")).filter(f => f.endsWith(".md")).map(f => `docs/${f}`);
+
+/* ─── Préparation : commentaires, URI data:, chemins SVG retirés, numéros de ligne conservés ─── */
+const blank = s => s.replace(/[^\n]/g, " ");
+function strip(src) {
+  let out = "", i = 0, q = null;
+  while (i < src.length) {
+    const c = src[i], n = src[i + 1];
+    if (q) {
+      out += c;
+      if (c === "\\") { out += n ?? ""; i += 2; continue; }
+      if (c === q) q = null;
+      else if (q === "`" && c === "$" && n === "{") { /* interpolation : gardée telle quelle */ }
+      i++; continue;
+    }
+    if (c === "/" && n === "*") { const e = src.indexOf("*/", i + 2); const end = e < 0 ? src.length : e + 2; out += blank(src.slice(i, end)); i = end; continue; }
+    if (c === "/" && n === "/" && src[i - 1] !== ":" ) { const e = src.indexOf("\n", i); const end = e < 0 ? src.length : e; out += blank(src.slice(i, end)); i = end; continue; }
+    if (c === '"' || c === "'" || c === "`") {
+      // apostrophe dans un texte JSX (« l'accueil ») : pas une chaîne si précédée d'une lettre
+      if (c === "'" && /[\p{L}]/u.test(src[i - 1] || "")) { out += c; i++; continue; }
+      q = c;
+    }
+    out += c; i++;
+  }
+  return out
+    .replace(/data:[a-z]+\/[a-z0-9.+-]+[;,][^"'`)\s]*/gi, m => blank(m))
+    .replace(/\b(d|points)="[^"]*"/g, m => blank(m));
+}
+
+/* Valeur d'une propriété de style : depuis le « : » jusqu'à « , » « } » « ; » ou fin de ligne, hors parenthèses et chaînes. */
+function valueAt(text, start) {
+  let depth = 0, q = null, v = "";
+  for (let i = start; i < text.length; i++) {
+    const c = text[i];
+    if (q) { v += c; if (c === q) q = null; continue; }
+    if (c === '"' || c === "'" || c === "`") { q = c; v += c; continue; }
+    if ("([{".includes(c)) depth++;
+    if (")]}".includes(c)) { if (depth === 0) break; depth--; v += c; continue; }
+    if (depth === 0 && (c === "," || c === ";" || c === "\n")) break;
+    v += c;
+  }
+  return v;
+}
+
+/* ─── Dérogations ─── */
+function waiversOf(raw) {
+  const w = new Map(), bad = [];
+  raw.split("\n").forEach((l, i) => {
+    const m = l.match(/design-lint-disable-next-line\s+([A-Z]\d)(?:\s+--\s+(.+?))?\s*(\*\/|\}|$)/);
+    if (!m) return;
+    if (!m[2] || !m[2].trim()) bad.push(i + 1);
+    else w.set(i + 2, m[1]);
+  });
+  return { w, bad };
+}
+
+/* ─── Règles ─── */
+const violations = [];
+let waiverCount = 0;
+const lineOf = (text, idx) => text.slice(0, idx).split("\n").length;
+const excerpt = s => s.trim().replace(/\s+/g, " ").slice(0, 70);
+
+function checkFile(file) {
+  const raw = readFileSync(join(ROOT, file), "utf8");
+  const text = strip(raw);
+  const { w, bad } = waiversOf(raw);
+  const isTok = TOKEN_FILES.has(file);
+  const report = (idx, rule, ext, fix) => {
+    const line = typeof idx === "number" && idx < 0 ? -idx : lineOf(text, idx);
+    if (w.get(line) === rule) { waiverCount++; w.set(line, "used"); return; }
+    violations.push(`${file}:${line}  ${rule}  ${excerpt(ext)}  → ${fix}`);
+  };
+  bad.forEach(l => report(-l, "W0", "dérogation sans raison", "ajouter « -- raison »"));
+  const each = (re, fn) => { for (const m of text.matchAll(re)) fn(m); };
+
+  // L1 : tiret cadratin, emoji (commentaires exclus)
+  text.split("\n").forEach((l, i) => {
+    if (l.includes("\u2014")) report(-(i + 1), "L1", l, "remplacer le tiret cadratin");
+    const e = l.match(/\p{Extended_Pictographic}/u);
+    if (e && !/[©®™]/.test(e[0])) report(-(i + 1), "L1", l, "retirer l'emoji, utiliser <Icon>");
+  });
+
+  if (!isTok) {
+    // C1 couleur hexadécimale ; C2 fonction de couleur ; C3 opacité concaténée ; C4 nom de couleur
+    each(/(?<![&\w])#[0-9a-fA-F]{3,8}\b/g, m => report(m.index, "C1", text.slice(m.index - 10, m.index + 12), "jeton T.* ou ON.*"));
+    each(/\b(rgba?|hsla?)\(/g, m => report(m.index, "C2", text.slice(m.index, m.index + 30), "jeton T.* ou ON.*"));
+    each(/\$\{[^}]+\}[0-9a-fA-F]{2}(?![0-9a-zA-Z])/g, m => report(m.index, "C3", m[0], "fond teinté T.*Bg"));
+    each(/:\s*["'](white|black|red|green|blue|gray|grey)["']/g, m => report(m.index, "C4", m[0], "jeton T.*"));
+    // T1 propriété typographique ; T2 famille nommée
+    each(/\b(font|fontSize|fontWeight|fontFamily|lineHeight|letterSpacing|font-size|font-weight|font-family|line-height|letter-spacing)\s*:/g, m => {
+      const v = valueAt(text, m.index + m[0].length).trim();
+      if (m[1] === "font" && /^["']inherit["']$/.test(v)) return;
+      report(m.index, "T1", m[0] + " " + v, "...TY.* ou <Txt v>");
+    });
+    // T2 ne vise pas les textes de contenu (src/content/), qui peuvent citer une police par son nom (mentions légales)
+    if (!file.startsWith("src/content/")) each(/\b(Manrope|Inter|JetBrains|Segoe)\b|sans-serif|monospace/g, m => report(m.index, "T2", m[0], "FD, FB, FM via TY.*"));
+    // S1 espacement hors échelle
+    each(/\b(padding|margin)([A-Z][A-Za-z]*|-[a-z-]+)?\s*:|\b(gap|rowGap|columnGap|row-gap|column-gap)\s*:/g, m => {
+      const v = valueAt(text, m.index + m[0].length);
+      const clean = v.replace(/calc\([^)]*\)/g, "").replace(/\b(PAD|GAP|W)\.\w+/g, "").replace(/\bsp\([^)]*\)/g, "");
+      for (const n of clean.matchAll(/(?<![\w.$#])(-?\d*\.?\d+)(px|%|vh|svh|dvh|vw|em|rem|fr|ch|s|ms)?(?![\w.])/g)) {
+        if (n[2] && n[2] !== "px") continue;
+        const x = Math.abs(parseFloat(n[1]));
+        if (!SPACE.includes(x)) { report(m.index, "S1", m[0] + v, `échelle ${SPACE.join(", ")}`); break; }
+      }
+    });
+    // S2 sp(n) hors échelle
+    each(/\bsp\(([\d.]+)\)/g, m => { if (!SPACE.includes(4 * parseFloat(m[1]))) report(m.index, "S2", m[0], "sp(n) avec 4n dans l'échelle"); });
+    // S3 pad de Card
+    each(/<Card\b[^>]*?\bpad=(\{[^}]*\}|"[^"]*")/g, m => {
+      const v = m[1].replace(/^\{|\}$/g, "");
+      const lits = [...v.matchAll(/["']([^"']*)["']/g)].map(x => x[1]);
+      if (/^\s*\d/.test(v) || !lits.length || lits.some(l => !CARD_PADS.includes(l))) report(m.index, "S3", m[0], `pad="${CARD_PADS.join("|")}"`);
+    });
+    // S4 maxWidth numérique de 600 ou plus
+    each(/\bmaxWidth:\s*(\d+)\b/g, m => { if (+m[1] >= 600) report(m.index, "S4", m[0], "W.*"); });
+    // R1 rayon
+    each(/\bborder\w*Radius\s*:|\bborder(-[a-z]+)?-radius\s*:/g, m => {
+      const v = valueAt(text, m.index + m[0].length).replace(/\bRAD\.\w+/g, "").replace(/["']?50%["']?/g, "");
+      for (const n of v.matchAll(/(?<![\w.$])(\d*\.?\d+)(px|%)?(?![\w.])/g)) if (parseFloat(n[1]) > 4) { report(m.index, "R1", m[0] + v, "RAD.*, \"50%\" ou 0 à 4"); break; }
+    });
+    // O1 ombre
+    each(/\bboxShadow\s*:|\bbox-shadow\s*:/g, m => {
+      const v = valueAt(text, m.index + m[0].length);
+      const rest = v.replace(/\bSH\.\w+(\.\w+)?(\[\d\])?/g, "").replace(/\bringOf\([^)]*\)/g, "").replace(/["']none["']/g, "");
+      if (/["'`]|\dpx|rgba?\(/.test(rest)) report(m.index, "O1", m[0] + v, "SH.*, ringOf() ou \"none\"");
+    });
+    // M1 transition
+    each(/\btransition\s*:/g, m => {
+      const v = valueAt(text, m.index + m[0].length);
+      if (/\ball\b/.test(v)) report(m.index, "M1", m[0] + v, "nommer les propriétés, durées MO.*");
+      else if (/^\s*["'`]/.test(v) && !/MO\./.test(v)) report(m.index, "M1", m[0] + v, "durées MO.*");
+    });
+    // K1 élément natif
+    each(/<(input|textarea|select|button)\b([^>]*)/g, m => { if (m[1] === "input" && /type="file"/.test(m[2])) return; report(m.index, "K1", m[0], "Btn, Bare, Input, Textarea, Select de ui.jsx"); });
+    // K4 onClick sur élément non interactif
+    each(/<(div|span|p|li)\b(?:=>|[^>])*?\bonClick=/g, m => report(m.index, "K4", m[0].slice(0, 60), "button (Bare) ou Card cliquable"));
+    // K5 icône espacée à la main
+    each(/&nbsp;\s*<Icon|<Icon[^>]*\/>\s*&nbsp;/g, m => report(m.index, "K5", m[0], "propriété icon / iconRight de Btn"));
+  }
+  // K2 Btn kind et size ; K3 Tag tone (tous fichiers, y compris lib/store.js)
+  const litsOf = v => [...v.replace(/^\{|\}$/g, "").trim().matchAll(/(?:^|[?:]\s*)["']([^"']*)["']/g)].map(x => x[1]); // valeur littérale ou branches d'un ternaire
+  each(/<Btn\b[^>]*?\bkind=(\{[^}]*\}|"[^"]*")/g, m => litsOf(m[1]).forEach(l => { if (!BTN_KINDS.includes(l)) report(m.index, "K2", m[0], BTN_KINDS.join("|")); }));
+  each(/<Btn\b[^>]*?\bsize=(\{[^}]*\}|"[^"]*")/g, m => litsOf(m[1]).forEach(l => { if (!BTN_SIZES.includes(l)) report(m.index, "K2", m[0], BTN_SIZES.join("|")); }));
+  each(/<Tag\b[^>]*?\btone=(\{[^}]*\}|"[^"]*")/g, m => litsOf(m[1]).forEach(l => { if (!TAG_TONES.includes(l)) report(m.index, "K3", m[0], TAG_TONES.join("|")); }));
+  each(/\btone:\s*["']([^"']+)["']/g, m => { if (!TAG_TONES.includes(m[1])) report(m.index, "K3", m[0], TAG_TONES.join("|")); });
+
+  if (isTok) {
+    // X1 tailles et graisses de police
+    const famOf = v => (v.includes("${FD}") || v.includes("Manrope") ? FD : v.includes("${FM}") || v.includes("JetBrains") ? FM : v.includes("${FB}") || v.includes("Inter") ? FB : null);
+    each(/\bfont\s*:\s*/g, m => {
+      const v = valueAt(text, m.index + m[0].length).replace(/^["'`]/, "");
+      const s = v.match(/(\d+(?:\.\d+)?)px/), wgt = v.match(/^\s*([1-9]00)\b/), fam = famOf(v);
+      if (s && !SIZES.includes(+s[1])) report(m.index, "X1", "font: " + v, `taille dans ${SIZES.join(", ")}`);
+      if (wgt) {
+        const ok = fam ? WEIGHTS[fam] : [...new Set(Object.values(WEIGHTS).flat())];
+        if (!ok.includes(+wgt[1])) report(m.index, "X1", "font: " + v, "graisse autorisée pour la famille");
+      }
+    });
+    each(/\bfont-size\s*:\s*(\d+(?:\.\d+)?)px/g, m => { if (!SIZES.includes(+m[1])) report(m.index, "X1", m[0], `taille dans ${SIZES.join(", ")}`); });
+    each(/\b(fontWeight|font-weight)\s*:\s*["']?(\d+)/g, m => { if (![...new Set(Object.values(WEIGHTS).flat())].includes(+m[2])) report(m.index, "X1", m[0], "graisse autorisée"); });
+    // X2 couleur littérale dans ui.jsx
+    if (file === "src/ui.jsx") {
+      each(/(?<![&\w])#[0-9a-fA-F]{3,8}\b/g, m => report(m.index, "X2", text.slice(m.index - 10, m.index + 12), "jeton de tokens.js"));
+      each(/\b(rgba?|hsla?)\(/g, m => report(m.index, "X2", text.slice(m.index, m.index + 30), "jeton de tokens.js"));
+    }
+  }
+  for (const [line, code] of w) if (code !== "used") violations.push(`${file}:${line - 1}  W1  dérogation ${code} sans effet  → la retirer`);
+}
+
+srcFiles.forEach(checkFile);
+docFiles.forEach(f => readFileSync(join(ROOT, f), "utf8").split("\n").forEach((l, i) => {
+  if (l.includes("\u2014")) violations.push(`${f}:${i + 1}  L1  ${excerpt(l)}  → remplacer le tiret cadratin`);
+}));
+
+/* A1 : contrastes déclarés dans PAIRS */
+const lum = hex => {
+  const h = hex.replace("#", "");
+  const [r, g, b] = [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16) / 255).map(v => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4));
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+};
+for (const [fg, bg, min] of PAIRS) {
+  const [a, b] = [lum(fg), lum(bg)].sort((x, y) => y - x);
+  const ratio = (a + 0.05) / (b + 0.05);
+  if (ratio < min) violations.push(`src/tokens.js  A1  ${fg} sur ${bg} : ${ratio.toFixed(2)}:1  → au moins ${min}:1`);
+}
+
+if (waiverCount > MAX_WAIVERS) violations.push(`(global)  W2  ${waiverCount} dérogations  → ${MAX_WAIVERS} au plus`);
+violations.forEach(v => console.log(v));
+const files = srcFiles.length + docFiles.length;
+if (violations.length) {
+  console.log(`\ndesign-lint : ${violations.length} violation(s), ${files} fichiers, ${waiverCount} dérogation(s)`);
+  process.exit(1);
+}
+console.log(`design-lint : 0 violation, ${files} fichiers, ${waiverCount} dérogation(s)`);

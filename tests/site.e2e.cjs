@@ -6,7 +6,7 @@ const BASE = process.argv[2] || "http://localhost:5097/";
 const SC = process.argv[3] || "tests/screenshots/site";
 fs.mkdirSync(SC, { recursive: true });
 
-const IGNORE = /fonts\.googleapis|fonts\.gstatic|Failed to load resource|ERR_TUNNEL|ERR_NAME|net::/;
+const IGNORE = /Failed to load resource|ERR_TUNNEL|ERR_NAME|net::/;
 const problems = [];
 const check = (ok, msg) => { if (!ok) problems.push(msg); };
 
@@ -69,7 +69,7 @@ async function run(b, vw, vh, opts = {}) {
     const range = h - vh;
     const seen = [];
     for (const [i, f] of [[1, 0.1], [2, 0.38], [3, 0.63], [4, 0.9]]) {
-      await p.evaluate(y => scrollTo(0, y), top + range * f); await p.waitForTimeout(650);
+      await p.evaluate(y => scrollTo(0, y), top + range * f); await p.waitForTimeout(1100);
       const panelTop = await p.locator(".rs-panel").evaluate(el => Math.round(el.getBoundingClientRect().top));
       check(panelTop <= 64 && panelTop >= 50, `[${tag}] strate : panneau non épinglé (top ${panelTop})`);
       seen.push(await p.locator(".rs-vis.on").count());
@@ -156,23 +156,43 @@ async function run(b, vw, vh, opts = {}) {
 
   // Demander une démo
   await visit("#/demo"); await shot("13-demo");
-  await p.getByRole("button", { name: "Envoyer ma demande" }).click();
+  await p.getByRole("button", { name: "Préparer ma demande" }).click();
   check(await p.locator("[role=alert]").count() > 3, `[${tag}] formulaire : erreurs non signalées`);
   await shot("13b-demo-erreurs", false);
   await p.getByLabel("Prénom").fill("Alex"); await p.getByLabel("Nom", { exact: true }).fill("Martin");
   await p.getByLabel("Organisme").fill("Organisme test");
-  await p.getByLabel("Fonction").selectOption({ index: 1 });
-  await p.getByLabel("Personnes accompagnées par an").selectOption({ index: 2 });
+  await p.getByLabel("Fonction (facultatif)").selectOption({ index: 1 });
   await p.getByLabel("Adresse électronique professionnelle").fill("alex.martin@exemple.fr");
-  await p.getByLabel(/J'accepte d'être recontacté/).check();
-  await p.getByRole("button", { name: "Envoyer ma demande" }).click(); await p.waitForTimeout(300);
+  check(await p.getByRole("checkbox").count() === 0, `[${tag}] formulaire : aucune case de recontact ne doit être obligatoire`);
+  await p.getByRole("button", { name: "Préparer ma demande" }).click(); await p.waitForTimeout(300);
   check(await p.getByRole("heading", { name: /votre demande est prête/ }).count() === 1, `[${tag}] formulaire : écran de confirmation absent`);
   await shot("14-demo-confirmation");
 
-  // Pied de page : lien FAQ
+  // Pied de page : liens vers les questions fréquentes et les pages « Vos données »
   await visit("#/");
-  await p.getByRole("navigation", { name: "Pages du site" }).getByRole("link", { name: "FAQ" }).click(); await p.waitForTimeout(400);
-  check(p.url().endsWith("#/a-propos/faq"), `[${tag}] lien FAQ du pied de page`);
+  await p.locator("footer").getByRole("link", { name: "Questions fréquentes" }).click(); await p.waitForTimeout(400);
+  check(p.url().endsWith("#/a-propos/faq"), `[${tag}] lien « Questions fréquentes » du pied de page`);
+  await visit("#/");
+  await p.locator("footer").getByRole("link", { name: "Accessibilité : non conforme" }).click(); await p.waitForTimeout(400);
+  check(p.url().endsWith("#/accessibilite"), `[${tag}] lien « Accessibilité : non conforme » du pied de page`);
+
+  // Pages « Vos données » et pages légales : titre, titre du document, pas de valeur inventée
+  const LEGAL = [["#/vos-donnees", "Vos données, vos choix"], ["#/vos-donnees/video", "Que devient ma vidéo ?"], ["#/vos-donnees/assistant", "Ce que fait l'assistant, et ce qu'il ne fait pas"],
+    ["#/vos-donnees/droits", "Vos droits"], ["#/vos-donnees/appareil", "Ce qui est gardé sur cet appareil"], ["#/vos-donnees/notice", "Information complète sur vos données"],
+    ["#/vos-donnees/coachs", "Coachs : vos données"], ["#/conditions", "Règles d'utilisation"], ["#/mentions-legales", "Mentions légales"], ["#/accessibilite", "Accessibilité"]];
+  for (const [h, t] of LEGAL) {
+    await visit(h);
+    const h1 = (await p.getByRole("heading", { level: 1 }).first().textContent()) || "";
+    check(h1.trim() === t, `[${tag}] ${h} : titre « ${t} » attendu, lu « ${h1.trim()} »`);
+    check((await p.title()).startsWith(t), `[${tag}] ${h} : titre du document non mis à jour (${await p.title()})`);
+    await overflow(h);
+  }
+  await visit("#/vos-donnees"); await shot("15-vos-donnees");
+  await visit("#/vos-donnees/notice"); await shot("16-notice");
+  check(await p.getByText("À compléter par l'organisme").count() > 0, `[${tag}] notice : emplacements « À compléter par l'organisme » absents`);
+  await visit("#/accessibilite");
+  check(await p.getByText(/non conforme/).count() > 0, `[${tag}] déclaration d'accessibilité : mention « non conforme » absente`);
+  await shot("17-accessibilite");
 
   errors.forEach(e => problems.push(`[${tag}] ${e}`));
   await ctx.close();

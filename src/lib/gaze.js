@@ -8,7 +8,7 @@
 
 import { FilesetResolver, FaceLandmarker } from "@mediapipe/tasks-vision";
 
-const WASM = import.meta.env.VITE_MEDIAPIPE_WASM || "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm";
+const WASM = import.meta.env.VITE_MEDIAPIPE_WASM || "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.2.3/wasm";
 const MODEL = import.meta.env.VITE_FACE_MODEL ||
   "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task";
 const EYE_KEYS = ["eyeLookDownLeft", "eyeLookDownRight", "eyeLookOutLeft", "eyeLookOutRight", "eyeLookInLeft", "eyeLookInRight"];
