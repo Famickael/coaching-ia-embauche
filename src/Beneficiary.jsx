@@ -76,8 +76,8 @@ function CodeEntry({ initial, onOk }) {
         <form onSubmit={submit}>
           <label htmlFor="code" style={{ font: `600 13px ${FB}`, color: T.navy, display: "block", textAlign: "left", marginBottom: 8 }}>Votre code d'accès</label>
           <input id="code" value={code} autoComplete="off" maxLength={6} onChange={e => { setCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "")); setErr(""); }} placeholder="6 caractères"
-            style={{ width: "100%", height: 56, padding: "0 18px", borderRadius: RAD.md, border: `1.5px solid ${err ? T.error : T.line}`, font: `700 22px ${FM}`, letterSpacing: ".25em", textAlign: "center", color: T.navy, background: T.bg }} />
-          {err && <div role="alert" style={{ font: `500 13px ${FB}`, color: T.error, marginTop: 8, textAlign: "left" }}>{err}</div>}
+            style={{ width: "100%", height: 56, padding: "0 18px", borderRadius: RAD.md, border: `1.5px solid ${err ? T.errorDk : T.line}`, font: `700 22px ${FM}`, letterSpacing: ".25em", textAlign: "center", color: T.navy, background: T.bg }} />
+          {err && <div role="alert" style={{ font: `500 13px ${FB}`, color: T.errorDk, marginTop: 8, textAlign: "left" }}>{err}</div>}
           <div style={{ marginTop: 20 }}><Btn kind="objective" size="lg" full disabled={code.length < 6}>Accéder à mon espace&nbsp;<Icon d={I.arrow} s={18} c="#fff" /></Btn></div>
         </form>
       </Card>
@@ -174,7 +174,7 @@ function Home({ p, takes, go, counselor, onQuit }) {
 
       <div style={{ marginTop: 28, paddingTop: 18, borderTop: `1px solid ${T.line}`, display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }} className="noprint">
         <button onClick={onQuit} style={{ font: `500 13px ${FB}`, color: T.muted, background: "none", border: "none", cursor: "pointer" }}>← Changer de code</button>
-        <button onClick={withdraw} style={{ font: `500 13px ${FB}`, color: T.error, background: "none", border: "none", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6 }}><Icon d={I.trash} s={14} c={T.error} /> Retirer mon consentement et supprimer mes données</button>
+        <button onClick={withdraw} style={{ font: `500 13px ${FB}`, color: T.errorDk, background: "none", border: "none", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6 }}><Icon d={I.trash} s={14} c={T.error} /> Retirer mon consentement et supprimer mes données</button>
       </div>
     </div>
   );

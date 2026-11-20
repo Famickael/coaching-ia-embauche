@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { T, GRAD, GRAD_MAIN, FD, FB, FM, RAD, SH, sp, RepetMark, Halo, Tag, Btn, Card, Icon, I } from "./ui.jsx";
+import { T, GRAD, GRAD_MAIN, FD, FB, FM, RAD, SH, sp, RepetMark, Halo, Tag, Btn, Card, Icon, I, LOCAL_ONLY } from "./ui.jsx";
 import { useInView, useReducedMotion, useCount, Reveal } from "./motion.jsx";
 
 /* Page d'accueil : à quoi sert l'outil, raconté au fil du défilement.
@@ -37,20 +37,19 @@ export const linkBtn = { font: `600 13px ${FB}`, color: T.primary, background: "
 
 /* ─── Héros ─── */
 function Hero({ go }) {
-  const [ref, v] = useInView({ threshold: 0 });
   return (
     <section style={{ position: "relative", overflow: "hidden", background: T.bg }}>
       <Halo style={{ width: 560, height: 560, background: `${T.blue}1A`, top: -180, right: -100 }} />
       <Halo style={{ width: 420, height: 420, background: `${T.primary}14`, top: 60, left: -180 }} />
       <Halo style={{ width: 260, height: 260, background: `${T.violet}14`, bottom: -80, right: 200 }} />
       <div className="rp-hero" style={{ position: "relative", maxWidth: 1200, margin: "0 auto", padding: "84px 24px 84px", display: "grid", gridTemplateColumns: "1.1fr .9fr", gap: 56, alignItems: "center" }}>
-        <div ref={ref} className={`rv ${v ? "is-in" : ""}`}>
+        <div className="up">
           <div style={{ display: "flex", gap: 8, marginBottom: sp(6), flexWrap: "wrap" }}>
-            <Tag tone="ai">✨ Assistant IA</Tag>
+            <Tag tone="ai"><Icon d={I.sparkle} s={12} c={T.violet} /> Assistant IA</Tag>
             <Tag tone="primary">Sans note, sans jugement</Tag>
           </div>
           <h1 className="rp-h1" style={{ font: `800 54px/1.05 ${FD}`, letterSpacing: "-.035em", margin: `0 0 ${sp(5)}px`, color: T.primary }}>
-            Répétez votre entretien d'embauche,<br /><span style={{ background: GRAD_MAIN, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>sans pression.</span>
+            Répétez votre entretien d'embauche,<br /><span style={{ paddingBottom: ".08em", background: GRAD_MAIN, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>sans pression.</span>
           </h1>
           <p style={{ font: `400 19px/1.6 ${FB}`, color: T.body, maxWidth: 520, margin: `0 0 ${sp(8)}px` }}>
             La Répét' vous permet de vous entraîner en autonomie, face à votre caméra. Un assistant <strong style={{ color: T.primary }}>décrit votre prise sans la noter</strong>, puis votre coach vous aide à aller plus loin.
@@ -60,7 +59,7 @@ function Hero({ go }) {
             <Btn kind="secondary" size="lg" onClick={() => go("#/fonctionnement")}>Voir le fonctionnement</Btn>
           </div>
           <div style={{ font: `500 13px ${FB}`, color: T.muted, marginTop: sp(5) }}>
-            Aucun compte à créer. Vous êtes coach ? <button onClick={() => go("#/coach")} style={linkBtn}>Accéder à l'espace coach</button>
+            Aucun compte à créer. Vous êtes coach ? <button onClick={() => go("#/coach")} style={{ ...linkBtn, padding: "8px 0" }}>Accéder à l'espace coach</button>
           </div>
         </div>
         <div className="rp-hero-vis"><HeroCard /></div>
@@ -90,13 +89,12 @@ function HeroCard() {
   return (
     <div style={{ position: "relative" }}>
       <div ref={ref} className={`hc ${v ? "is-in" : ""}`} role="img"
-        aria-label="Exemple de retour : frise d'une prise de 1 minute 32 avec trois repères, 148 mots par minute, 6 pauses. Aucune note.">
+        aria-label="Aperçu d'un retour : frise d'une prise de 1 minute 32 avec trois repères, 148 mots par minute, 6 pauses. Aucune note.">
         <Card pad={0} style={{ overflow: "hidden", boxShadow: SH.lg, borderRadius: RAD.xl }}>
           <div aria-hidden>
             <div style={{ background: GRAD, padding: "16px 20px", display: "flex", alignItems: "center", gap: 10 }}>
               <RepetMark s={28} white />
-              <div style={{ font: `700 15px ${FD}`, color: "#fff", letterSpacing: "-.01em" }}>Votre prise du jour</div>
-              <span style={{ marginLeft: "auto", font: `600 11px ${FB}`, color: "#fff", background: "rgba(255,255,255,.2)", padding: "4px 10px", borderRadius: RAD.pill }}>Exemple</span>
+              <div style={{ font: `700 15px ${FD}`, color: "#fff", letterSpacing: "-.01em" }}>Prise du 12 mars · Parlez-moi de vous</div>
             </div>
 
             <div style={{ padding: "18px 22px 8px" }}>
@@ -150,7 +148,7 @@ function HeroCard() {
       </div>
       <div className="rp-float" style={{ position: "absolute", bottom: -18, left: -18, background: "#fff", borderRadius: RAD.md, padding: "10px 14px", boxShadow: SH.lg, display: "flex", alignItems: "center", gap: 8 }}>
         <div style={{ width: 28, height: 28, borderRadius: "50%", background: T.accentBg, display: "grid", placeItems: "center" }}><Icon d={I.lock} s={14} c={T.accent} /></div>
-        <div style={{ font: `700 12px ${FB}`, color: T.primary }}>Analysé sur votre appareil</div>
+        <div style={{ font: `700 12px ${FB}`, color: T.primary }}>{LOCAL_ONLY ? "Analysé sur votre appareil" : "Vidéo conservée sur votre appareil"}</div>
       </div>
     </div>
   );
@@ -170,7 +168,9 @@ function Scrolly() {
   const refs = useRef([]);
   useEffect(() => {
     if (reduced) return;
-    const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) setActive(+e.target.dataset.i); }), { rootMargin: "-45% 0px -45% 0px", threshold: 0 });
+    // Sur téléphone, la scène occupe le haut de l'écran : le visuel change quand le texte suivant entre par le bas.
+    const mobile = window.matchMedia && window.matchMedia("(max-width:760px)").matches;
+    const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) setActive(+e.target.dataset.i); }), { rootMargin: mobile ? "-75% 0px -24% 0px" : "-45% 0px -45% 0px", threshold: 0 });
     refs.current.forEach(el => el && io.observe(el));
     return () => io.disconnect();
   }, [reduced]);
@@ -331,7 +331,7 @@ function NotDo() {
             <Card style={{ height: "100%" }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: sp(4) }}>
                 <div style={{ width: 44, height: 44, borderRadius: RAD.md, background: `${T.primary}10`, display: "grid", placeItems: "center" }}><Icon d={ic} s={20} c={T.primary} /></div>
-                <span className="strike" aria-hidden style={{ font: `500 13px ${FM}`, color: T.faint }}>{ghost}</span>
+                <span className="strike" aria-hidden style={{ font: `500 13px ${FM}`, color: T.muted }}>{ghost}</span>
               </div>
               <h3 style={{ font: `700 18px ${FD}`, margin: "0 0 6px", color: T.navy }}>{t}</h3>
               <p style={{ font: `400 14px/1.6 ${FB}`, color: T.body, margin: 0 }}>{d}</p>
@@ -350,7 +350,7 @@ function ForWho({ go }) {
       <div className="rp-stack" style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: sp(5) }}>
         <Reveal style={{ height: "100%" }}>
           <Card topbar style={{ height: "100%", display: "flex", flexDirection: "column", gap: 10 }}>
-            <h3 style={{ font: `700 20px ${FD}`, margin: "6px 0 0", color: T.navy }}>Vous êtes accompagné(e)</h3>
+            <h3 style={{ font: `700 20px ${FD}`, margin: "6px 0 0", color: T.navy }}>Un coach vous accompagne</h3>
             <p style={{ font: `400 15px/1.6 ${FB}`, color: T.body, margin: 0, flex: 1 }}>Votre coach vous a remis un code de 6 caractères. Il ouvre votre espace d'entraînement.</p>
             <div><Btn kind="objective" onClick={() => go("#/espace")}>J'ai un code&nbsp;<Icon d={I.arrow} s={16} c="#fff" /></Btn></div>
           </Card>
@@ -363,13 +363,12 @@ function ForWho({ go }) {
           </Card>
         </Reveal>
       </div>
-      <p style={{ font: `500 13px ${FB}`, color: T.muted, margin: `${sp(5)}px 0 0` }}>Pour les <strong style={{ color: T.primary }}>organismes d'accompagnement vers l'emploi</strong>.</p>
     </Section>
   );
 }
 
 /* ─── Bandeau final ─── */
-export function FinalBand({ title = "Prêt pour une première répétition ?", text = "Quelques minutes suffisent pour un premier essai.", children, openSpace, go }) {
+export function FinalBand({ title = "Prêt pour une première répétition ?", text = "Cinq minutes et votre code suffisent pour une première prise.", children, openSpace, go }) {
   return (
     <section style={{ padding: `${sp(18)}px 0 ${sp(20)}px` }}>
       <Reveal>
@@ -377,7 +376,7 @@ export function FinalBand({ title = "Prêt pour une première répétition ?", t
           <Halo style={{ width: 300, height: 300, background: "rgba(255,255,255,.18)", bottom: -120, right: -40 }} />
           <div style={{ position: "relative", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 24 }}>
             <div>
-              <h3 className="rp-h3" style={{ font: `800 30px ${FD}`, color: "#fff", margin: "0 0 8px", letterSpacing: "-.02em" }}>{title}</h3>
+              <h2 className="rp-h3" style={{ font: `800 30px ${FD}`, color: "#fff", margin: "0 0 8px", letterSpacing: "-.02em" }}>{title}</h2>
               <p style={{ font: `400 17px ${FB}`, color: "rgba(255,255,255,.9)", margin: 0 }}>{text}</p>
             </div>
             <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>

@@ -1,5 +1,5 @@
 import React, { useMemo, useRef, useState } from "react";
-import { T, GRAD_SOFT, FD, FB, FM, RAD, SH, Card, Tag, Btn, Back, Icon, I } from "./ui.jsx";
+import { T, GRAD_SOFT, FD, FB, FM, RAD, SH, Card, Tag, Btn, Back, Icon, I, ORG_NAME } from "./ui.jsx";
 import { useStore, TRIAL_LOGIN, setCounselor, logoutCounselor, createParcours, deleteParcours, takesOf, updateTake, parcoursStatus } from "./lib/store.js";
 import { Player, DimCard, markersOf, useVideoUrl } from "./Report.jsx";
 import { fmt } from "./lib/analysis.js";
@@ -42,6 +42,7 @@ export default function Counselor() {
 function Login() {
   const [email, setEmail] = useState(TRIAL_LOGIN.email);
   const [pwd, setPwd] = useState(TRIAL_LOGIN.password);
+  const [forgot, setForgot] = useState(false);
   const ok = /.+@.+\..+/.test(email) && pwd.length >= 4;
   const lab = { font: `600 13px ${FB}`, color: T.navy, display: "block", margin: "0 0 7px" };
   return (
@@ -51,10 +52,15 @@ function Login() {
       <p style={{ font: `400 14px/1.6 ${FB}`, color: T.body, margin: "0 0 20px" }}>Accédez à vos parcours et aux prises que l'on vous a envoyées.</p>
       <form onSubmit={e => { e.preventDefault(); if (ok) setCounselor(TRIAL_LOGIN.name); }}>
         <label htmlFor="login-email" style={lab}>Adresse électronique professionnelle</label>
-        <input id="login-email" type="email" autoComplete="username" value={email} onChange={e => setEmail(e.target.value)} style={inp} />
+        <input id="login-email" type="email" inputMode="email" autoCapitalize="none" autoCorrect="off" autoComplete="username" value={email} onChange={e => setEmail(e.target.value)} style={inp} />
         <label htmlFor="login-pwd" style={{ ...lab, marginTop: 14 }}>Mot de passe</label>
         <input id="login-pwd" type="password" autoComplete="current-password" value={pwd} onChange={e => setPwd(e.target.value)} style={inp} />
-        <div style={{ marginTop: 20 }}><Btn kind="primary" full disabled={!ok}>Se connecter</Btn></div>
+        <div style={{ textAlign: "right", marginTop: 8 }}>
+          <button type="button" onClick={() => setForgot(true)} style={{ font: `600 13px ${FB}`, color: T.primary, background: "none", border: "none", padding: "6px 0", cursor: "pointer", textDecoration: "underline", textUnderlineOffset: 3 }}>Mot de passe oublié ?</button>
+        </div>
+        {forgot && <div role="status" style={{ font: `400 13px/1.5 ${FB}`, color: T.navy, background: `${T.primary}0D`, borderRadius: RAD.sm, padding: "9px 12px", marginTop: 4 }}>Contactez votre référent pour réinitialiser votre mot de passe.</div>}
+        <div style={{ marginTop: 16 }}><Btn kind="primary" full disabled={!ok}>Se connecter</Btn></div>
+        <p style={{ font: `400 12px ${FB}`, color: T.muted, textAlign: "center", margin: "14px 0 0" }}>Accès réservé aux coachs de {ORG_NAME}.</p>
       </form>
     </Card>
   );

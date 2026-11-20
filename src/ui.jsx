@@ -14,7 +14,7 @@ const T = {
   violet: "#5C4BB9", lavender: "#736BDE",
   // Sémantique
   success: "#41C77A", successBg: "#E9F8F0",
-  error: "#FF5A72", errorBg: "#FFECEF",
+  error: "#FF5A72", errorDk: "#C62F47", errorBg: "#FFECEF", // errorDk : textes et bordures d'erreur (5,4:1)
   warning: "#FFB547", warningBg: "#FFF6E8",
   // Neutres
   bg: "#F8FAFC", surface: "#FFFFFF",
@@ -70,17 +70,18 @@ function RepetLogo({ s = 22, dark = false, tagline = true }) {
 const ORG_NAME = "Famickael";
 const ORG_LOGO_URL = null;
 function OrgLogo({ s = 10, dark = false }) {
-  const label = `Emplacement du logo de votre organisme (exemple : ${ORG_NAME})`;
   if (ORG_LOGO_URL) return <img src={ORG_LOGO_URL} alt={ORG_NAME} style={{ height: s * 3.2, width: "auto", display: "block" }} />;
   return (
-    <div title={label} aria-label={label} role="img" style={{ height: s * 3.2, padding: "0 12px", border: `1.5px dashed ${dark ? "rgba(255,255,255,.5)" : T.faint}`, borderRadius: 10, display: "inline-flex", alignItems: "center", flexShrink: 0 }}>
+    <div aria-label={ORG_NAME} role="img" style={{ height: s * 3.2, padding: "0 12px", border: `1.5px dashed ${dark ? "rgba(255,255,255,.5)" : T.faint}`, borderRadius: 10, display: "inline-flex", alignItems: "center", flexShrink: 0 }}>
       <span aria-hidden style={{ font: `700 ${s * 1.4}px ${FD}`, color: dark ? "#fff" : T.primary, letterSpacing: "-.01em" }}>{ORG_NAME}</span>
     </div>
   );
 }
 /* halo lumineux décoratif */
+// Dégradé radial plutôt qu'un flou (filter: blur coûte cher au défilement sur iPhone).
 function Halo({ style }) {
-  return <div style={{ position: "absolute", borderRadius: "50%", filter: "blur(60px)", pointerEvents: "none", ...style }} />;
+  const { background, ...rest } = style || {};
+  return <div style={{ position: "absolute", borderRadius: "50%", pointerEvents: "none", background: `radial-gradient(closest-side, ${background}, transparent)`, ...rest }} />;
 }
 
 /* ─── PRIMITIVES ───────────────────────────────────────────────────────── */
@@ -91,7 +92,7 @@ function Tag({ children, tone = "blue" }) {
     indigo: [T.primary, `${T.primary}12`], // alias rétro-compat
     ai: [T.violet, `${T.violet}14`], violet: [T.violet, `${T.violet}14`], lavender: [T.violet, `${T.violet}14`],
     appui: [T.accent, T.accentBg],
-    success: ["#1E7A4A", T.successBg], warning: ["#B5791A", T.warningBg], error: [T.error, T.errorBg], muted: [T.muted, T.lineLt],
+    success: ["#1E7A4A", T.successBg], warning: ["#B5791A", T.warningBg], error: [T.errorDk, T.errorBg], muted: [T.muted, T.lineLt],
   }[tone];
   return (
     <span style={{ font: `600 11px ${FB}`, letterSpacing: ".02em", color: m[0], background: m[1], padding: "5px 11px", borderRadius: RAD.pill, display: "inline-flex", alignItems: "center", gap: 5 }}>{children}</span>
@@ -212,9 +213,9 @@ const GStyle = () => (
     .hc.is-in .hc-note{animation:hcFade .3s ease 3.3s both}
     /* scène collante du défilement */
     .sc{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:56px}
-    .sc-scene{grid-column:2;grid-row:1;position:-webkit-sticky;position:sticky;top:96px;align-self:start;height:480px}
+    .sc-scene{grid-column:2;grid-row:1;position:-webkit-sticky;position:sticky;top:max(96px,calc(50vh - 200px));top:max(96px,calc(50svh - 200px));align-self:start;height:400px}
     .sc-steps{grid-column:1;grid-row:1}
-    .sc-step{min-height:80vh;min-height:80svh;display:flex;flex-direction:column;justify-content:center;opacity:.35;transition:opacity .3s}
+    .sc-step{min-height:80vh;min-height:80svh;display:flex;flex-direction:column;justify-content:center;opacity:.6;transition:opacity .3s}
     .sc-step.on{opacity:1}
     .sc-vis{position:absolute;inset:0;opacity:0;transform:translateY(12px);transition:opacity .45s cubic-bezier(.2,.7,.3,1),transform .45s cubic-bezier(.2,.7,.3,1);pointer-events:none}
     .sc-vis.on{opacity:1;transform:none}
@@ -232,9 +233,9 @@ const GStyle = () => (
     .sc-onl,.on .sc-off{opacity:0}
     .on .sc-onl{opacity:1}
     .strike{position:relative;display:inline-block}
-    .strike::after{content:"";position:absolute;left:-3px;right:-3px;top:50%;height:2px;background:currentColor;transform:scaleX(0);transform-origin:left;transition:transform .4s ease .2s}
+    .strike::after{content:"";position:absolute;left:-3px;right:-3px;top:50%;height:2px;background:${T.error};transform:scaleX(0);transform-origin:left;transition:transform .4s ease .2s}
     .is-in .strike::after{transform:scaleX(1)}
-    .is-in .strike{opacity:.45;transition:opacity .3s ease .6s}
+    .is-in .strike{opacity:.7;transition:opacity .3s ease .6s}
     .navlink{font:600 14px 'Inter','Segoe UI',sans-serif;color:${T.body};background:none;border:none;cursor:pointer;padding:8px 4px;text-decoration:none;text-underline-offset:6px;text-decoration-thickness:2px}
     .navlink:hover{color:${T.primary}}
     .rp-nav nav button{white-space:nowrap}
@@ -261,15 +262,22 @@ const GStyle = () => (
       .rp-head{padding:22px 20px!important}
       .rp-card-pad{padding-left:20px!important;padding-right:20px!important}
       .rp-hero-vis{max-width:440px;width:100%;margin:0 auto}
-      .rp-float{left:8px!important;bottom:-14px!important}
+      .rp-float{left:8px!important;bottom:-24px!important}
       .sc{display:block}
       .sc-scene{top:56px;height:min(44vh,320px);height:min(44svh,320px);z-index:2;background:${T.bg};padding:8px 0}
-      .sc-step{min-height:70vh;min-height:70svh}
+      .sc-step{min-height:60vh;min-height:60svh;justify-content:flex-start;padding-top:20px;opacity:1}
+      .sc-scene::after{content:"";position:absolute;left:0;right:0;top:100%;height:24px;background:linear-gradient(${T.bg},transparent);pointer-events:none}
       .rp-trust{display:grid!important;grid-template-columns:1fr 1fr;gap:10px 14px!important;font-size:12px!important}
       .rp-nav-pill-label{display:none}
+      .rp-nav-pill-icon{display:none}
       .rp-nav nav{gap:8px!important}
       .rp-nav nav .navlink{font-size:13px}
     }
+    @media (max-height:520px){
+      .sc-scene{position:static!important;height:300px!important}
+      .sc-step{min-height:0!important;padding:24px 0;opacity:1}
+    }
+    .rp-app{min-height:100vh;min-height:100svh}
     @media (max-width:360px){
       .rp-hide-xs{display:none!important}
     }
@@ -314,4 +322,7 @@ function GradHead({ tag, title, sub, action, soft }) {
 }
 
 
-export { T, GRAD_MAIN, GRAD_PREMIUM, GRAD_COACH, GRAD_AI, GRAD, GRAD_SOFT, GRAD_AI_SOFT, FD, FB, FM, RAD, SH, sp, RepetMark, RepetLogo, OrgLogo, ORG_NAME, Halo, Tag, Btn, Card, Back, Icon, I, GStyle, Rail, GradHead, LOGO_SYM, LOGO_WORD };
+// « Analyse sur votre appareil » n'est vrai que sans transcription ni reformulation par un serveur.
+const LOCAL_ONLY = !import.meta.env.VITE_STT_ENDPOINT && !import.meta.env.VITE_LLM_ENDPOINT;
+
+export { LOCAL_ONLY, T, GRAD_MAIN, GRAD_PREMIUM, GRAD_COACH, GRAD_AI, GRAD, GRAD_SOFT, GRAD_AI_SOFT, FD, FB, FM, RAD, SH, sp, RepetMark, RepetLogo, OrgLogo, ORG_NAME, Halo, Tag, Btn, Card, Back, Icon, I, GStyle, Rail, GradHead, LOGO_SYM, LOGO_WORD };

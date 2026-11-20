@@ -10,11 +10,11 @@ export default function HowItWorks({ go, openSpace }) {
     <main className="rp-pad" style={{ maxWidth: 1200, margin: "0 auto", padding: "36px 24px 0" }}>
       <Reveal>
         <div style={{ borderRadius: RAD.lg, overflow: "hidden" }}>
-          <GradHead soft tag="Fonctionnement" title="Du premier essai au débriefing" sub="Qui fait quoi, ce que l'assistant observe, et où vont les données." />
+          <GradHead soft tag="Fonctionnement" title="De la première prise au débriefing" sub="Qui fait quoi, ce que l'assistant observe, et où vont les données." />
         </div>
       </Reveal>
 
-      <Section eyebrow="Le déroulé" title="Un seul lien, du premier essai au débriefing">
+      <Section eyebrow="Le déroulé" title="Un seul lien pour tout le parcours">
         <Reveal><Flow /></Reveal>
       </Section>
 
@@ -43,7 +43,7 @@ export default function HowItWorks({ go, openSpace }) {
         </div>
       </Section>
 
-      <Section eyebrow="Pour la DSI et le juridique" title="Réalisable et hébergé en interne, sans prestataire">
+      <Section eyebrow="Données et hébergement" title="Hébergé par votre organisme, sans prestataire">
         <div className="rp-stack" style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: sp(5) }}>
           <Reveal style={{ height: "100%" }}><Proof icon={I.lock} t="Analyse locale, transmission maîtrisée" b="L'analyse de la posture tourne dans le navigateur (MediaPipe). La vidéo n'est transmise et stockée que si le bénéficiaire choisit de la partager à son coach, jamais à son insu." /></Reveal>
           <Reveal delay={90} style={{ height: "100%" }}><Proof icon={I.shield} t="Texte traité dans le navigateur" b="La transcription (Whisper) et l'analyse descriptive tournent dans le navigateur. Une reformulation par un modèle hébergé en France (par exemple Mistral) peut être activée ; elle ne reçoit que du texte." /></Reveal>
@@ -100,7 +100,7 @@ function Flow() {
   const steps = [
     { n: 1, who: "Coach", t: "crée un parcours", d: "et génère un lien", c: T.primary },
     { n: 2, who: "Bénéficiaire", t: "ouvre le lien", d: "saisit son code", c: T.blue },
-    { n: 3, who: "Bénéficiaire", t: "s'entraîne seul", d: "retour IA bienveillant", c: T.violet },
+    { n: 3, who: "Bénéficiaire", t: "s'entraîne seul", d: "l'assistant décrit la prise", c: T.violet },
     { n: 4, who: "Bénéficiaire", t: "partage sa prise", d: "quand il le décide", c: T.accent },
     { n: 5, who: "Coach", t: "annote", d: "contextualise, nuance", c: T.primary },
     { n: 6, who: "Ensemble", t: "débriefing en atelier", d: "en présentiel", c: T.blue },

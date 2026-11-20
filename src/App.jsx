@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { T, FD, FB, FM, RAD, SH, sp, RepetLogo, OrgLogo, Tag, Btn, Card, Icon, I, GStyle } from "./ui.jsx";
+import { T, FD, FB, FM, RAD, SH, sp, RepetLogo, OrgLogo, Tag, Btn, Card, Icon, I, GStyle, LOCAL_ONLY } from "./ui.jsx";
 import { LegalModal } from "./legal.jsx";
 import Home from "./Home.jsx";
 import HowItWorks from "./HowItWorks.jsx";
@@ -55,7 +55,7 @@ export default function App() {
   };
 
   return (
-    <div style={{ minHeight: "100vh", background: T.bg, fontFamily: FB, color: T.ink, display: "flex", flexDirection: "column" }}>
+    <div className="rp-app" style={{ background: T.bg, fontFamily: FB, color: T.ink, display: "flex", flexDirection: "column" }}>
       <GStyle />
       <Nav route={route} s={s} />
       <div style={{ flex: 1 }}>
@@ -90,9 +90,9 @@ function Nav({ route, s }) {
           <a href="#/fonctionnement" className={`navlink rp-hide-xs ${inSpace ? "rp-hide-m" : ""} ${route.role === "how" ? "on" : ""}`}>Fonctionnement</a>
           {inSpace ? (
             <div style={{ display: "flex", alignItems: "center", gap: 6, background: "#fff", border: `1px solid ${T.line}`, borderRadius: RAD.pill, padding: "4px 4px 4px 12px", boxShadow: SH.xs }}>
-              <Icon d={I.user} s={15} c={T.primary} />
+              <span className="rp-nav-pill-icon" style={{ display: "inline-flex" }}><Icon d={I.user} s={15} c={T.primary} /></span>
               <span className="rp-nav-pill-label" style={{ font: `600 13px ${FB}`, color: T.navy, whiteSpace: "nowrap" }}>{label}</span>
-              <button onClick={() => go("#/espace")} aria-label="Changer d'espace" style={{ font: `600 12.5px ${FB}`, color: T.primary, background: `${T.primary}10`, border: "none", borderRadius: RAD.pill, padding: "7px 12px", cursor: "pointer" }}>Changer</button>
+              <button onClick={() => go("#/espace")} aria-label="Changer d'espace" style={{ font: `600 12.5px ${FB}`, color: T.primary, background: `${T.primary}10`, border: "none", borderRadius: RAD.pill, padding: "7px 12px", cursor: "pointer", whiteSpace: "nowrap" }}>Changer d'espace</button>
             </div>
           ) : (
             <Btn kind="primary" size="sm" onClick={openSpace}><span className="rp-hide-m" style={{ display: "inline-flex" }}><Icon d={I.user} s={16} c="#fff" /></span>Mon espace</Btn>
@@ -126,8 +126,8 @@ function Espace() {
               <label htmlFor="espace-code" style={{ font: `600 13px ${FB}`, color: T.navy, display: "block", marginBottom: 8 }}>Votre code d'accès</label>
               <input id="espace-code" value={code} autoComplete="off" maxLength={6} placeholder="6 caractères"
                 onChange={e => { setCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "")); setErr(""); }}
-                style={{ width: "100%", height: 54, padding: "0 18px", borderRadius: RAD.md, border: `1.5px solid ${err ? T.error : T.line}`, font: `700 21px ${FM}`, letterSpacing: ".25em", textAlign: "center", color: T.navy, background: T.bg }} />
-              {err && <div role="alert" style={{ font: `500 13px ${FB}`, color: T.error, marginTop: 8 }}>{err}</div>}
+                style={{ width: "100%", height: 54, padding: "0 18px", borderRadius: RAD.md, border: `1.5px solid ${err ? T.errorDk : T.line}`, font: `700 21px ${FM}`, letterSpacing: ".25em", textAlign: "center", color: T.navy, background: T.bg }} />
+              {err && <div role="alert" style={{ font: `500 13px ${FB}`, color: T.errorDk, marginTop: 8 }}>{err}</div>}
               <div style={{ marginTop: 16 }}><Btn kind="objective" full disabled={code.length < 6}>Ouvrir mon espace&nbsp;<Icon d={I.arrow} s={17} c="#fff" /></Btn></div>
             </form>
           </Card>
@@ -144,8 +144,6 @@ function Espace() {
 }
 
 /* ─── Pied de page (non collant) ─── */
-// « Analyse sur votre appareil » n'est vrai que sans transcription ni reformulation par un serveur.
-const LOCAL_ONLY = !import.meta.env.VITE_STT_ENDPOINT && !import.meta.env.VITE_LLM_ENDPOINT;
 
 function Footer({ setModal }) {
   const trust = [
@@ -163,7 +161,6 @@ function Footer({ setModal }) {
           <RepetLogo s={14} tagline={false} />
           <div style={{ width: 1, height: 26, background: T.line }} />
           <OrgLogo s={9} />
-          <span style={{ font: `400 11px ${FB}`, color: T.muted }}>Emplacement du logo de votre organisme</span>
         </div>
         <div className="rp-trust" style={{ display: "flex", gap: 18, font: `500 12px ${FB}`, color: T.body, flexWrap: "wrap" }}>
           {trust.map(([ic, l]) => <span key={l} style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><Icon d={ic} s={14} c={T.primary} /> {l}</span>)}
