@@ -142,7 +142,7 @@ export function ReportBody({ take, mode, counselorName }) {
   return (
     <div>
       {intro}
-      <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1.3fr) minmax(0,1fr)", gap: 16 }}>
+      <div className="rp-split" style={{ display: "grid", gridTemplateColumns: "minmax(0,1.3fr) minmax(0,1fr)", gap: 16 }}>
         <div>
           <Player take={take} url={url} markers={markers} active={active} onActive={setActive} playerRef={playerRef} />
           <div style={{ marginTop: 12 }}>{synth}</div>

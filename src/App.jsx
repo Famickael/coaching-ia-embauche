@@ -51,13 +51,13 @@ function Nav({ role, setRole, setModal }) {
   const tabs = [["home", "Présentation"], ["benef", "Bénéficiaire"], ["coach", "Coach"]];
   return (
     <header style={{ position: "sticky", top: 0, zIndex: 50, background: "rgba(248,250,252,.82)", backdropFilter: "blur(14px)", borderBottom: `1px solid ${T.line}` }}>
-      <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px", height: 64, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+      <div className="rp-nav" style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px", height: 64, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 18, cursor: "pointer" }} onClick={() => setRole("home")}>
           <RepetLogo s={17} tagline={false} />
-          <div style={{ width: 1, height: 30, background: T.line }} />
-          <TSLogo s={10} />
+          <div className="rp-hide-m" style={{ width: 1, height: 30, background: T.line }} />
+          <span className="rp-hide-m"><TSLogo s={10} /></span>
         </div>
-        <nav style={{ display: "flex", gap: 4, background: "#fff", padding: 4, borderRadius: RAD.pill, boxShadow: SH.xs }}>
+        <nav className="rp-tabs" style={{ display: "flex", gap: 4, background: "#fff", padding: 4, borderRadius: RAD.pill, boxShadow: SH.xs }}>
           {tabs.map(([k, l]) => (
             <button key={k} onClick={() => setRole(k)} style={{
               font: `600 13px ${FB}`, padding: "8px 16px", borderRadius: RAD.pill, border: "none", cursor: "pointer",
@@ -80,13 +80,13 @@ function Landing({ setRole, setModal }) {
         <Halo style={{ width: 560, height: 560, background: `${T.blue}1A`, top: -180, right: -100 }} />
         <Halo style={{ width: 420, height: 420, background: `${T.primary}14`, top: 60, left: -180 }} />
         <Halo style={{ width: 260, height: 260, background: `${T.violet}14`, bottom: -80, right: 200 }} />
-        <div style={{ position: "relative", maxWidth: 1200, margin: "0 auto", padding: "84px 24px 76px", display: "grid", gridTemplateColumns: "1.1fr .9fr", gap: 56, alignItems: "center" }}>
+        <div className="rp-hero" style={{ position: "relative", maxWidth: 1200, margin: "0 auto", padding: "84px 24px 76px", display: "grid", gridTemplateColumns: "1.1fr .9fr", gap: 56, alignItems: "center" }}>
           <div className="up">
             <div style={{ display: "flex", gap: 8, marginBottom: sp(6) }}>
               <Tag tone="ai">✨ Coach IA</Tag>
               <Tag tone="success">Conçu pour l'AI Act et le RGPD</Tag>
             </div>
-            <h1 style={{ font: `800 56px/1.05 ${FD}`, letterSpacing: "-.035em", margin: `0 0 ${sp(5)}px`, color: T.primary }}>
+            <h1 className="rp-h1" style={{ font: `800 56px/1.05 ${FD}`, letterSpacing: "-.035em", margin: `0 0 ${sp(5)}px`, color: T.primary }}>
               Préparez votre entretien,<br /><span style={{ background: GRAD_MAIN, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>sans pression.</span>
             </h1>
             <p style={{ font: `400 19px/1.6 ${FB}`, color: T.body, maxWidth: 520, margin: `0 0 ${sp(8)}px` }}>
@@ -100,19 +100,19 @@ function Landing({ setRole, setModal }) {
               Pour les <strong style={{ color: T.primary }}>organismes d'accompagnement vers l'emploi</strong>
             </div>
           </div>
-          <div className="up" style={{ position: "relative" }}>
+          <div className="up rp-hide-m" style={{ position: "relative" }}>
             <HeroVisual />
           </div>
         </div>
       </section>
 
-      <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px" }}>
+      <div className="rp-pad" style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px" }}>
         <Section eyebrow="Le déroulé" title="Un seul lien, du premier essai au débriefing">
           <Flow />
         </Section>
 
         <Section eyebrow="Pour la DSI & le juridique" title="Réalisable et hébergé en interne, sans prestataire">
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: sp(5) }}>
+          <div className="rp-stack" style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: sp(5) }}>
             <Proof icon={I.lock} t="Analyse locale, transmission maîtrisée" b="L'analyse de la posture tourne dans le navigateur (MediaPipe). La vidéo n'est transmise et stockée que si le bénéficiaire choisit de la partager à son coach, jamais à son insu." />
             <Proof icon={I.shield} t="Texte traité en souveraineté" b="La transcription (Whisper) et l'analyse descriptive tournent dans le navigateur. Une reformulation par un modèle hébergé en France (par exemple Mistral) peut être activée ; elle ne reçoit que du texte." />
             <Proof icon={I.sparkle} t="Conçu pour être hébergé en interne" b="Application développée et opérée par l'organisme d'accompagnement lui-même. Briques standards, maîtrisables par une équipe interne." />
@@ -120,7 +120,7 @@ function Landing({ setRole, setModal }) {
         </Section>
 
         <Section eyebrow="Le parti pris" title="Un coach qui rend autonome, pas conforme">
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: sp(5) }}>
+          <div className="rp-stack" style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: sp(5) }}>
             <Princ n="01" t="Décrire, jamais noter" d="« Vous regardez vers le bas 40 % du temps » plutôt que « contact visuel insuffisant ». La personne observe, et décide elle-même quoi en faire." />
             <Princ n="02" t="Des conventions, pas des vérités" d="Chaque repère est une convention de secteur, variable selon le poste et la culture, jamais une qualité personnelle universelle." />
             <Princ n="03" t="L'humain garde la main" d="Le coach relit les prises que la personne choisit de lui envoyer : il contextualise, nuance et annote avant de renvoyer le rapport." />
@@ -129,11 +129,11 @@ function Landing({ setRole, setModal }) {
         </Section>
 
         <section style={{ padding: `${sp(4)}px 0 ${sp(20)}px` }}>
-          <div style={{ position: "relative", borderRadius: RAD.xl, padding: "52px 48px", overflow: "hidden", background: GRAD, boxShadow: SH.lg }}>
+          <div className="rp-cta" style={{ position: "relative", borderRadius: RAD.xl, padding: "52px 48px", overflow: "hidden", background: GRAD, boxShadow: SH.lg }}>
             <Halo style={{ width: 300, height: 300, background: "rgba(255,255,255,.18)", bottom: -120, right: -40 }} />
             <div style={{ position: "relative", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 24 }}>
               <div>
-                <h3 style={{ font: `800 30px ${FD}`, color: "#fff", margin: "0 0 8px", letterSpacing: "-.02em" }}>Prêt à voir comment ça marche ?</h3>
+                <h3 className="rp-h3" style={{ font: `800 30px ${FD}`, color: "#fff", margin: "0 0 8px", letterSpacing: "-.02em" }}>Prêt à voir comment ça marche ?</h3>
                 <p style={{ font: `400 17px ${FB}`, color: "rgba(255,255,255,.9)", margin: 0 }}>Créez un parcours côté coach, puis ouvrez le lien côté bénéficiaire.</p>
               </div>
               <Btn kind="objective" size="lg" onClick={() => setRole("benef")}>Commencer&nbsp;<Icon d={I.arrow} s={18} c="#fff" /></Btn>
@@ -186,9 +186,9 @@ function HeroVisual() {
 }
 
 const Section = ({ eyebrow, title, children }) => (
-  <section style={{ padding: `${sp(18)}px 0 0` }}>
+  <section className="rp-section" style={{ padding: `${sp(18)}px 0 0` }}>
     <div style={{ font: `700 12px ${FB}`, letterSpacing: ".1em", textTransform: "uppercase", color: T.primary, marginBottom: sp(2) }}>{eyebrow}</div>
-    <h2 style={{ font: `800 34px/1.1 ${FD}`, letterSpacing: "-.03em", margin: 0, color: T.navy }}>{title}</h2>
+    <h2 className="rp-h2" style={{ font: `800 34px/1.1 ${FD}`, letterSpacing: "-.03em", margin: 0, color: T.navy }}>{title}</h2>
     <div style={{ marginTop: sp(8) }}>{children}</div>
   </section>
 );
@@ -224,10 +224,10 @@ function Flow() {
     { n: 7, who: "Bénéficiaire", t: "peut recommencer", d: "même après l'atelier", c: T.orange },
   ];
   return (
-    <div style={{ display: "flex", overflowX: "auto", paddingBottom: sp(2), gap: 0 }}>
+    <div className="rp-flow" style={{ display: "flex", overflowX: "auto", paddingBottom: sp(2), gap: 0 }}>
       {steps.map((s, i) => (
         <React.Fragment key={i}>
-          <div style={{ flex: "1 0 146px", minWidth: 146 }}>
+          <div className="rp-flow-step" style={{ flex: "1 0 146px", minWidth: 146 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 9, marginBottom: sp(2) }}>
               <span style={{ width: 28, height: 28, borderRadius: "50%", background: s.c, color: "#fff", display: "grid", placeItems: "center", font: `700 12px ${FM}`, flexShrink: 0 }}>{s.n}</span>
               <span style={{ font: `700 10.5px ${FB}`, textTransform: "uppercase", letterSpacing: ".05em", color: s.c }}>{s.who}</span>
@@ -235,7 +235,7 @@ function Flow() {
             <div style={{ font: `700 15px ${FD}`, marginBottom: 2, color: T.navy }}>{s.t}</div>
             <div style={{ font: `400 13px ${FB}`, color: T.body }}>{s.d}</div>
           </div>
-          {i < steps.length - 1 && <div style={{ flexShrink: 0, alignSelf: "flex-start", marginTop: 4, color: T.faint, padding: "0 6px" }}><Icon d={I.arrow} s={16} c={T.faint} /></div>}
+          {i < steps.length - 1 && <div className="rp-hide-m" style={{ flexShrink: 0, alignSelf: "flex-start", marginTop: 4, color: T.faint, padding: "0 6px" }}><Icon d={I.arrow} s={16} c={T.faint} /></div>}
         </React.Fragment>
       ))}
     </div>
@@ -251,7 +251,7 @@ function Footer({ setModal }) {
   const links = [["cgu", "Conditions d'utilisation"], ["rgpd", "Protection des données"], ["lifecycle", "Cycle de vie de la vidéo"]];
   return (
     <footer style={{ borderTop: `1px solid ${T.line}`, background: "#fff", marginTop: sp(10) }}>
-      <div style={{ maxWidth: 1200, margin: "0 auto", padding: "24px 24px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 18 }}>
+      <div className="rp-pad" style={{ maxWidth: 1200, margin: "0 auto", padding: "24px 24px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 18 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
           <RepetLogo s={14} tagline={false} />
           <div style={{ width: 1, height: 26, background: T.line }} />
@@ -264,7 +264,7 @@ function Footer({ setModal }) {
         </div>
       </div>
       <div style={{ borderTop: `1px solid ${T.lineLt}` }}>
-        <div style={{ maxWidth: 1200, margin: "0 auto", padding: "14px 24px 16px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
+        <div className="rp-pad" style={{ maxWidth: 1200, margin: "0 auto", padding: "14px 24px 16px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
           <div style={{ font: `400 11px ${FB}`, color: T.muted }}>
             La Répét' · prototype de coaching IA à l'entretien d'embauche
           </div>
