@@ -82,7 +82,7 @@ require("fs").mkdirSync(SC, { recursive: true });
   const record = async n => {
     await click("Activer la caméra"); await p.waitForTimeout(800);
     await click("Démarrer l'enregistrement"); await p.waitForTimeout(4500); await shot(`04-enregistrement-q${n}`);
-    await click("■ Arrêter"); await p.waitForTimeout(800); await shot(`05-relecture-q${n}`);
+    await click("Arrêter"); await p.waitForTimeout(800); await shot(`05-relecture-q${n}`);
     await click("Voir mon retour");
     await p.getByText("Comment préférez-vous le découvrir ?").waitFor({ timeout: 30000 });
   };
