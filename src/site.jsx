@@ -202,6 +202,7 @@ export const SiteStyle = () => (
     @keyframes rsSeg{0%,40%{transform:none}50%,90%{transform:translateX(100%)}100%{transform:none}}
     .rs-seg>span{position:relative;text-align:center;padding:8px 4px;font:600 12px/1.3 ${FB};color:${T.navy}}
     @media (max-width:760px){
+      .rs-card-pos{right:8px!important;width:min(310px,calc(100% - 16px))!important}
       .rs-fcards{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;gap:16px;margin:0 -16px;padding:4px 16px 16px;scroll-padding:0 16px;-webkit-overflow-scrolling:touch}
       .rs-fcard{flex:0 0 82%;scroll-snap-align:start}
       .rs-phrase-in{top:${HEADER_H_M}px;height:calc(100vh - ${HEADER_H_M}px);height:calc(100svh - ${HEADER_H_M}px)}

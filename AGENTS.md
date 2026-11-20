@@ -45,6 +45,7 @@ npm ci
 npm run build
 npm run test:analysis
 node tests/assistant.test.mjs
+npm run test:site     # pages publiques, si Chromium est disponible
 # si Chromium est disponible :
 npm run test:e2e
 E2E_VIEWPORT=390x844 npm run test:e2e

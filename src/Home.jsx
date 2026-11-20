@@ -136,7 +136,7 @@ function Scene({ sc, on, first }) {
           </div>
           <div style={{ ...TY.h3, color: T.navy }}>{b.text}</div>
         </div>
-        <div className="rs-pop d2" style={{ position: "absolute", right: -16, bottom: -28, width: "min(310px, 86%)" }}>
+        <div className="rs-pop d2 rs-card-pos" style={{ position: "absolute", right: -16, bottom: -28, width: "min(310px, 86%)" }}>
           {sc.card === "debrief" && <DebriefCard />}
           {sc.card === "reperes" && <ReperesCard />}
           {sc.card === "rapport" && <RapportCard />}
