@@ -12,8 +12,8 @@ Le principe : le coach crée un parcours et transmet un code (ou un lien). La pe
 
 | Expérience | Lien | Accès |
 |---|---|---|
-| **Côté bénéficiaire** | https://famickael.github.io/coaching-ia-embauche/#/s/REPETE | code d'essai **`REPETE`**, déjà rempli dans le lien |
-| **Côté coach** | https://famickael.github.io/coaching-ia-embauche/#/coach | identification automatique avec le nom « Coach d'essai » |
+| **Côté bénéficiaire** | https://famickael.github.io/la-repet/#/s/REPETE | code d'essai **`REPETE`**, déjà rempli dans le lien |
+| **Côté coach** | https://famickael.github.io/la-repet/#/coach | identification automatique avec le nom « Coach d'essai » |
 
 Pour voir la boucle complète, ouvre les deux liens **dans le même navigateur** (deux onglets) : enregistre une prise côté bénéficiaire et envoie-la, elle apparaît « À relire » côté coach ; annote-la et envoie le rapport, il apparaît dans l'espace bénéficiaire. Le code `REPETE` est aussi pré-rempli dans l'écran de saisie du code, et le nom « Coach d'essai » dans l'écran d'identification du coach.
 
@@ -29,7 +29,7 @@ npm run dev          # http://localhost:5173
 npm run build        # production dans dist/ (chemins relatifs, déployable sur un hébergement statique)
 ```
 
-Publication : le workflow `.github/workflows/pages.yml` construit et publie le site sur GitHub Pages à chaque envoi sur `main` (réglage du dépôt : Pages, source « GitHub Actions »). Adresse : https://famickael.github.io/coaching-ia-embauche/. Si le site affiche une page blanche, vérifier ce réglage : avec la source « Deploy from a branch », GitHub publie les fichiers sources bruts (`index.html` pointe alors vers `/src/main.jsx`, introuvable) à la place de la version construite. GitHub Pages ne permet pas d'activer l'isolation inter-origines (en-têtes COOP/COEP) : Whisper y tourne sur un seul cœur, ou sur WebGPU quand le navigateur le propose.
+Publication : le workflow `.github/workflows/pages.yml` construit et publie le site sur GitHub Pages à chaque envoi sur `main` (réglage du dépôt : Pages, source « GitHub Actions »). Adresse : https://famickael.github.io/la-repet/. Si le site affiche une page blanche, vérifier ce réglage : avec la source « Deploy from a branch », GitHub publie les fichiers sources bruts (`index.html` pointe alors vers `/src/main.jsx`, introuvable) à la place de la version construite. GitHub Pages ne permet pas d'activer l'isolation inter-origines (en-têtes COOP/COEP) : Whisper y tourne sur un seul cœur, ou sur WebGPU quand le navigateur le propose.
 
 Parcours de prise en main :
 
