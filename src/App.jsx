@@ -264,10 +264,7 @@ function Footer({ setModal }) {
         </div>
       </div>
       <div style={{ borderTop: `1px solid ${T.lineLt}` }}>
-        <div className="rp-pad" style={{ maxWidth: 1200, margin: "0 auto", padding: "14px 24px 16px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
-          <div style={{ font: `400 11px ${FB}`, color: T.muted }}>
-            La Répét' · prototype de coaching IA à l'entretien d'embauche
-          </div>
+        <div className="rp-pad" style={{ maxWidth: 1200, margin: "0 auto", padding: "14px 24px 16px", display: "flex", justifyContent: "flex-end", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
           <div style={{ display: "flex", gap: 18, flexWrap: "wrap" }}>
             {links.map(([k, l]) => (
               <button key={k} onClick={() => setModal && setModal(k)} style={{ font: `500 12px ${FB}`, color: T.primary, background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline", textUnderlineOffset: 2 }}>{l}</button>
