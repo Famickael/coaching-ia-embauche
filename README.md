@@ -50,8 +50,11 @@ Au premier enregistrement analysé, le navigateur télécharge le modèle de tra
 |---|---|
 | Accès sans compte par code ou lien | `store.createParcours` génère un code aléatoire (alphabet sans caractères ambigus) ; route `#/s/CODE` dans `App.jsx` |
 | Consentement granulaire, tracé et retirable | écran `Consent` (`Beneficiary.jsx`) ; `withdrawConsent` supprime prises et vidéos |
-| Échauffement sans analyse ni conservation | `Warmup` : la prise n'est jamais enregistrée |
-| Questions contextualisées par le poste visé, ou question libre | `src/lib/questions.js` |
+| Échauffement ni enregistré ni analysé | `Warmup` (`Beneficiary.jsx`) et `WarmupStage.jsx` : aperçu en direct sans `MediaRecorder`, une phrase à la fois tirée au hasard (`WARMUP_PHRASES`, relances `WARMUP_PROMPTS`), astuces, questionnaire de fin gardé sur l'appareil (`saveWarmupDebrief`, clé séparée) |
+| Fond flou ou couleur unie pendant l'échauffement, en local | `src/lib/background.js` (MediaPipe Image Segmenter, modèle selfie segmenter, rendu sur canvas) ; option désactivée si le modèle ne charge pas |
+| Choix du métier visé avec autocomplétion | `JobField` (combobox accessible) et `src/lib/jobs.js` (environ 150 métiers, recherche sans accents), saisie libre ; met à jour `poste` du parcours |
+| Assistant conversationnel (fonctionnement du site, préparation d'entretien) | `src/Assistant.jsx` et `src/lib/assistant.js` : moteur local (53 sujets, relances « un exemple ? », « pourquoi ? », « et pour… ? ») ou modèle de langage via `VITE_LLM_ENDPOINT`, sortie filtrée par `isCompliant()` |
+| Sélection de plusieurs questions, contextualisées par le poste visé, et ajout de questions personnelles | `Pick` puis enchaînement question par question (`ctx.queue`), « Question suivante (2/N) », arrêt possible ; `src/lib/questions.js` |
 | Enregistrement caméra + micro, ou micro seul | `Recorder.jsx` : `getUserMedia` + `MediaRecorder` (webm, mp4 sur Safari), 3 min maximum, relecture avant validation |
 | Transcription horodatée **dans le navigateur** | `src/lib/whisper.worker.js` (transformers.js, Whisper base, WebGPU si disponible, sinon WASM), ou service serveur via `VITE_STT_ENDPOINT` |
 | Suivi du regard et de la présence dans le cadre, en local | `src/lib/gaze.js` (MediaPipe Face Landmarker, 2 images par seconde) |
@@ -85,6 +88,8 @@ src/
   Beneficiary.jsx     espace bénéficiaire : code, consentement, espace, échauffement, question, enregistrement, traitement, rapport, partage
   Counselor.jsx       espace coach : identification locale, liste et indicateurs, création de parcours, détail, relecture
   Recorder.jsx        enregistreur caméra/micro + déclenchement du suivi du regard
+  WarmupStage.jsx     aperçu de l'échauffement (caméra ou voix seule, fond), sans enregistrement
+  Assistant.jsx       fil de conversation avec l'assistant (échauffement, questionnaire, retour)
   Report.jsx          lecteur avec repères, cartes d'observation, corps du rapport (partagé par les deux espaces)
   lib/
     store.js          données : localStorage (« larepet.v1 ») pour les métadonnées, IndexedDB (« larepet ») pour les vidéos
@@ -92,7 +97,10 @@ src/
     transcribe.js     décodage audio 16 kHz + transcription locale (worker) ou serveur
     whisper.worker.js Whisper dans un Web Worker
     gaze.js           MediaPipe Face Landmarker (présence, orientation de la tête, direction des yeux)
-    questions.js      banque de questions
+    questions.js      banque de questions, phrases et relances d'échauffement, sujets du questionnaire de fin
+    jobs.js           liste des métiers et recherche pour l'autocomplétion
+    assistant.js      assistant : base de connaissances locale, relances, appel facultatif au modèle de langage
+    background.js     fond flou ou uni pendant l'échauffement (MediaPipe Image Segmenter)
 tests/
   analysis.test.mjs   test unitaire de l'analyse et du garde-fou (npm run test:analysis)
   run-e2e.mjs         test de bout en bout Playwright avec caméra et transcription simulées (npm run test:e2e)
@@ -125,7 +133,7 @@ Toutes les variables sont facultatives. Sans elles, l'application fonctionne ent
 | `VITE_STT_ENDPOINT`, `VITE_STT_MODEL` | transcription serveur, format OpenAI `audio/transcriptions` (`verbose_json`, segments), par exemple un proxy vers un modèle hébergé en France |
 | `VITE_WHISPER_MODEL`, `VITE_MODELS_BASE_URL` | modèle Whisper local et hébergement des modèles |
 | `VITE_LLM_ENDPOINT`, `VITE_LLM_MODEL` | reformulation par un modèle de langage via un proxy compatible « chat completions » ; la clé reste côté serveur |
-| `VITE_MEDIAPIPE_WASM`, `VITE_FACE_MODEL` | fichiers MediaPipe auto-hébergés |
+| `VITE_MEDIAPIPE_WASM`, `VITE_FACE_MODEL`, `VITE_SEGMENTER_MODEL` | fichiers MediaPipe auto-hébergés (suivi du visage, détourage pour le fond de l'échauffement) |
 
 ---
 
@@ -170,12 +178,13 @@ Limites connues :
 
 ```bash
 npm run test:analysis                                   # analyse et garde-fou, sans navigateur
+node tests/assistant.test.mjs                           # assistant local : conformité de toutes les réponses, relances
 npx playwright install chromium && npm run test:e2e     # parcours complet dans Chromium
 # ou, avec un Chromium déjà installé : CHROMIUM_PATH=/chemin/vers/chromium npm run test:e2e
 E2E_VIEWPORT=390x844 npm run test:e2e                 # même parcours en taille téléphone, échoue si une page déborde en largeur
 ```
 
-Le test de bout en bout construit l'application avec un service de transcription simulé (`tests/mock-stt.mjs`), utilise la caméra et le micro simulés de Chromium, rejoue la boucle complète (création du parcours, consentement, enregistrement, analyse, rapport vidéo, envoi, relecture et annotation, envoi du rapport, lecture du rapport final) et enregistre des captures dans `tests/screenshots/`.
+Le test de bout en bout construit l'application avec un service de transcription simulé (`tests/mock-stt.mjs`), utilise la caméra et le micro simulés de Chromium, rejoue la boucle complète (création du parcours, consentement, choix du métier, échauffement avec phrase aléatoire, assistant et questionnaire de fin, sélection de deux questions dont une personnelle, enregistrement des deux réponses à la suite, analyse, rapport vidéo, envoi, relecture et annotation, envoi du rapport, lecture du rapport final) et enregistre des captures dans `tests/screenshots/`.
 
 ---
 

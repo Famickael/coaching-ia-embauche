@@ -15,7 +15,9 @@ export const QUESTIONS = [
   { id: "questions", theme: "Fin d'entretien", text: "Avez-vous des questions à nous poser ?" },
 ];
 
-export const fill = (q, poste) => q.replace("{poste}", poste || "ce poste");
+/* Libellé de métier inséré dans une phrase : « serveur(se) » devient « serveur ». */
+export const posteLabel = poste => (poste || "").replace(/\s*\([^)]*\)/g, "").trim();
+export const fill = (q, poste) => q.replace("{poste}", posteLabel(poste) || "ce poste");
 
 /* Échauffement : une seule phrase à la fois, à dire à voix haute. Rien n'est enregistré. */
 export const WARMUP_PHRASES = [
@@ -55,7 +57,7 @@ export const WARMUP_PROMPTS = [
 export function fillPhrase(text, { poste, prenom } = {}) {
   const first = (prenom || "").split(" ")[0];
   return text
-    .replace("{poste}", poste || "ce poste")
+    .replace("{poste}", posteLabel(poste) || "ce poste")
     .replace("{prenom}", first || "…");
 }
 

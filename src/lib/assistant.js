@@ -653,7 +653,7 @@ export async function askAssistant(history, { context = "warmup", poste, memory 
     });
     if (!res.ok) throw new Error(res.status);
     const data = await res.json();
-    const text = (data.choices?.[0]?.message?.content ?? "").replace(/—/g, ",").trim();
+    const text = (data.choices?.[0]?.message?.content ?? "").replace(/\u2014/g, ",").trim();
     if (!text || text.length > 1800 || !isCompliant({ synthese: text, dimensions: [] })) throw new Error("réponse non conforme");
     return { ...local, text, source: "llm", fallback: false };
   } catch (e) {
