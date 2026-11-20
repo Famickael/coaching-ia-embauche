@@ -1,6 +1,15 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App.jsx";
+import { themeCSS } from "./tokens.js";
+import { loadA11y, applyA11y } from "./lib/a11y.js";
+
+/* Thème et options d'accessibilité appliqués avant le premier rendu : pas de flash. */
+const themeStyle = document.createElement("style");
+themeStyle.id = "rp-theme";
+themeStyle.textContent = themeCSS();
+document.head.appendChild(themeStyle);
+applyA11y(loadA11y());
 import { T, TY, W, Txt, Btn } from "./ui.jsx";
 
 /* Filet de sécurité : en cas d'erreur d'affichage, montrer un message plutôt qu'une page blanche. */

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { T, ON, TY, RAD, W, MO, GRAD_NIGHT, ringOf, Btn, Chip, Icon, I } from "./ui.jsx";
+import { T, FIX, ON, TY, RAD, W, MO, GRAD_NIGHT, ringOf, Btn, Chip, Icon, I } from "./ui.jsx";
 import { loadSegmenter, startBackground, BG_COLOR } from "./lib/background.js";
 import { PHRASES } from "./content/legal.js";
 
@@ -143,7 +143,7 @@ export default function WarmupStage({ setModal }) {
 
         {live && (
           <>
-            <div style={{ ...pill, top: 12, right: 12, background: T.successDk }}>
+            <div style={{ ...pill, top: 12, right: 12, background: FIX.successDk }}>
               <Icon d={I.lock} s={12} /> Non enregistré
             </div>
             <div aria-live="polite" style={{ ...pill, left: 12, bottom: 12, background: ON.scrim }}>

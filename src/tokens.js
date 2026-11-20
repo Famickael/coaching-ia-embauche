@@ -2,7 +2,9 @@
    JavaScript pur, sans JSX : importé par src/ui.jsx (qui les réexporte pour les écrans)
    et par tests/design-lint.mjs (échelles et contrastes). Toute valeur visuelle vient d'ici. */
 
-export const T = {
+/* Palette claire (valeurs de référence, section 1.1). Les écrans n'utilisent jamais ces valeurs brutes :
+   ils passent par T, dont chaque couleur est une variable CSS (thèmes clair, sombre, contraste renforcé). */
+export const LIGHT = {
   // Structure et marque (dominante)
   primary: "#386097", primaryDk: "#2C4D7C", primaryLt: "#4A72A8",
   // Secondaire décoratif (jamais en texte ni en fond de bouton)
@@ -25,8 +27,54 @@ export const T = {
   // Voiles et fonds particuliers
   overlay: "rgba(27,58,102,.45)", videoBg: "#000000",
   glass: "rgba(248,250,252,.9)",
-  studio: "#DCE6F2",                      // fond uni de remplacement de l'aperçu caméra (échauffement)          // en-tête collant translucide (section 6)
+  studio: "#DCE6F2",                      // fond uni de remplacement de l'aperçu caméra (échauffement)
 };
+
+/* Palette sombre (section 8 bis) : mêmes rôles, contrastes AA vérifiés par la règle A1 sur PAIRS. */
+export const DARK = {
+  primary: "#8DB4EA", primaryDk: "#B7D0F3", primaryLt: "#6F98D3",
+  blue: "#5AAEE0", blueDk: "#7DC2EC",
+  accent: "#4ECBC1", accentDk: "#7FDCD4", accentLt: "#7FD6CF",
+  violet: "#B4A9F5", lavender: "#9D93EC",
+  success: "#41C77A", successDk: "#6FD69B",
+  warning: "#FFB547", warningDk: "#F3C46C",
+  error: "#FF5A72", errorDk: "#FF8D9E",
+  navy: "#E8EEF8", body: "#C5CEDC", muted: "#9DA9BB", faint: "#5E6A7C",
+  lineStrong: "#7F8CA2", line: "#2B3649", lineLt: "#222C3D",
+  bg: "#0E141E", surface: "#161F2E",
+  primaryBg: "#1D2A3F", accentBg: "#13302F", violetBg: "#252347",
+  successBg: "#142E20", warningBg: "#30260F", errorBg: "#3A1B23",
+  overlay: "rgba(0,0,0,.6)", videoBg: "#000000",
+  glass: "rgba(14,20,30,.9)",
+  studio: "#DCE6F2",
+};
+/* Contraste renforcé : textes secondaires et bordures plus marqués (s'ajoute au thème clair ou sombre). */
+export const HC_LIGHT = { body: "#1F2937", muted: "#374151", faint: "#4B5563", lineStrong: "#4B5563", line: "#9AA6B8", lineLt: "#D5DBE5", primary: "#24477A", accent: "#06605B", violet: "#45369E" };
+export const HC_DARK = { body: "#E8EEF8", muted: "#D2DAE7", faint: "#AEB9CB", lineStrong: "#AEB9CB", line: "#4B5567", lineLt: "#323D50", primary: "#B7D0F3", accent: "#7FDCD4", violet: "#CFC7FA" };
+export const THEMES = {
+  clair: LIGHT, sombre: DARK,
+  "clair, contraste renforcé": { ...LIGHT, ...HC_LIGHT }, "sombre, contraste renforcé": { ...DARK, ...HC_DARK },
+};
+
+/* Jetons de couleur utilisés partout : une variable CSS par rôle (définies une seule fois par themeCSS()). */
+export const T = Object.fromEntries(Object.keys(LIGHT).map(k => [k, `var(--c-${k})`]));
+/* Couleurs fixes, quel que soit le thème : éléments posés sur une vidéo ou sur un dégradé de marque sombre. */
+export const FIX = LIGHT;
+
+const vars = p => Object.entries(p).map(([k, v]) => `--c-${k}:${v}`).join(";");
+/* Feuille des variables : clair par défaut, sombre (choisi ou automatique), contraste renforcé.
+   Injectée avant le premier rendu (src/main.jsx). */
+export function themeCSS() {
+  const darkAll = vars(DARK), hcL = vars(HC_LIGHT), hcD = vars(HC_DARK);
+  return [
+    `:root{${vars(LIGHT)};color-scheme:light}`,
+    `html[data-theme=dark]{${darkAll};color-scheme:dark}`,
+    `@media (prefers-color-scheme: dark){html:not([data-theme=light]):not([data-theme=dark]){${darkAll};color-scheme:dark}}`,
+    `html[data-contrast=more]{${hcL}}`,
+    `html[data-theme=dark][data-contrast=more]{${hcD}}`,
+    `@media (prefers-color-scheme: dark){html:not([data-theme=light]):not([data-theme=dark])[data-contrast=more]{${hcD}}}`,
+  ].join("\n");
+}
 
 /* Texte et éléments posés sur fond sombre, dégradé ou vidéo (section 1.4). */
 export const ON = {
@@ -35,15 +83,15 @@ export const ON = {
 };
 
 /* Dégradés (section 1.3). */
-export const GRAD_PREMIUM = `linear-gradient(135deg, ${T.primary} 0%, ${T.blueDk} 50%, ${T.violet} 100%)`;
+export const GRAD_PREMIUM = `linear-gradient(135deg, ${FIX.primary} 0%, ${FIX.blueDk} 50%, ${FIX.violet} 100%)`;
 export const GRAD = GRAD_PREMIUM;
-export const GRAD_MAIN = `linear-gradient(135deg, ${T.blue} 0%, ${T.violet} 100%)`;
-export const GRAD_COACH = `linear-gradient(135deg, ${T.blue} 0%, ${T.accent} 100%)`;
-export const GRAD_AI = `linear-gradient(135deg, ${T.blueDk} 0%, ${T.violet} 100%)`;
+export const GRAD_MAIN = `linear-gradient(135deg, ${FIX.blue} 0%, ${FIX.violet} 100%)`;
+export const GRAD_COACH = `linear-gradient(135deg, ${FIX.blue} 0%, ${FIX.accent} 100%)`;
+export const GRAD_AI = `linear-gradient(135deg, ${FIX.blueDk} 0%, ${FIX.violet} 100%)`;
 export const GRAD_SOFT = `linear-gradient(135deg, rgba(56,96,151,.08), rgba(92,75,185,.07))`;
 /* Bordure animée du panneau de l'assistant (bleu vers violet, rôle IA). */
-export const GRAD_AI_BORDER = `linear-gradient(120deg, ${T.blueDk} 0%, ${T.violet} 50%, ${T.blueDk} 100%)`;
-export const GRAD_NIGHT = `linear-gradient(160deg, ${T.navy} 0%, ${T.primaryDk} 60%, ${T.violet} 100%)`;
+export const GRAD_AI_BORDER = `linear-gradient(120deg, ${FIX.blueDk} 0%, ${FIX.violet} 50%, ${FIX.blueDk} 100%)`;
+export const GRAD_NIGHT = `linear-gradient(160deg, ${FIX.navy} 0%, ${FIX.primaryDk} 60%, ${FIX.violet} 100%)`;
 /* Profondeur et marque (v3.1, demande du propriétaire) : titre d'accroche et fonds des sections clés. */
 export const GRAD_TITLE = `linear-gradient(120deg, ${T.navy} 0%, ${T.primary} 100%)`;        // début du titre d'accroche (texte, AA)
 export const GRAD_ACCROCHE = `linear-gradient(90deg, ${T.blueDk} 0%, ${T.violet} 100%)`;    // fin d'accroche, mots-clés de la phrase (texte large, AA)
@@ -60,38 +108,40 @@ export const HL = {
 };
 
 /* Typographie (section 2). */
-export const FD = "'Manrope', 'Segoe UI', sans-serif";
-export const FB = "'Inter', 'Segoe UI', sans-serif";
+/* Familles : variables CSS, pour l'option « police lisible » (Atkinson Hyperlegible). */
+export const FONT_STACKS = { display: "'Manrope', 'Segoe UI', sans-serif", body: "'Inter', 'Segoe UI', sans-serif", lisible: "'Atkinson Hyperlegible', 'Inter', 'Segoe UI', sans-serif" };
+export const FD = "var(--ff-d)";
+export const FB = "var(--ff-b)";
 export const FM = "'JetBrains Mono', monospace";
 export const SIZES = [11, 12, 13, 14, 16, 18, 20, 24, 26, 28, 32, 38, 54];
 export const WEIGHTS = { [FD]: [700, 800], [FB]: [400, 600, 700], [FM]: [500, 700] };
 export const TY = {
-  display:  { font: `800 54px/1.05 ${FD}`, letterSpacing: "-.035em" },
-  xl:       { font: `800 32px/1.15 ${FD}`, letterSpacing: "-.03em" },
-  h1:       { font: `800 28px/1.15 ${FD}`, letterSpacing: "-.02em" },
-  h2:       { font: `800 20px/1.25 ${FD}`, letterSpacing: "-.01em" },
-  h3:       { font: `700 16px/1.3 ${FD}` },
-  h4:       { font: `700 14px/1.4 ${FD}` },
-  overline: { font: `700 11px/1.3 ${FB}`, letterSpacing: ".08em", textTransform: "uppercase" },
-  lead:     { font: `400 18px/1.6 ${FB}` },
-  bodyLg:   { font: `400 16px/1.6 ${FB}` },
-  body:     { font: `400 14px/1.6 ${FB}` },
-  bodyStrong: { font: `600 14px/1.5 ${FB}` },
-  small:    { font: `400 13px/1.5 ${FB}` },
-  caption:  { font: `400 12px/1.5 ${FB}` },
-  label:    { font: `600 13px/1.3 ${FB}` },
-  btnSm:    { font: `600 13px/1 ${FB}` }, btn: { font: `600 14px/1 ${FB}` }, btnLg: { font: `600 16px/1 ${FB}` },
+  display:  { font: `800 calc(54px * var(--fs, 1))/1.05 ${FD}`, letterSpacing: "-.035em" },
+  xl:       { font: `800 calc(32px * var(--fs, 1))/1.15 ${FD}`, letterSpacing: "-.03em" },
+  h1:       { font: `800 calc(28px * var(--fs, 1))/1.15 ${FD}`, letterSpacing: "-.02em" },
+  h2:       { font: `800 calc(20px * var(--fs, 1))/1.25 ${FD}`, letterSpacing: "-.01em" },
+  h3:       { font: `700 calc(16px * var(--fs, 1))/1.3 ${FD}` },
+  h4:       { font: `700 calc(14px * var(--fs, 1))/1.4 ${FD}` },
+  overline: { font: `700 calc(11px * var(--fs, 1))/1.3 ${FB}`, letterSpacing: ".08em", textTransform: "uppercase" },
+  lead:     { font: `400 calc(18px * var(--fs, 1))/1.6 ${FB}` },
+  bodyLg:   { font: `400 calc(16px * var(--fs, 1))/1.6 ${FB}` },
+  body:     { font: `400 calc(14px * var(--fs, 1))/1.6 ${FB}` },
+  bodyStrong: { font: `600 calc(14px * var(--fs, 1))/1.5 ${FB}` },
+  small:    { font: `400 calc(13px * var(--fs, 1))/1.5 ${FB}` },
+  caption:  { font: `400 calc(12px * var(--fs, 1))/1.5 ${FB}` },
+  label:    { font: `600 calc(13px * var(--fs, 1))/1.3 ${FB}` },
+  btnSm:    { font: `600 calc(13px * var(--fs, 1))/1 ${FB}` }, btn: { font: `600 calc(14px * var(--fs, 1))/1 ${FB}` }, btnLg: { font: `600 calc(16px * var(--fs, 1))/1 ${FB}` },
   link:     { fontWeight: 600, textDecoration: "underline", textUnderlineOffset: 3 },
   strong:   { fontWeight: 700 },                                      // <strong> dans un paragraphe
-  input:    { font: `400 16px/1.5 ${FB}` },
-  tag:      { font: `600 12px/1 ${FB}`, letterSpacing: ".02em" },
-  num:      { font: `700 28px/1 ${FM}` },
-  code:     { font: `700 24px/1 ${FM}`, letterSpacing: ".25em" },
-  time:     { font: `700 11px/1 ${FM}` },
-  mono:     { font: `500 12px/1.5 ${FM}` },
+  input:    { font: `400 calc(16px * var(--fs, 1))/1.5 ${FB}` },
+  tag:      { font: `600 calc(12px * var(--fs, 1))/1 ${FB}`, letterSpacing: ".02em" },
+  num:      { font: `700 calc(28px * var(--fs, 1))/1 ${FM}` },
+  code:     { font: `700 calc(24px * var(--fs, 1))/1 ${FM}`, letterSpacing: ".25em" },
+  time:     { font: `700 calc(11px * var(--fs, 1))/1 ${FM}` },
+  mono:     { font: `500 calc(12px * var(--fs, 1))/1.5 ${FM}` },
   /* Exceptions nommées : rendus validés (accueil) dont la taille reste dans SIZES */
-  quote:    { font: `700 20px/1.45 ${FD}` },                          // citation d'article, phrase qui se colore (mobile)
-  pageTitle: { font: `800 38px/1.1 ${FD}`, letterSpacing: "-.03em" }, // h1 des pages secondaires (PageHero)
+  quote:    { font: `700 calc(20px * var(--fs, 1))/1.45 ${FD}` },                          // citation d'article, phrase qui se colore (mobile)
+  pageTitle: { font: `800 calc(38px * var(--fs, 1))/1.1 ${FD}`, letterSpacing: "-.03em" }, // h1 des pages secondaires (PageHero)
   inherit:  { font: "inherit" },
 };
 export const TY_MOBILE = { display: 38, xl: 26, h1: 24, lead: 16 };   // appliqué par les classes .ty-* de GStyle
@@ -147,23 +197,24 @@ export const TONE = {
   muted: { fg: T.body, bg: T.lineLt },
 };
 
-/* Combinaisons texte/fond autorisées (section 1.5) : [texte, fond, seuil]. Vérifiées par la règle A1. */
+/* Combinaisons texte/fond autorisées (section 1.5) : [texte, fond, seuil], par nom de rôle.
+   La règle A1 recalcule chaque ratio dans chacun des THEMES (clair, sombre, contraste renforcé). */
 export const PAIRS = [
-  [T.navy, T.surface, 4.5], [T.navy, T.bg, 4.5], [T.navy, T.primaryBg, 4.5], [T.navy, T.accentBg, 4.5], [T.navy, T.violetBg, 4.5],
-  [T.navy, T.successBg, 4.5], [T.navy, T.warningBg, 4.5], [T.navy, T.errorBg, 4.5],
-  [T.body, T.surface, 4.5], [T.body, T.bg, 4.5], [T.body, T.primaryBg, 4.5], [T.body, T.accentBg, 4.5], [T.body, T.successBg, 4.5], [T.body, T.lineLt, 4.5],
-  [T.muted, T.surface, 4.5], [T.muted, T.bg, 4.5],
-  [T.primary, T.surface, 4.5], [T.primary, T.bg, 4.5], [T.primary, T.primaryBg, 4.5],
-  [T.primaryDk, T.surface, 4.5], [T.primaryDk, T.bg, 4.5], [T.primaryDk, T.primaryBg, 4.5],
-  [T.accent, T.surface, 4.5], [T.accent, T.bg, 4.5], [T.accent, T.accentBg, 4.5],
-  [T.violet, T.surface, 4.5], [T.violet, T.bg, 4.5], [T.violet, T.violetBg, 4.5],
-  [T.successDk, T.surface, 4.5], [T.successDk, T.successBg, 4.5],
-  [T.warningDk, T.surface, 4.5], [T.warningDk, T.warningBg, 4.5],
-  [T.errorDk, T.surface, 4.5], [T.errorDk, T.bg, 4.5], [T.errorDk, T.errorBg, 4.5],
-  [T.surface, T.primary, 4.5], [T.surface, T.primaryDk, 4.5], [T.surface, T.accent, 4.5], [T.surface, T.accentDk, 4.5],
-  [T.surface, T.violet, 4.5], [T.surface, T.errorDk, 4.5], [T.surface, T.successDk, 4.5], [T.surface, T.blueDk, 4.5], [T.surface, T.navy, 4.5],
-  [T.accentLt, T.navy, 4.5],
-  [T.lineStrong, T.surface, 3], [T.lineStrong, T.bg, 3],
+  ["navy", "surface", 4.5], ["navy", "bg", 4.5], ["navy", "primaryBg", 4.5], ["navy", "accentBg", 4.5], ["navy", "violetBg", 4.5],
+  ["navy", "successBg", 4.5], ["navy", "warningBg", 4.5], ["navy", "errorBg", 4.5],
+  ["body", "surface", 4.5], ["body", "bg", 4.5], ["body", "primaryBg", 4.5], ["body", "accentBg", 4.5], ["body", "successBg", 4.5], ["body", "lineLt", 4.5],
+  ["muted", "surface", 4.5], ["muted", "bg", 4.5],
+  ["primary", "surface", 4.5], ["primary", "bg", 4.5], ["primary", "primaryBg", 4.5],
+  ["primaryDk", "surface", 4.5], ["primaryDk", "bg", 4.5], ["primaryDk", "primaryBg", 4.5],
+  ["accent", "surface", 4.5], ["accent", "bg", 4.5], ["accent", "accentBg", 4.5],
+  ["violet", "surface", 4.5], ["violet", "bg", 4.5], ["violet", "violetBg", 4.5],
+  ["successDk", "surface", 4.5], ["successDk", "successBg", 4.5],
+  ["warningDk", "surface", 4.5], ["warningDk", "warningBg", 4.5],
+  ["errorDk", "surface", 4.5], ["errorDk", "bg", 4.5], ["errorDk", "errorBg", 4.5],
+  ["surface", "primary", 4.5], ["surface", "primaryDk", 4.5], ["surface", "accent", 4.5], ["surface", "accentDk", 4.5],
+  ["surface", "violet", 4.5], ["surface", "errorDk", 4.5], ["surface", "successDk", 4.5], ["surface", "blueDk", 4.5], ["surface", "navy", 4.5],
+  ["accentLt", "navy", 4.5, "clair"],
+  ["lineStrong", "surface", 3], ["lineStrong", "bg", 3],
   // dégradés de texte de l'accueil (texte de 32 px et plus : seuil 3) ; GRAD_TITLE commence en navy
-  [T.primary, T.primaryBg, 3], [T.blueDk, T.bg, 3], [T.blueDk, T.primaryBg, 3], [T.violet, T.primaryBg, 3],
+  ["primary", "primaryBg", 3], ["blueDk", "bg", 3], ["blueDk", "primaryBg", 3], ["violet", "primaryBg", 3],
 ];

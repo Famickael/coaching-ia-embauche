@@ -471,6 +471,32 @@ Les pages publiques (accueil, à propos, solutions, ressources) utilisent les du
 | Zoom | La page reste utilisable à 200 % ; tailles en px mais aucun conteneur à hauteur fixe pour du texte |
 | Langue et ton | Français, vouvoiement, écriture inclusive au point médian déjà en place, pas de tiret cadratin, pas d'emoji en guise d'icône |
 
+### 8 bis. Options d'accessibilité et thèmes
+
+**Où.** Bouton icône « Options d'accessibilité » (`I.a11y`, `IconBtn`) dans l'en-tête, à côté de « Mon espace » ou de « Mes paramètres » ; entrée « Options d'accessibilité » dans le menu mobile et dans « Mes paramètres ». Il ouvre une `Modal` (`src/A11y.jsx`).
+
+**Réglages** (mémorisés dans `localStorage`, clé `larepet.a11y`, lecture et écriture sous `try/catch` ; `src/lib/a11y.js`) :
+
+| Réglage | Effet | Mise en œuvre |
+|---|---|---|
+| Taille du texte | 4 niveaux : 100, 112,5, 125, 150 % | variable `--fs` : chaque taille de `TY` vaut `calc(Npx * var(--fs, 1))` |
+| Thème | Automatique (suit le système), clair, sombre | `html[data-theme]` ; variables `--c-*` |
+| Contraste renforcé | Textes secondaires et bordures plus marqués | `html[data-contrast=more]` ; palettes `HC_LIGHT`, `HC_DARK` |
+| Police lisible | Atkinson Hyperlegible (auto-hébergée) pour titres et texte | `html[data-font=lisible]` change `--ff-d` et `--ff-b` |
+| Texte espacé | Lettres 0,12 em, mots 0,16 em, lignes 1,8, texte aligné à gauche (WCAG 1.4.12) | `html[data-spacing=on]` |
+| Réduire les animations | Mêmes règles que `prefers-reduced-motion` | `html[data-motion=reduce]`, `useReducedMotion()` |
+| Mode concentration | Masque halos (`.rp-deco`), cartes animées (`.rs-fvis`), arrête les défilements automatiques | `html[data-focusmode=on]` |
+| Règle de lecture | Bande de 48 px qui suit le pointeur, le doigt ou le focus ; le reste est voilé (`T.overlay`) | `.rp-ruler` |
+| Liens toujours soulignés | Tous les liens et la navigation | `html[data-links=on]` |
+| Focus renforcé | Contour 3 px `navy`, décalage 3 px, halo `SH.ring` | `html[data-focusring=on]` |
+| Réinitialiser | Revient aux réglages par défaut et aux préférences du système | `resetA11y()` |
+
+**Sans flash.** Un script en ligne d'`index.html` pose `data-theme` (et la classe `rp-boot-dark` pour l'écran de chargement) avant tout affichage ; `src/main.jsx` injecte la feuille des variables (`themeCSS()`) et applique tous les réglages avant le premier rendu React. Au premier passage : thème automatique, contraste renforcé si `prefers-contrast: more`, animations selon `prefers-reduced-motion`.
+
+**Couleurs en variables.** Les valeurs ne sont définies qu'une fois dans `src/tokens.js` : `LIGHT` (référence de la section 1), `DARK`, `HC_LIGHT`, `HC_DARK`. `T.x` vaut `var(--c-x)` ; les écrans n'utilisent que `T`. `FIX` (valeurs claires, fixes) sert seulement aux éléments posés sur une vidéo ou sur un dégradé de marque sombre (`GRAD`, `GRAD_AI`, `GRAD_NIGHT`, pastilles sur la vidéo), dont le texte reste blanc dans les deux thèmes. La règle A1 de `test:design` vérifie chaque paire de `PAIRS` dans les quatre thèmes (clair, sombre, et leurs versions à contraste renforcé). Seule exception déclarée : `accentLt` sur `navy`, vérifiée en thème clair uniquement (`navy` y est un fond sombre, il devient une couleur de texte en thème sombre).
+
+Palette sombre (rôles identiques à la section 1.1) : `bg` `#0E141E`, `surface` `#161F2E`, `navy` (titres) `#E8EEF8`, `body` `#C5CEDC`, `muted` `#9DA9BB`, `primary` `#8DB4EA`, `accent` `#4ECBC1`, `violet` `#B4A9F5`, `successDk` `#6FD69B`, `warningDk` `#F3C46C`, `errorDk` `#FF8D9E`, fonds teintés de `#1D2A3F` à `#3A1B23`. Sur un fond plein coloré, le texte reste `T.surface` : il devient foncé en thème sombre, avec un contraste vérifié.
+
 ---
 
 ## 9. Voix de l'interface (rappel)
@@ -659,5 +685,7 @@ Dégradés : `GRAD` et `GRAD_AI` recomposés selon 1.3, `GRAD_NIGHT` ajouté, `G
 | 2026-11-20 | Astuces de l'échauffement dans une fenêtre `Modal`, ouverte par un lien au-dessus de la phrase | Demande du propriétaire |
 
 | 2026-11-20 | Entraînement complet (7 questions dans l'ordre réel, mise en situation selon le métier) et écran récapitulatif sans score ; recruteur oral sans visage (`RecruiterVoice` : synthèse vocale de l'appareil, sous-titre mot à mot, « Réécouter », « Couper le son », enregistrement possible seulement quand la voix a fini) | Demandes du propriétaire |
+
+| 2026-11-20 | Couleurs en variables CSS (`T` → `var(--c-*)`), palettes `LIGHT`, `DARK`, `HC_LIGHT`, `HC_DARK`, `FIX` ; tailles de texte multipliées par `--fs` ; familles en variables (`--ff-d`, `--ff-b`) ; règle A1 étendue aux quatre thèmes ; options d'accessibilité (8 bis) | Demande du propriétaire : thème sombre, contraste, police lisible, taille du texte |
 
 Ajouter une ligne à chaque évolution d'une règle ou d'une échelle.

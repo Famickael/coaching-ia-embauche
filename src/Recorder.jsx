@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { T, ON, TY, RAD, W, GAP, GRAD_NIGHT, Btn, Back, Icon, I } from "./ui.jsx";
+import { T, FIX, ON, TY, RAD, W, GAP, GRAD_NIGHT, Btn, Back, Icon, I } from "./ui.jsx";
 import { startGaze } from "./lib/gaze.js";
 import { PHRASES } from "./content/legal.js";
 import { setRecording, nudgeAssistant } from "./Assistant.jsx";
@@ -131,7 +131,7 @@ export default function Recorder({ question, onDone, onCancel, trackGaze = true,
           </div>
         )}
         {(phase === "live" || phase === "recording") && (
-          <div style={{ ...pill, right: 12, background: T.successDk, ...TY.tag }}>
+          <div style={{ ...pill, right: 12, background: FIX.successDk, ...TY.tag }}>
             <Icon d={I.lock} s={12} /> Reste sur cet appareil
           </div>
         )}

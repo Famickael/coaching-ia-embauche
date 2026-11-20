@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { T, Bare, HL, GRAD_NIGHT, GRAD, GRAD_TITLE, GRAD_ACCROCHE, GRAD_HERO, GRAD_SECTION, GLOW, PACE, RAD, SH, RepetMark, Halo, Tag, Btn, Card, Icon, I, ON, TY, W, MO, SI, img, Eyebrow, Section, IconTile, Link, HEADER_H, HEADER_H_M } from "./ui.jsx";
+import { T, FIX, Bare, HL, GRAD_NIGHT, GRAD, GRAD_TITLE, GRAD_ACCROCHE, GRAD_HERO, GRAD_SECTION, GLOW, PACE, RAD, SH, RepetMark, Halo, Tag, Btn, Card, Icon, I, ON, TY, W, MO, SI, img, Eyebrow, Section, IconTile, Link, HEADER_H, HEADER_H_M } from "./ui.jsx";
 import { useReducedMotion, useCount, useInView, Reveal } from "./motion.jsx";
 
 /* Page d'accueil : héros (accroche qui change, scènes en boucle), strate épinglée en quatre étapes,
@@ -149,7 +149,7 @@ function Scene({ sc, on, first }) {
 }
 
 const DebriefCard = () => (
-  <div style={{ background: T.primary, color: ON.text, borderRadius: RAD.md, padding: 16, boxShadow: SH.glow, display: "grid", gap: 8 }}>
+  <div style={{ background: FIX.primary, color: ON.text, borderRadius: RAD.md, padding: 16, boxShadow: SH.glow, display: "grid", gap: 8 }}>
     <div style={{ display: "flex", alignItems: "center", gap: 8, ...TY.overline }}><Icon d={I.sparkle} s={12} c={ON.text} /> Aperçu du débrief</div>
     <div style={{ display: "flex", gap: 8, ...TY.bodyStrong }}><Icon d={I.check} s={16} c={ON.text} /><span>Vous décrivez clairement le problème.</span></div>
     <div style={{ display: "flex", gap: 8, ...TY.body }}><Icon d={I.search} s={16} c={ON.text} /><span>Qu'avez-vous fait personnellement pour le résoudre ?</span></div>

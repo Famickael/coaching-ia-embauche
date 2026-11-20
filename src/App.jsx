@@ -10,6 +10,7 @@ import Resources from "./Resources.jsx";
 import Demo from "./Demo.jsx";
 import Beneficiary from "./Beneficiary.jsx";
 import Counselor from "./Counselor.jsx";
+import A11yLayer, { openA11y } from "./A11y.jsx";
 import { useStore, getState, setLastSpace, setCounselor, logoutCounselor, findParcours, withdrawConsent, clearWarmupDebrief, TRIAL_CODE, TRIAL_LOGIN } from "./lib/store.js";
 
 /* La Répét' : entraînement à l'entretien d'embauche, avec un assistant IA et votre coach.
@@ -106,6 +107,7 @@ export default function App() {
       </div>
       <Footer />
       <LegalModal modal={modal} close={() => setModal(null)} />
+      <A11yLayer />
     </div>
   );
 }
@@ -159,9 +161,11 @@ function Nav({ route, s }) {
             <a href={route.role === "coach" ? "#/vos-donnees/coachs" : "#/vos-donnees"} aria-label="Vos données" className="navlink rp-datalink" style={{ display: "inline-flex", alignItems: "center", gap: 8, minHeight: 44 }}>
               <Icon d={I.shield} s={16} /><span className="rp-hide-m">Vos données</span>
             </a>
+            <IconBtn icon={I.a11y} label="Options d'accessibilité" onClick={openA11y} />
             <SettingsMenu route={route} s={s} />
           </>) : (<>
             <span className="rs-demo"><Btn kind="secondary" size="sm" onClick={() => go("#/demo")}>Demander une prise en main</Btn></span>
+            <IconBtn icon={I.a11y} label="Options d'accessibilité" onClick={openA11y} />
             <Btn kind="primary" size="sm" onClick={openSpace}><span className="rp-hide-m" style={{ display: "inline-flex" }}><Icon d={I.user} s={16} /></span>Mon espace</Btn>
             <IconBtn ref={burger} variant="outline" className="rs-burger" aria-expanded={menu} aria-controls="rs-menu" label={menu ? "Fermer le menu" : "Ouvrir le menu"} icon={menu ? I.close : I.menu} onClick={() => setMenu(m => !m)} />
           </>)}
@@ -179,6 +183,7 @@ function Nav({ route, s }) {
           </nav>
           <div style={{ display: "grid", gap: 12, marginTop: 24 }}>
             <Btn kind="secondary" full onClick={() => { setMenu(false); go("#/demo"); }}>Demander une prise en main</Btn>
+            <Btn kind="ghost" full icon={I.a11y} onClick={() => { setMenu(false); openA11y(); }}>Options d'accessibilité</Btn>
           </div>
           <nav aria-label="Vos données" onClick={() => setMenu(false)} style={{ marginTop: 24, display: "grid", gap: 4 }}>
             <div style={{ ...TY.overline, color: T.muted }}>Vos données</div>
@@ -197,8 +202,8 @@ function SettingsMenu({ route, s }) {
   const coach = route.role === "coach";
   const code = route.code;
   const items = coach
-    ? [["data", "Vos données", I.shield], ["logout", "Se déconnecter", I.logout]]
-    : [["data", "Vos données", I.shield], ["code", "Changer de code", I.redo], ["withdraw", "Retirer mon consentement", I.trash], ["logout", "Se déconnecter", I.logout]];
+    ? [["data", "Vos données", I.shield], ["a11y", "Options d'accessibilité", I.a11y], ["logout", "Se déconnecter", I.logout]]
+    : [["data", "Vos données", I.shield], ["a11y", "Options d'accessibilité", I.a11y], ["code", "Changer de code", I.redo], ["withdraw", "Retirer mon consentement", I.trash], ["logout", "Se déconnecter", I.logout]];
   const focusItem = i => { const el = list.current?.querySelectorAll("[role=menuitem]")[i]; el?.focus(); };
   useEffect(() => {
     if (!open) return;
@@ -209,7 +214,8 @@ function SettingsMenu({ route, s }) {
   }, [open]);
   const close = (refocus = true) => { setOpen(false); if (refocus) btn.current?.focus(); };
   const act = k => {
-    close(k !== "withdraw");
+    close(k !== "withdraw" && k !== "a11y");
+    if (k === "a11y") openA11y();
     if (k === "data") go(coach ? "#/vos-donnees/coachs" : "#/vos-donnees");
     if (k === "code") { setLastSpace(null); go("#/beneficiaire"); }
     if (k === "withdraw") setConfirm(true);

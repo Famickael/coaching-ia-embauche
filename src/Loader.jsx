@@ -13,7 +13,7 @@ export function dismissLoader() {
   const el = document.getElementById("rp-loader");
   if (!el) return;
   const auto = typeof navigator !== "undefined" && navigator.webdriver;
-  const reduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const reduced = (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) || document.documentElement.dataset.motion === "reduce";
   if (auto) { el.remove(); return; }
   const wait = Math.max(0, (reduced ? MIN_MS_REDUCED : MIN_MS) - performance.now());
   setTimeout(() => {

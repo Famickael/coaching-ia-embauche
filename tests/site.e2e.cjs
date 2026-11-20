@@ -217,6 +217,35 @@ async function run(b, vw, vh, opts = {}) {
   check(await p.getByText(/non conforme/).count() > 0, `[${tag}] déclaration d'accessibilité : mention « non conforme » absente`);
   await shot("17-accessibilite");
 
+  // Options d'accessibilité : thème sombre et grande taille de texte, sans débordement, mémorisées sans flash
+  if (!opts.reduced) {
+    await visit("#/");
+    await p.getByRole("button", { name: "Options d'accessibilité" }).first().click();
+    const dlg = p.getByRole("dialog", { name: "Options d'accessibilité" });
+    await dlg.waitFor();
+    await dlg.getByRole("radio", { name: "Sombre" }).click();
+    await dlg.getByRole("radio", { name: mobile ? "Très grande" : "Maximale" }).click();
+    await shot("18-options-accessibilite", false);
+    await p.keyboard.press("Escape");
+    check(await p.evaluate(() => document.documentElement.dataset.theme) === "dark", `[${tag}] accessibilité : thème sombre non appliqué`);
+    const bg = await p.evaluate(() => getComputedStyle(document.body).backgroundColor);
+    check(bg === "rgb(14, 20, 30)", `[${tag}] accessibilité : fond sombre attendu, lu ${bg}`);
+    for (const h of ["#/", "#/a-propos", "#/solutions", "#/ressources", "#/vos-donnees", "#/demo", "#/espace", "#/accessibilite"]) {
+      await visit(h); await overflow(`sombre et grand texte ${h}`);
+    }
+    await visit("#/"); await shot("19-accueil-sombre");
+    await visit("#/espace"); await shot("20-mon-espace-sombre");
+    await visit("#/vos-donnees"); await shot("21-vos-donnees-sombre");
+    await p.goto(BASE + "?sombre=1#/a-propos", { waitUntil: "commit" });
+    await p.waitForFunction(() => document.documentElement.dataset.theme !== undefined);
+    check(await p.evaluate(() => document.documentElement.dataset.theme === "dark" && document.documentElement.classList.contains("rp-boot-dark")), `[${tag}] accessibilité : thème non appliqué avant l'affichage au rechargement`);
+    await p.waitForTimeout(500);
+    await p.getByRole("button", { name: "Options d'accessibilité" }).first().click();
+    await p.getByRole("button", { name: "Réinitialiser" }).click();
+    check(await p.evaluate(() => document.documentElement.dataset.theme) === "auto", `[${tag}] accessibilité : « Réinitialiser » ne remet pas le thème automatique`);
+    await p.keyboard.press("Escape");
+  }
+
   errors.forEach(e => problems.push(`[${tag}] ${e}`));
   await ctx.close();
 }

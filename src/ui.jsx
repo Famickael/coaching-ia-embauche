@@ -1,7 +1,7 @@
 import React, { useEffect, useId, useRef, useState } from "react";
 import {
   T, ON, GRAD, GRAD_MAIN, GRAD_COACH, GRAD_AI, GRAD_SOFT, GRAD_PAGE, FD, FB, FM, TY, PAD, PAD_MOBILE, GAP, W, RAD, SH, MO, Z,
-  TONE, HEADER_H, HEADER_H_M, TY_MOBILE, GRAD_AI_BORDER,
+  TONE, HEADER_H, HEADER_H_M, TY_MOBILE, GRAD_AI_BORDER, FONT_STACKS,
 } from "./tokens.js";
 import { Reveal } from "./motion.jsx";
 
@@ -51,7 +51,7 @@ function OrgLogo({ s = 10, dark = false }) {
 /* Halo lumineux décoratif. Dégradé radial plutôt qu'un flou (filter: blur coûte cher au défilement sur iPhone). */
 function Halo({ style }) {
   const { background, ...rest } = style || {};
-  return <div aria-hidden style={{ position: "absolute", borderRadius: "50%", pointerEvents: "none", background: `radial-gradient(closest-side, ${background}, transparent)`, ...rest }} />;
+  return <div aria-hidden className="rp-deco" style={{ position: "absolute", borderRadius: "50%", pointerEvents: "none", background: `radial-gradient(closest-side, ${background}, transparent)`, ...rest }} />;
 }
 
 /* Chemin d'une image du dossier public/ (le site est servi sous un sous-dossier). */
@@ -114,6 +114,7 @@ const I = {
   heart: <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8z" />,
   monitor: <><rect x="2" y="3" width="20" height="14" rx="2" /><line x1="8" y1="21" x2="16" y2="21" /><line x1="12" y1="17" x2="12" y2="21" /></>,
   compass: <><circle cx="12" cy="12" r="9" /><polygon points="16 8 14 14 8 16 10 10 16 8" /></>,
+  a11y: <><circle cx="12" cy="4.5" r="2" /><path d="M5 8.5l7 1.5 7-1.5M12 10v4.5M9 21l3-6.5 3 6.5" /></>,
   list: <><line x1="8" y1="6" x2="21" y2="6" /><line x1="8" y1="12" x2="21" y2="12" /><line x1="8" y1="18" x2="21" y2="18" /><line x1="3" y1="6" x2="3.01" y2="6" /><line x1="3" y1="12" x2="3.01" y2="12" /><line x1="3" y1="18" x2="3.01" y2="18" /></>,
 };
 /* Ancien nom des icônes des pages publiques, conservé comme alias de I (même objet). */
@@ -608,9 +609,12 @@ const FONT_FACES = [["Manrope", "manrope", [700, 800]], ["Inter", "inter", [400,
 const GStyle = () => (
   <style>{`
     ${FONT_FACES}
-    *{box-sizing:border-box} body{margin:0;background:${T.bg}}
+    :root{--ff-d:${FONT_STACKS.display};--ff-b:${FONT_STACKS.body};--fs:1}
+    html[data-font=lisible]{--ff-d:${FONT_STACKS.lisible};--ff-b:${FONT_STACKS.lisible}}
+    *{box-sizing:border-box} body{margin:0;background:${T.bg};color:${T.navy}}
     html{overflow-y:scroll;scrollbar-gutter:stable}
     ::selection{background:${T.lavender};color:${T.surface}}
+    img{max-width:100%}
     @keyframes up{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
     @keyframes spin{to{transform:rotate(360deg)}}
     @keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
@@ -812,8 +816,8 @@ const GStyle = () => (
     .rs-band{padding:48px}
     /* Article */
     .rs-prose{color:${T.body};font:${F("bodyLg")}}
-    .rs-prose h2{font:800 24px/1.25 ${FD};letter-spacing:-.02em;color:${T.navy};margin:48px 0 16px;scroll-margin-top:${GAP.section + 16}px}
-    .rs-prose h3{font:700 18px/1.4 ${FD};color:${T.navy};margin:32px 0 12px}
+    .rs-prose h2{font:800 calc(24px * var(--fs))/1.25 ${FD};letter-spacing:-.02em;color:${T.navy};margin:48px 0 16px;scroll-margin-top:${GAP.section + 16}px}
+    .rs-prose h3{font:700 calc(18px * var(--fs))/1.4 ${FD};color:${T.navy};margin:32px 0 12px}
     .rs-prose p{margin:0 0 16px}
     .rs-prose ul,.rs-prose ol{margin:0 0 16px;padding-left:24px}
     .rs-prose li{margin:0 0 8px;padding-left:4px}
@@ -841,14 +845,25 @@ const GStyle = () => (
     @media (prefers-reduced-motion: reduce){
       *,*::before,*::after{animation-duration:.001ms!important;animation-delay:0s!important;animation-iteration-count:1!important;transition-duration:.001ms!important;transition-delay:0s!important;scroll-behavior:auto!important}
     }
+    /* Options d'accessibilité (docs/design-system.md, section 8 bis) : attributs posés sur <html> par src/lib/a11y.js */
+    html[data-motion=reduce] *,html[data-motion=reduce] *::before,html[data-motion=reduce] *::after{animation-duration:.001ms!important;animation-delay:0s!important;animation-iteration-count:1!important;transition-duration:.001ms!important;transition-delay:0s!important;scroll-behavior:auto!important}
+    html[data-spacing=on] body *{letter-spacing:.12em!important;word-spacing:.16em!important}
+    html[data-spacing=on] :is(p,li,dd,dt,label,blockquote,td,th,h1,h2,h3,h4,.rs-prose){line-height:1.8!important}
+    html[data-spacing=on] :is(p,li,dd,blockquote,h1,h2,h3,h4){text-align:left!important}
+    html[data-spacing=on] p{margin-bottom:.5em}
+    html[data-focusmode=on] .rp-deco,html[data-focusmode=on] .rs-fvis{display:none!important}
+    html[data-focusmode=on] *,html[data-focusmode=on] *::before,html[data-focusmode=on] *::after{animation-iteration-count:1!important}
+    html[data-links=on] a,html[data-links=on] .navlink,html[data-links=on] .rp-link{text-decoration:underline!important;text-underline-offset:3px}
+    html[data-focusring=on] :focus-visible{outline:3px solid ${T.navy}!important;outline-offset:3px!important;box-shadow:${SH.ring}!important}
+    .rp-ruler{position:fixed;left:0;right:0;z-index:${Z.modal + 1};background:${T.overlay};pointer-events:none}
     /* Point de rupture unique : 760 px (référentiel 6) */
     @media (max-width:760px){
       .rp-hide-m,.rp-rail-other{display:none!important}
       .rp-show-m{display:inline}
       .rp-nav{padding:0 16px!important;height:${HEADER_H_M}px!important;gap:8px}
       .rp-nav nav{gap:8px!important}
-      .rp-nav nav .navlink{font-size:13px}
-      .ty-display{font-size:${TY_MOBILE.display}px!important} .ty-xl{font-size:${TY_MOBILE.xl}px!important} .ty-h1{font-size:${TY_MOBILE.h1}px!important} .ty-lead{font-size:${TY_MOBILE.lead}px!important}
+      .rp-nav nav .navlink{font-size:calc(13px * var(--fs))}
+      .ty-display{font-size:calc(${TY_MOBILE.display}px * var(--fs))!important} .ty-xl{font-size:calc(${TY_MOBILE.xl}px * var(--fs))!important} .ty-h1{font-size:calc(${TY_MOBILE.h1}px * var(--fs))!important} .ty-lead{font-size:calc(${TY_MOBILE.lead}px * var(--fs))!important}
       .rp-pad-sm{padding:${PAD_MOBILE.sm}px!important} .rp-pad-md{padding:${PAD_MOBILE.md}px!important} .rp-pad-lg{padding:${PAD_MOBILE.lg}px!important}
       .rp-page{padding:${PAD_MOBILE.page}!important}
       .rp-btn-sm{min-height:44px!important}
@@ -873,7 +888,7 @@ const GStyle = () => (
       .rs-fcards{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;gap:16px;margin:0 -16px;padding:4px 16px 16px;scroll-padding:0 16px;-webkit-overflow-scrolling:touch}
       .rs-fcard{flex:0 0 82%;scroll-snap-align:start}
       .rs-phrase-in{top:${HEADER_H_M}px;height:calc(100vh - ${HEADER_H_M}px);height:calc(100svh - ${HEADER_H_M}px)}
-      .rs-phrase-t{font-size:32px!important}
+      .rs-phrase-t{font-size:calc(32px * var(--fs))!important}
       .rs-g2,.rs-g3,.rs-g4,.rs-split{grid-template-columns:minmax(0,1fr);gap:16px}
       .rs-split{gap:32px}
       .rs-panel{top:${HEADER_H_M}px;height:calc(100vh - ${HEADER_H_M}px);height:calc(100svh - ${HEADER_H_M}px);justify-content:flex-start;padding:16px 0}
@@ -883,8 +898,8 @@ const GStyle = () => (
       .rs-visbox{height:auto!important;min-height:300px}
       .rs-section{padding-top:48px!important}
       .rs-chips.rs-scroll{flex-wrap:nowrap;overflow-x:auto;margin:0 -16px;padding:0 16px 4px}
-      .rs-prose h2{font-size:20px}
-      .rs-quote{font-size:18px}
+      .rs-prose h2{font-size:calc(20px * var(--fs))}
+      .rs-quote{font-size:calc(18px * var(--fs))}
       .rs-band{padding:32px 24px}
     }
     @media (max-height:520px){ .rs-panel{position:static!important;height:auto!important} }
