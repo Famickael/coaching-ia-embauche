@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { T, FD, FB, FM, RAD, SH, Card, Tag, Icon, I } from "./ui.jsx";
+import { T, ON, TY, RAD, SH, PAD, GAP, MO, TONE, ringOf, Card, Tag, Bare, Notice, Quote, TimeChip, I } from "./ui.jsx";
 import { loadVideoUrl } from "./lib/store.js";
 import { fmt } from "./lib/analysis.js";
 
@@ -18,12 +18,24 @@ export function useVideoUrl(take) {
 
 /* Marqueurs : observations de l'assistant + notes horodatées du coach. */
 export function markersOf(take) {
-  const dims = (take.analysis?.dimensions || []).map(d => ({ id: d.id, t: d.t, kind: "ia", color: toneOf(d), label: d.titre }));
+  const dims = (take.analysis?.dimensions || []).map(d => ({ id: d.id, t: d.t, kind: "ia", type: d.type, color: toneOf(d), label: d.titre }));
   const notes = (take.report?.notes || []).map(n => ({ id: n.id, t: n.t, kind: "note", color: T.primary, label: n.text }));
   return [...dims, ...notes].sort((a, b) => a.t - b.t);
 }
 
-/* Lecteur avec barre de repères cliquables (repère ↔ moment de la vidéo). */
+/* Repère de lecture (référentiel 5.10) : appui rond plein, à explorer rond évidé, note du coach carré.
+   La forme distingue autant que la couleur. */
+export const Mark = ({ kind, s = 12 }) => (
+  <span aria-hidden style={{
+    display: "block", width: s, height: s, boxSizing: "border-box", flexShrink: 0,
+    borderRadius: kind === "note" ? RAD.xs / 2 : "50%",
+    background: kind === "explore" ? T.surface : kind === "note" ? T.primary : T.accent,
+    border: kind === "explore" ? `3px solid ${T.violet}` : `2px solid ${T.surface}`, boxShadow: SH.xs,
+  }} />
+);
+const kindOf = m => (m.kind === "note" ? "note" : m.type === "appui" ? "appui" : "explore");
+
+/* Lecteur avec barre de repères cliquables (repère et moment de la vidéo liés). */
 export function Player({ take, url, markers, active, onActive, playerRef }) {
   const local = useRef(null);
   const ref = playerRef || local;
@@ -50,55 +62,63 @@ export function Player({ take, url, markers, active, onActive, playerRef }) {
 
   const isAudio = take.mime?.startsWith("audio");
   return (
-    <Card pad={0} style={{ overflow: "hidden" }}>
-      <div style={{ background: "#000", aspectRatio: isAudio ? "auto" : "16/9", display: "grid", placeItems: "center", padding: isAudio ? 24 : 0 }}>
+    <Card pad="none">
+      <div style={{ background: T.videoBg, aspectRatio: isAudio ? "auto" : "16/9", display: "grid", placeItems: "center", padding: isAudio ? 24 : 0 }}>
         {url
           ? (isAudio
             ? <audio ref={ref} src={url} controls style={{ width: "90%" }} />
             : <video ref={ref} src={url} controls playsInline style={{ width: "100%", height: "100%", objectFit: "contain" }} />)
-          : <div style={{ color: "rgba(255,255,255,.7)", font: `500 13px ${FB}`, padding: 30 }}>Vidéo non disponible sur cet appareil.</div>}
+          : <div style={{ ...TY.small, color: ON.text, padding: 32 }}>Vidéo non disponible sur cet appareil.</div>}
       </div>
-      <div style={{ padding: "14px 16px 16px" }}>
-        <div onClick={e => { const r = e.currentTarget.getBoundingClientRect(); seek(((e.clientX - r.left) / r.width) * dur); }}
-          style={{ position: "relative", height: 8, background: T.lineLt, borderRadius: RAD.pill, marginBottom: 6, cursor: "pointer" }}>
-          <div style={{ position: "absolute", inset: 0, width: `${Math.min(100, (cur / dur) * 100)}%`, background: T.primary, borderRadius: RAD.pill }} />
+      <div style={{ padding: "16px 16px 16px", display: "grid", gap: 8 }}>
+        <div style={{ position: "relative", height: 44 }}>
+          <Bare aria-label="Se placer dans la vidéo" onClick={e => { const r = e.currentTarget.getBoundingClientRect(); seek(((e.clientX - r.left) / r.width) * dur); }}
+            style={{ position: "absolute", left: 0, right: 0, top: 0, bottom: 0, display: "flex", alignItems: "center" }}>
+            <span style={{ position: "relative", display: "block", width: "100%", height: 8, background: T.lineLt, borderRadius: RAD.pill }}>
+              <span style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: `${Math.min(100, (cur / dur) * 100)}%`, background: T.primary, borderRadius: RAD.pill }} />
+            </span>
+          </Bare>
           {markers.map(m => (
-            <div key={m.id} title={`${fmt(m.t)} · ${m.label}`} onClick={e => { e.stopPropagation(); seek(m.t, m.id); }}
-              style={{ position: "absolute", left: `${Math.min(100, (m.t / dur) * 100)}%`, top: m.kind === "note" ? -9 : -4, width: m.kind === "note" ? 12 : 16, height: m.kind === "note" ? 12 : 16, marginLeft: m.kind === "note" ? -6 : -8, borderRadius: m.kind === "note" ? 3 : "50%", cursor: "pointer", background: m.color, border: "2px solid #fff", boxShadow: active === m.id ? `0 0 0 4px ${m.color}44` : SH.xs }} />
+            <Bare key={m.id} title={`${fmt(m.t)} · ${m.label}`} aria-label={`${fmt(m.t)} · ${m.label}`} onClick={() => seek(m.t, m.id)}
+              style={{ position: "absolute", left: `${Math.min(100, (m.t / dur) * 100)}%`, top: 0, width: 32, height: 44, transform: `translate(-50%, ${m.kind === "note" ? -8 : 0}px)`, display: "grid", placeItems: "center" }}>
+              <span style={{ borderRadius: m.kind === "note" ? RAD.xs : "50%", boxShadow: active === m.id ? ringOf(m.kind === "note" ? T.primaryBg : m.type === "appui" ? T.accentBg : T.violetBg) : "none" }}>
+                <Mark kind={kindOf(m)} s={m.kind === "note" ? 12 : 16} />
+              </span>
+            </Bare>
           ))}
         </div>
-        <div style={{ display: "flex", justifyContent: "space-between", font: `500 11px ${FM}`, color: T.muted, marginBottom: 10 }}><span>{fmt(cur)}</span><span>{fmt(dur)}</span></div>
-        <div style={{ display: "flex", gap: 14, flexWrap: "wrap", font: `400 12px ${FB}`, color: T.body }}>
-          <Dot c={T.accent} t="Point d'appui" /><Dot c={T.violet} t="À explorer" /><Dot c={T.primary} t="Note du coach" square />
+        <div style={{ display: "flex", justifyContent: "space-between", ...TY.time, color: T.muted }}><span>{fmt(cur)}</span><span>{fmt(dur)}</span></div>
+        <div style={{ display: "flex", gap: 16, flexWrap: "wrap", ...TY.caption, color: T.body, marginTop: 4 }}>
+          <Legend kind="appui" t="Point d'appui" /><Legend kind="explore" t="À explorer" /><Legend kind="note" t="Note du coach" />
         </div>
       </div>
     </Card>
   );
 }
-const Dot = ({ c, t, square }) => <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><span style={{ width: 9, height: 9, borderRadius: square ? 2 : "50%", background: c }} />{t}</span>;
+const Legend = ({ kind, t }) => <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}><Mark kind={kind} s={12} />{t}</span>;
 
-/* Carte d'une observation de l'assistant (avec le commentaire du coach s'il existe). */
-export function DimCard({ d, comment, active, onClick, compact }) {
-  const c = toneOf(d);
-  return (
-    <div onClick={onClick} style={{
-      background: active ? `${c}10` : "#fff", border: `1.5px solid ${active ? c : T.line}`, borderRadius: RAD.md,
-      padding: compact ? 14 : 18, marginBottom: 10, cursor: onClick ? "pointer" : "default", transition: "all .2s",
-    }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 7, flexWrap: "wrap" }}>
-        <span style={{ minWidth: 36, height: 22, padding: "0 7px", borderRadius: RAD.pill, background: c, color: "#fff", display: "grid", placeItems: "center", font: `700 11px ${FM}` }}>{fmt(d.t)}</span>
-        <span style={{ font: `700 15px ${FD}`, color: T.navy, flex: 1 }}>{d.titre}</span>
-        <Tag tone={d.type === "appui" ? "appui" : "ai"}>{d.type === "appui" ? "Point d'appui" : "À explorer"}</Tag>
-      </div>
-      <div style={{ font: `500 14px/1.55 ${FB}`, color: T.navy, marginBottom: 8 }}>{d.observation}</div>
-      <div style={{ font: `400 13px/1.55 ${FB}`, color: T.body, background: T.bg, borderRadius: RAD.sm, padding: "9px 12px" }}>{d.conseil}</div>
-      {comment && (
-        <div style={{ marginTop: 8, display: "flex", gap: 8, font: `400 13px/1.55 ${FB}`, color: T.navy, background: `${T.primary}0D`, borderLeft: `3px solid ${T.primary}`, borderRadius: RAD.xs, padding: "9px 12px" }}>
-          <Icon d={I.note} s={15} c={T.primary} /><span><strong>Votre coach :</strong> {comment}</span>
-        </div>
-      )}
-    </div>
+/* Carte d'une observation de l'assistant (avec le commentaire du coach s'il existe). Cliquable : rendue en bouton. */
+export function DimCard({ d, comment, active, onClick }) {
+  const ap = d.type === "appui";
+  const tone = ap ? TONE.appui : TONE.ai;
+  const body = (
+    <>
+      <span style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+        <TimeChip t={d.t} tone={ap ? "appui" : "ai"} />
+        <span style={{ ...TY.h3, color: T.navy, flex: 1, minWidth: 120 }}>{d.titre}</span>
+        <Tag tone={ap ? "appui" : "ai"} icon={ap ? I.check : I.search}>{ap ? "Point d'appui" : "À explorer"}</Tag>
+      </span>
+      <span style={{ display: "block", ...TY.body, color: T.navy }}>{d.observation}</span>
+      <span style={{ display: "block", ...TY.small, color: T.body, background: T.bg, borderRadius: RAD.sm, padding: "8px 12px" }}>{d.conseil}</span>
+      {comment && <Quote><strong>Votre coach :</strong> {comment}</Quote>}
+    </>
   );
+  const st = {
+    display: "grid", gap: 8, width: "100%", textAlign: "left", background: active ? tone.bg : T.surface, border: `1.5px solid ${active ? tone.fg : T.line}`,
+    borderRadius: RAD.md, padding: PAD.sm, transition: `border-color ${MO.fast}, background-color ${MO.fast}`,
+  };
+  if (onClick) return <Bare onClick={onClick} aria-pressed={!!active} style={st}>{body}</Bare>;
+  return <div style={st}>{body}</div>;
 }
 
 /* Rapport en lecture : mode "simple" (texte) ou "video" (relecture avec repères). */
@@ -112,27 +132,28 @@ export function ReportBody({ take, mode, counselorName }) {
   const seekTo = (t, id) => { setActive(id); const v = playerRef.current; if (v) { v.currentTime = t; v.play().catch(() => {}); } };
 
   const intro = rep && (
-    <Card style={{ marginBottom: 14, borderLeft: `4px solid ${T.primary}` }}>
-      <div style={{ font: `700 13px ${FB}`, color: T.primary, marginBottom: 6 }}>Le mot de {counselorName || "votre coach"}</div>
-      <div style={{ font: `400 15px/1.65 ${FB}`, color: T.navy, whiteSpace: "pre-wrap" }}>{rep.intro || "Votre coach a relu votre prise."}</div>
+    <Card level={2} style={{ borderLeft: `3px solid ${T.primary}`, display: "grid", gap: 8 }}>
+      <div style={{ ...TY.label, color: T.primary }}>Le mot de {counselorName || "votre coach"}</div>
+      <div style={{ ...TY.bodyLg, color: T.navy, whiteSpace: "pre-wrap" }}>{rep.intro || "Votre coach a relu votre prise."}</div>
     </Card>
   );
   const notes = rep?.notes?.length > 0 && (
-    <Card style={{ marginTop: 4 }}>
-      <div style={{ font: `700 14px ${FD}`, color: T.navy, marginBottom: 10 }}>Notes horodatées</div>
-      {rep.notes.slice().sort((a, b) => a.t - b.t).map(n => (
-        <div key={n.id} onClick={mode === "video" ? () => seekTo(n.t, n.id) : undefined} style={{ display: "flex", gap: 10, padding: "8px 0", borderTop: `1px solid ${T.lineLt}`, cursor: mode === "video" ? "pointer" : "default" }}>
-          <span style={{ minWidth: 40, height: 22, borderRadius: RAD.pill, background: T.primary, color: "#fff", display: "grid", placeItems: "center", font: `700 11px ${FM}` }}>{fmt(n.t)}</span>
-          <span style={{ font: `400 14px/1.5 ${FB}`, color: T.navy }}>{n.text}</span>
-        </div>
-      ))}
+    <Card>
+      <h3 style={{ ...TY.h4, color: T.navy, margin: "0 0 8px" }}>Notes horodatées</h3>
+      {rep.notes.slice().sort((a, b) => a.t - b.t).map(n => {
+        const row = <><TimeChip t={n.t} tone="primary" /><span style={{ ...TY.body, color: T.navy }}>{n.text}</span></>;
+        const st = { display: "flex", gap: 12, alignItems: "flex-start", width: "100%", padding: "8px 0", borderTop: `1px solid ${T.lineLt}` };
+        return mode === "video"
+          ? <Bare key={n.id} onClick={() => seekTo(n.t, n.id)} style={st}>{row}</Bare>
+          : <div key={n.id} style={st}>{row}</div>;
+      })}
     </Card>
   );
-  const synth = <div style={{ background: `${T.primary}0D`, borderRadius: RAD.md, padding: 16, marginBottom: 14, font: `400 14.5px/1.6 ${FB}`, color: T.navy }}><strong>En deux mots.</strong> {A.synthese}</div>;
+  const synth = <Notice tone="info" icon={I.sparkle} style={{ ...TY.bodyLg }}><strong>En deux mots.</strong> {A.synthese}</Notice>;
 
   if (mode !== "video") {
     return (
-      <div>
+      <div style={{ display: "grid", gap: GAP.stack }}>
         {intro}{synth}
         {A.dimensions.map(d => <DimCard key={d.id} d={d} comment={rep?.comments?.[d.id]} />)}
         {notes}
@@ -140,16 +161,16 @@ export function ReportBody({ take, mode, counselorName }) {
     );
   }
   return (
-    <div>
+    <div style={{ display: "grid", gap: GAP.stack }}>
       {intro}
-      <div className="rp-split" style={{ display: "grid", gridTemplateColumns: "minmax(0,1.3fr) minmax(0,1fr)", gap: 16 }}>
-        <div>
+      <div className="rp-split">
+        <div style={{ display: "grid", gap: GAP.stack }}>
           <Player take={take} url={url} markers={markers} active={active} onActive={setActive} playerRef={playerRef} />
-          <div style={{ marginTop: 12 }}>{synth}</div>
+          {synth}
           {notes}
         </div>
-        <div>
-          {A.dimensions.map(d => <DimCard key={d.id} d={d} compact comment={rep?.comments?.[d.id]} active={active === d.id} onClick={() => seekTo(d.t, d.id)} />)}
+        <div style={{ display: "grid", gap: GAP.stack }}>
+          {A.dimensions.map(d => <DimCard key={d.id} d={d} comment={rep?.comments?.[d.id]} active={active === d.id} onClick={() => seekTo(d.t, d.id)} />)}
         </div>
       </div>
     </div>
