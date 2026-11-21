@@ -4,17 +4,66 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <!--csp-->
-    <meta name="description" content="La Répét' : entraînement autonome à l'entretien d'embauche, avec un retour qui décrit sans noter et un coach qui garde la main." />
+    <!-- Référencement et aperçus de lien : docs/seo.md. Titres et descriptions par page : src/lib/seo.js.
+         Les robots d'aperçu (LinkedIn, WhatsApp, Slack…) n'exécutent pas le JavaScript et ignorent l'ancre (#/…) :
+         tout lien partagé affiche l'aperçu ci-dessous. Adresses absolues : à changer avec le nom de domaine. -->
+    <!-- SITE FERMÉ À L'INDEXATION. Pour l'ouvrir (liste de contrôle complète : docs/seo.md, section 2) : retirer
+         cette balise, remplacer public/robots.txt par sa version d'ouverture, déclarer le site dans Search Console. -->
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="description" content="Préparez un entretien d'embauche ou de mobilité : vous répétez à votre rythme, un retour décrit votre réponse sans la noter et votre coach garde la main." />
+    <link rel="canonical" href="https://famickael.github.io/la-repet/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="La Répét'" />
+    <meta property="og:locale" content="fr_FR" />
+    <meta property="og:title" content="S'entraîner aux entretiens avec un coach" />
+    <meta property="og:description" content="Vous répétez à votre rythme, un retour décrit votre réponse sans la noter, et votre coach garde la main." />
+    <meta property="og:url" content="https://famickael.github.io/la-repet/" />
+    <meta property="og:image" content="https://famickael.github.io/la-repet/og-image.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Logo La Répét' sur un dégradé bleu et violet, avec la phrase : Répétez votre entretien, avec votre coach. Un retour qui décrit, sans noter." />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image:alt" content="Logo La Répét' sur un dégradé bleu et violet, avec la phrase : Répétez votre entretien, avec votre coach. Un retour qui décrit, sans noter." />
     <meta name="theme-color" content="#F8FAFC" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#0E141E" media="(prefers-color-scheme: dark)" />
     <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+    <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="./icons/apple-touch-icon.png" />
+    <link rel="manifest" href="./site.webmanifest" />
+    <!-- Données structurées (schema.org) : nom du site et organisme. Valeurs d'exemple de src/content/organisme.js,
+         à remplacer en même temps que lui ; ni adresse, ni téléphone, ni numéro d'immatriculation tant qu'ils sont fictifs. -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "WebSite",
+            "@id": "https://famickael.github.io/la-repet/#site",
+            "name": "La Répét'",
+            "url": "https://famickael.github.io/la-repet/",
+            "inLanguage": "fr-FR",
+            "description": "Entraînement aux entretiens d'embauche et de mobilité, avec un retour qui décrit sans noter et un coach qui garde la main.",
+            "publisher": { "@id": "https://famickael.github.io/la-repet/#organisme" }
+          },
+          {
+            "@type": "Organization",
+            "@id": "https://famickael.github.io/la-repet/#organisme",
+            "name": "Organisme d'accompagnement (nom à remplacer)",
+            "url": "https://famickael.github.io/la-repet/",
+            "logo": "https://famickael.github.io/la-repet/icons/icon-512.png",
+            "description": "Organisme d'accompagnement vers l'emploi et la mobilité professionnelle, dont les coachs utilisent La Répét'."
+          }
+        ]
+      }
+    </script>
     <!-- Polices et masques du logo découverts avant le JavaScript (PERF-03, PERF-07) -->
     <link rel="preload" href="./fonts/outfit-latin-800-normal.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="preload" href="./fonts/inter-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="stylesheet" href="./fonts/fonts.css" />
     <link rel="preload" href="./img/logo/bulles.png" as="image" crossorigin />
     <link rel="preload" href="./img/logo/lettres.png" as="image" crossorigin />
-    <title>La Répét' · S'entraîner à l'entretien d'embauche</title>
+    <title>S'entraîner aux entretiens avec un coach · La Répét'</title>
     <script>
       /* Options d'accessibilité appliquées avant tout affichage (thème, animations) : pas de flash clair en thème sombre.
          Même clé que src/lib/a11y.js ; le reste des réglages est appliqué par src/main.jsx avant le premier rendu. */
