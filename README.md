@@ -111,7 +111,7 @@ Les photos suivantes proviennent de Pexels et sont utilisées sous la [licence P
 | Suppression d'une prise, d'un parcours, de toutes ses données | `deleteTake`, `deleteParcours`, `withdrawConsent` |
 | Indicateurs agrégés non stigmatisants | `List` (`Counselor.jsx`) : prises à relire, parcours, rapports, taux de réentraînement, délai moyen de relecture |
 | Impression ou export PDF du rapport | `window.print()` + feuille de style d'impression (`GStyle`) |
-| Information sur les données en trois niveaux (phrase, résumé, page), pages « Vos données », conditions, mentions légales, déclaration d'accessibilité | `src/content/legal.js` (textes), `src/content/organisme.js` (champs « À compléter par l'organisme »), `src/Legal.jsx` (pages et fenêtre de résumé) ; audit dans `docs/conformite.md` |
+| Information sur les données en trois niveaux (phrase, résumé, page), pages « Vos données », conditions, mentions légales, déclaration d'accessibilité | `src/content/legal.js` (textes), `src/content/organisme.js` (valeurs d'exemple explicites, à remplacer par l'organisme), `src/Legal.jsx` (pages et fenêtre de résumé) ; audit dans `docs/conformite.md` |
 
 ---
 
@@ -143,7 +143,7 @@ src/
   ui.jsx              composants de base (réexporte les jetons) : logos, Txt, Btn, Card, Tag, Notice, Modal, champs, Rail, GradHead, styles globaux
   Legal.jsx           pages « Vos données » (#/vos-donnees/...), conditions, mentions légales, accessibilité ; fenêtre de résumé (niveau 2)
   content/legal.js    fonds unique des textes d'information : phrases, résumés, textes complets (variantes prototype et production)
-  content/organisme.js  SEUL fichier à compléter par l'organisme : responsable, DPO, hébergeur, durées, base légale (null = « À compléter par l'organisme »)
+  content/organisme.js  SEUL fichier à compléter par l'organisme : responsable, DPO, hébergeur, durées, base légale (valeurs d'exemple affichées, domaines exemple.fr et example.org ; null = formulation neutre)
   Beneficiary.jsx     espace bénéficiaire : code, consentement, espace, échauffement, question, enregistrement, traitement, rapport, partage
   Counselor.jsx       espace coach : identification locale, liste et indicateurs, création de parcours, détail, relecture
   Recorder.jsx        enregistreur caméra/micro + déclenchement du suivi du regard
@@ -229,7 +229,7 @@ Par ordre de priorité :
 5. **Auto-hébergement des modèles** (Whisper, MediaPipe) et, si besoin, proxy serveur pour la transcription et la reformulation (modèles hébergés en France).
 6. **Validation des seuils** de `analysis.js` (débit, pauses, mots d'appui) et de `gaze.js` (seuils `down` et `side`) sur des prises réelles, puis **audit de biais** sur des profils représentatifs (âge, genre, accent, quartiers prioritaires, primo-arrivants).
 7. **Accessibilité** : audit RGAA 4.1.2 complet, consignes en FALC, test au lecteur d'écran.
-8. **Analyse d'impact (AIPD), obligatoire**, note de qualification AI Act, compléter `src/content/organisme.js` (champs « À compléter par l'organisme ») et faire valider les textes de `src/content/legal.js` par le juridique et le DPO ; formation des coachs. Détail et priorités : `docs/conformite.md`. Avec `VITE_BACKEND_URL`, les textes passent en variante « production ».
+8. **Analyse d'impact (AIPD), obligatoire**, note de qualification AI Act, remplacer les valeurs d'exemple de `src/content/organisme.js` et faire valider les textes de `src/content/legal.js` par le juridique et le DPO ; formation des coachs. Détail et priorités : `docs/conformite.md`. Avec `VITE_BACKEND_URL`, les textes passent en variante « production ».
 
 Limites connues :
 - la qualité de transcription de Whisper base en français est correcte mais imparfaite sur les prises courtes ou bruitées ; `whisper-small` est meilleur mais plus lourd ;
