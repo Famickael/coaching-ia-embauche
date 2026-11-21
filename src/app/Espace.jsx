@@ -19,7 +19,7 @@ export function Espace() {
   const card = { display: "flex", flexDirection: "column", gap: GAP.grid, height: "100%" };
   return (
     <main>
-      <PageHero eyebrow="Accès" title="Mon espace" lead="Vous vous entraînez, ou vous êtes coach ?" />
+      <PageHero eyebrow="Accès" title="Mon espace" lead="Vous vous entraînez, ou vous êtes coach ?" />
       <div className="rs-pad" style={{ maxWidth: W.page, margin: "0 auto", padding: "48px 24px 0" }}>
         <div className="rp-stack rp-equal" style={{ alignItems: "stretch", maxWidth: W.wide }}>
           <Card pad="lg" level={2} topbar style={card}>
@@ -27,7 +27,7 @@ export function Espace() {
               <div><Tag tone="primary">Je m'entraîne</Tag></div>
               <Txt v="h2" as="h2" color={T.navy}>J'ai un code d'accès</Txt>
             </div>
-            <CodeForm id="espace-code" grow hint="Les 6 caractères que votre coach vous a donnés." onOk={c => go(`#/s/${c}`)}
+            <CodeForm id="espace-code" grow hint="Les 6 caractères que votre coach vous a donnés." onOk={c => go(`#/s/${c}`)}
               footer={<Txt v="caption" color={T.muted}>{PHRASES.code}</Txt>} />
           </Card>
           <Card pad="lg" level={2} topbar="coach" style={card}>
@@ -44,13 +44,13 @@ export function Espace() {
                   <Input id="login-pwd" type="password" autoComplete="current-password" value={pwd} onChange={e => setPwd(e.target.value)} />
                 </Field>
                 <div style={{ textAlign: "right" }}>
-                  <Link onClick={() => setForgot(true)} style={{ ...TY.small, ...TY.link, minHeight: 44 }}>Mot de passe oublié ?</Link>
+                  <Link onClick={() => setForgot(true)} style={{ ...TY.small, ...TY.link, minHeight: 44 }}>Mot de passe oublié ?</Link>
                 </div>
                 {forgot && <Notice tone="info" role="status">Contactez votre référent pour réinitialiser votre mot de passe.</Notice>}
               </div>
               <div style={{ marginTop: "auto", display: "grid", gap: 12 }}>
                 <Btn kind="objective" full disabled={!ok}>Se connecter</Btn>
-                <Txt v="caption" color={T.muted}>{PHRASES.coachLogin} <Link href="#/vos-donnees/coachs">Coachs : vos données</Link></Txt>
+                <Txt v="caption" color={T.muted}>{PHRASES.coachLogin} <Link href="#/vos-donnees/coachs">Coachs : vos données</Link></Txt>
               </div>
             </form>
           </Card>

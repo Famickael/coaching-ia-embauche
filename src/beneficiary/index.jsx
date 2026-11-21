@@ -28,7 +28,7 @@ function restorable(t, ctx, takes) {
   if (t.view === "recap") return !!ctx.queue?.length;
   return true;
 }
-const LOST = "Cet écran ne peut pas être rouvert : un enregistrement en cours ou une série de questions n'est pas gardé après un rechargement. Vous êtes revenu à votre espace.";
+const LOST = "Cet écran ne peut pas être rouvert : un enregistrement en cours ou une série de questions n'est pas gardé après un rechargement. Vous êtes revenu à votre espace.";
 
 export default function Beneficiary({ initialCode, sub = "", setModal, onCode }) {
   const s = useStore();

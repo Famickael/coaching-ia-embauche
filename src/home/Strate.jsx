@@ -6,7 +6,7 @@ import { Pin } from "./shared.jsx";
 /* ─── Strate épinglée : le panneau reste fixe, seul son contenu change au fil du défilement ─── */
 export const STEPS = [
   { k: "S'entraîner", t: "Vous vous entraînez quand vous voulez", d: "Choisissez une question liée au métier que vous visez. Répondez face à la caméra, ou en voix seule. Recommencez autant de fois que vous voulez.", V: VisCamera },
-  { k: "Recevoir un retour", t: "L'assistant décrit votre réponse", d: "Rythme de parole, pauses, exemples, regard : il vous dit ce qu'il a remarqué, et à quel moment. Il commence par ce qui fonctionne déjà.", V: VisReport },
+  { k: "Recevoir un retour", t: "L'assistant décrit votre réponse", d: "Rythme de parole, pauses, exemples, regard : il vous dit ce qu'il a remarqué, et à quel moment. Il commence par ce qui fonctionne déjà.", V: VisReport },
   { k: "Envoyer", t: "Vous décidez de ce que vous envoyez", d: "Votre vidéo reste sur votre appareil. Votre coach la voit seulement si vous la lui envoyez, réponse par réponse.", V: VisShare },
   { k: "En parler", t: "Votre coach vous répond, vous en parlez ensemble", d: "Votre coach regarde votre réponse et ajoute ses remarques. Son rapport sert de point de départ à votre prochain rendez-vous ou atelier.", V: VisCoach },
 ];
@@ -154,7 +154,7 @@ export function VisCamera() {
         </div>
         <div className="rs-in" style={{ position: "absolute", left: 12, right: 12, bottom: 12, background: T.surface, borderRadius: RAD.md, padding: "12px 16px", transitionDelay: ".25s", display: "grid", gap: 4 }}>
           <div style={{ ...TY.overline, color: T.muted }}>Question · agent d'accueil</div>
-          <div style={{ ...TY.h3, color: T.navy }}>« Pouvez-vous vous présenter en deux minutes ? »</div>
+          <div style={{ ...TY.h3, color: T.navy }}>« Pouvez-vous vous présenter en deux minutes ? »</div>
         </div>
       </div>
     </div>
@@ -168,7 +168,7 @@ export const SEGS = [[0, 11], [13, 27], [29, 41], [44, 58], [60, 70], [73, 86], 
 export const OBS = [
   { at: 4, time: "0:04", ap: true, d: 300, t: "Ouverture", txt: "Vous entrez directement dans le sujet." },
   { at: 38, time: "0:35", ap: true, d: 900, t: "Exemples concrets", txt: "Vous citez une expérience précise." },
-  { at: 66, time: "1:01", ap: false, d: 1500, t: "Petits mots répétés", txt: "« Euh » revient quelques fois." },
+  { at: 66, time: "1:01", ap: false, d: 1500, t: "Petits mots répétés", txt: "« Euh » revient quelques fois." },
 ];
 
 export function VisReport({ play }) {
@@ -230,8 +230,8 @@ export function VisShare() {
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <IconTile icon={I.play} />
           <div>
-            <div style={{ ...TY.h3, color: T.navy }}>Entretien du 12 mars</div>
-            <div style={{ ...TY.mono, color: T.muted }}>1 min 32</div>
+            <div style={{ ...TY.h3, color: T.navy }}>Entretien du 12 mars</div>
+            <div style={{ ...TY.mono, color: T.muted }}>1 min 32</div>
           </div>
         </div>
         <div style={{ position: "relative", height: 24, marginTop: 16 }}>
@@ -270,7 +270,7 @@ export function VisCoach() {
       <div style={{ display: "flex", justifyContent: "space-between", ...TY.time, color: T.muted }}><span>0:00</span><span>1:32</span></div>
       {note("0:35", "Très bon exemple, gardez-le.", ".3s")}
       {note("0:48", "Ici, vous pouvez dire ce que vous avez fait, vous.", ".55s")}
-      {note("1:01", "Une respiration suffit à la place du « euh ».", ".8s")}
+      {note("1:01", "Une respiration suffit à la place du « euh ».", ".8s")}
       <div className="rs-in" style={{ display: "flex", alignItems: "center", gap: 8, ...TY.bodyStrong, color: T.primary, marginTop: 4, transitionDelay: "1.05s" }}>
         <Icon d={I.users} s={16} c={T.primary} /> Rendez-vous avec votre coach jeudi
       </div>

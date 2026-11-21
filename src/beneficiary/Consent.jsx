@@ -21,7 +21,7 @@ export function Consent({ p, onBack }) {
         <Summary items={SUMMARY.accord} />
         <div style={stack(GAP.stack)}>
           {box("local", "Je veux m'enregistrer sur cet appareil.", "Ma vidéo et ma voix restent sur cet appareil. Mon coach les voit seulement si je les lui envoie, réponse par réponse.", true)}
-          {box("ai", "Je veux recevoir un retour de l'assistant.", "L'assistant est un programme. Il décrit des faits : rythme de parole, pauses, regard. Il ne met pas de note. Il ne cherche pas à deviner les émotions. Sans cette case, vous pouvez quand même vous enregistrer et vous revoir.")}
+          {box("ai", "Je veux recevoir un retour de l'assistant.", "L'assistant est un programme. Il décrit des faits : rythme de parole, pauses, regard. Il ne met pas de note. Il ne cherche pas à deviner les émotions. Sans cette case, vous pouvez quand même vous enregistrer et vous revoir.")}
         </div>
         <div style={stack(8)}>
           <p style={{ ...TY.small, color: T.body, margin: 0 }}>{PHRASES.refuse}</p>

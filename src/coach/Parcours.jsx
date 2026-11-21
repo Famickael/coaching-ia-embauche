@@ -28,7 +28,7 @@ export function Parcours({ s, p, back, review }) {
         <div style={stack(4)}>
           <Txt v="h2" as="h2" color={T.navy}>Entretiens reçus</Txt>
           <Txt v="small" color={T.muted}>
-            {priv > 0 ? (priv > 1 ? `${priv} autres entretiens n'ont pas été envoyés : vous ne les voyez pas.` : "1 autre entretien n'a pas été envoyé : vous ne le voyez pas.") : "Vous voyez ici seulement les entretiens que la personne vous a envoyés."}
+            {priv > 0 ? (priv > 1 ? `${priv} autres entretiens n'ont pas été envoyés : vous ne les voyez pas.` : "1 autre entretien n'a pas été envoyé : vous ne le voyez pas.") : "Vous voyez ici seulement les entretiens que la personne vous a envoyés."}
           </Txt>
         </div>
         {shared.length === 0 && <Empty icon={I.send} text="Aucun entretien reçu pour le moment." />}
@@ -49,7 +49,7 @@ export function Parcours({ s, p, back, review }) {
       </section>
       <div><Back onClick={back} /></div>
       {confirmDel && (
-        <ConfirmDialog title={`Supprimer le parcours de ${p.prenom} ?`} confirmLabel="Supprimer le parcours" onCancel={() => setConfirmDel(false)} onConfirm={del}>
+        <ConfirmDialog title={`Supprimer le parcours de ${p.prenom} ?`} confirmLabel="Supprimer le parcours" onCancel={() => setConfirmDel(false)} onConfirm={del}>
           Le parcours, ses entretiens et ses rapports sont effacés de cet appareil. C'est définitif.
         </ConfirmDialog>
       )}

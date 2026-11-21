@@ -20,7 +20,7 @@ export const SUBS = {
 
 export const activeOf = role => (role === "research" ? "about" : role);
 
-export const DATA_LINKS = [["#/vos-donnees", "Vos données"], ["#/vos-donnees/video", "Que devient ma vidéo ?"], ["#/mentions-legales", "Mentions légales"], ["#/accessibilite", "Accessibilité : non conforme"]];
+export const DATA_LINKS = [["#/vos-donnees", "Vos données"], ["#/vos-donnees/video", "Que devient ma vidéo ?"], ["#/mentions-legales", "Mentions légales"], ["#/accessibilite", "Accessibilité : non conforme"]];
 
 export function Nav({ route, s }) {
   /* Session : coach connecté, ou dernier espace bénéficiaire ouvert, tant qu'on ne s'est pas déconnecté.

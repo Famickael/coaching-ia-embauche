@@ -85,3 +85,15 @@ for (const f of walk(new URL("../src", import.meta.url).pathname).filter(f => /\
 }
 console.log("content.test : types d'entretien et fournisseur d'IA OK");
 
+/* RED-11 : typographie française des textes visibles (docs/redaction.md, 1.3). Aucune espace ordinaire avant
+   ; ? ! : % » ni après «, et une insécable entre un nombre et son unité. Code, URL, expressions régulières et clés
+   ne sont pas lus (tests/lib/typo-fr.mjs). */
+const { jsTextSpans, mdTextSpans, badSpots } = await import("./lib/typo-fr.mjs");
+const TYPO_SKIP = /src\/(tokens\.js|ui\/GStyle\.jsx|ui\/icons\.jsx|lib\/whisper\.worker\.js|lib\/gazeKeys\.js)$/;
+const typoErrors = [];
+for (const f of walk(new URL("../src", import.meta.url).pathname).filter(f => /\.(jsx?|md)$/.test(f) && !TYPO_SKIP.test(f))) {
+  const src = readFileSync(f, "utf8");
+  for (const s of f.endsWith(".md") ? mdTextSpans(src) : jsTextSpans(src)) for (const spot of badSpots(s.text)) typoErrors.push(`${f.replace(/.*\/src\//, "src/")} : « ${spot.replace(/\n/g, " ")} »`);
+}
+assert.equal(typoErrors.length, 0, `espaces ordinaires à remplacer par des insécables :\n${typoErrors.slice(0, 40).join("\n")}`);
+console.log("content.test : typographie française OK");

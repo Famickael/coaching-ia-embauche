@@ -15,9 +15,9 @@ export function Share({ p, take, go, setModal }) {
         <Txt v="body" color={T.body}>{PHRASES.share} {PHRASES.sameDevice}</Txt>
       </div>
       <Summary items={SUMMARY.envoi} style={{ gap: 8 }} />
-      <div><Link onClick={() => setModal("video")}>Que devient ma vidéo ?</Link></div>
+      <div><Link onClick={() => setModal("video")}>Que devient ma vidéo ?</Link></div>
       <Field id="note" label="Un message pour votre coach (facultatif)">
-        <Textarea id="note" value={note} onChange={e => setNote(e.target.value)} placeholder="Par exemple : j'ai l'impression de parler trop vite, qu'en pensez-vous ?" />
+        <Textarea id="note" value={note} onChange={e => setNote(e.target.value)} placeholder="Par exemple : j'ai l'impression de parler trop vite, qu'en pensez-vous ?" />
       </Field>
       <div className="rp-actions" style={actions}>
         <Back onClick={() => go("report")}>Je la garde pour moi</Back>

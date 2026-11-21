@@ -13,9 +13,9 @@ export function Footer({ compact = false }) {
     [I.shield, "Aucune émotion devinée", T.accent, "#/vos-donnees/assistant"],
   ];
   const groups = [
-    ["Vos données", [["#/vos-donnees", "Vos données"], ["#/vos-donnees/video", "Que devient ma vidéo ?"], ["#/vos-donnees/assistant", "L'assistant et l'IA"], ["#/vos-donnees/droits", "Vos droits"]]],
+    ["Vos données", [["#/vos-donnees", "Vos données"], ["#/vos-donnees/video", "Que devient ma vidéo ?"], ["#/vos-donnees/assistant", "L'assistant et l'IA"], ["#/vos-donnees/droits", "Vos droits"]]],
     ["Le site", [["#/a-propos", "À propos"], ["#/solutions", "Solutions"], ["#/ressources", "Ressources"], ["#/a-propos/faq", "Questions fréquentes"], ["#/demo", "Nous contacter"]]],
-    ["Informations légales", [["#/conditions", "Conditions d'utilisation"], ["#/mentions-legales", "Mentions légales"], ["#/accessibilite", "Accessibilité : non conforme"]]],
+    ["Informations légales", [["#/conditions", "Conditions d'utilisation"], ["#/mentions-legales", "Mentions légales"], ["#/accessibilite", "Accessibilité : non conforme"]]],
   ];
   const lk = { ...TY.caption, ...TY.link, minHeight: 44, display: "inline-flex", alignItems: "center" };
   const trustList = (
@@ -28,7 +28,7 @@ export function Footer({ compact = false }) {
       <div className="rp-pad" style={{ maxWidth: W.page, margin: "0 auto", padding: "12px 24px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "4px 24px" }}>
         {trustList}
         <nav aria-label="Informations" style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
-          {[["#/vos-donnees", "Vos données"], ["#/mentions-legales", "Mentions légales"], ["#/accessibilite", "Accessibilité : non conforme"]].map(([h, l]) => <Link key={h} href={h} style={lk}>{l}</Link>)}
+          {[["#/vos-donnees", "Vos données"], ["#/mentions-legales", "Mentions légales"], ["#/accessibilite", "Accessibilité : non conforme"]].map(([h, l]) => <Link key={h} href={h} style={lk}>{l}</Link>)}
         </nav>
       </div>
     </footer>

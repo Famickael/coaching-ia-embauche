@@ -74,7 +74,7 @@ function A11yDialog({ s, close }) {
         </div>
         <div role="group" aria-label="Mouvement et attention" style={{ display: "grid", gap: GAP.stack }}>
           {opt("motion", "Réduire les animations", "Plus de défilement animé ni de transition. Le réglage de votre appareil est aussi respecté.")}
-          {opt("focus", "Mode concentration", "Masque les éléments décoratifs : halos, photos décoratives, cartes animées, défilements automatiques.")}
+          {opt("focus", "Mode concentration", "Masque les éléments décoratifs : halos, photos décoratives, cartes animées, défilements automatiques.")}
         </div>
       </div>
     </Modal>

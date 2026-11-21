@@ -89,7 +89,7 @@ export function AccountMenu({ route, s }) {
           </div>
         </div>, document.body)}
       {confirm && (
-        <Modal close={() => { setConfirm(false); btn.current?.focus(); }} title="Retirer mon accord et tout supprimer ?" footer={
+        <Modal close={() => { setConfirm(false); btn.current?.focus(); }} title="Retirer mon accord et tout supprimer ?" footer={
           <div className="rp-actions" style={{ display: "flex", justifyContent: "flex-end", gap: GAP.actions, flexWrap: "wrap" }}>
             <Btn kind="secondary" onClick={() => { setConfirm(false); btn.current?.focus(); }}>Annuler</Btn>
             <Btn kind="dangerSolid" icon={I.trash} onClick={async () => { await withdrawConsent(code); setConfirm(false); }}>Tout supprimer</Btn>

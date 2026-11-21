@@ -215,11 +215,12 @@ async function run(b, vw, vh, opts = {}) {
   const LEGAL = [["#/vos-donnees", "Vos données, vos choix"], ["#/vos-donnees/video", "Que devient ma vidéo ?"], ["#/vos-donnees/assistant", "Ce que fait l'assistant, et ce qu'il ne fait pas"],
     ["#/vos-donnees/droits", "Vos droits"], ["#/vos-donnees/appareil", "Ce qui est gardé sur cet appareil"], ["#/vos-donnees/notice", "Information complète sur vos données"],
     ["#/vos-donnees/coachs", "Coachs : vos données"], ["#/conditions", "Règles d'utilisation"], ["#/mentions-legales", "Mentions légales"], ["#/accessibilite", "Accessibilité"]];
+  const plain = x => x.replace(/[\u00A0\u202F]/g, " "); // espaces insécables de la typographie française (RED-11)
   for (const [h, t] of LEGAL) {
     await visit(h);
-    const h1 = (await p.getByRole("heading", { level: 1 }).first().textContent()) || "";
+    const h1 = plain((await p.getByRole("heading", { level: 1 }).first().textContent()) || "");
     check(h1.trim() === t, `[${tag}] ${h} : titre « ${t} » attendu, lu « ${h1.trim()} »`);
-    check((await p.title()).startsWith(t), `[${tag}] ${h} : titre du document non mis à jour (${await p.title()})`);
+    check(plain(await p.title()).startsWith(t), `[${tag}] ${h} : titre du document non mis à jour (${await p.title()})`);
     await overflow(h);
     const body = await p.locator("main").innerText();
     check(!/prototype|à compléter|version d'essai/i.test(body), `[${tag}] ${h} : mention de prototype ou de champ à compléter visible`);

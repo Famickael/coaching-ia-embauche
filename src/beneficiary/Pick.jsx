@@ -37,7 +37,7 @@ export function Pick({ p, ctx, go }) {
     const idx = sel.indexOf(q.key), on = idx >= 0;
     return (
       <CheckTile key={q.key} on={on} onToggle={() => toggle(q.key)} mark={idx + 1}
-        after={removable && <IconBtn icon={I.close} label={`Retirer la question : ${q.text}`} tone="muted" size={16} onClick={() => remove(q.key)} />}>
+        after={removable && <IconBtn icon={I.close} label={`Retirer la question : ${q.text}`} tone="muted" size={16} onClick={() => remove(q.key)} />}>
         <span style={{ ...TY.overline, color: T.primary }}>{q.theme}</span>
         <span style={{ ...TY.bodyStrong, color: T.navy, overflowWrap: "anywhere" }}>{q.text}</span>
       </CheckTile>
@@ -47,7 +47,7 @@ export function Pick({ p, ctx, go }) {
   return (
     <div style={{ ...wrap(W.read), ...stack(GAP.grid) }}>
       <div style={stack(8)}>
-        <Txt v="h1" as="h1" color={T.navy}>Sur quelles questions voulez-vous vous entraîner ?</Txt>
+        <Txt v="h1" as="h1" color={T.navy}>Sur quelles questions voulez-vous vous entraîner ?</Txt>
         <Txt v="bodyLg" color={T.body}>Choisissez une ou plusieurs questions. Vous y répondrez dans l'ordre où vous les choisissez. Vous pouvez ajouter les vôtres.</Txt>
         {!ctx.selection && ctx.preselect?.length > 0 && (
           <p style={{ ...TY.small, color: T.primary, margin: 0, display: "flex", alignItems: "center", gap: 8 }}><Icon d={I.check} s={16} /> Questions choisies d'après vos réponses à l'échauffement. Vous pouvez changer.</p>
@@ -60,8 +60,8 @@ export function Pick({ p, ctx, go }) {
         </div>
         <p style={{ ...TY.body, color: T.body, margin: 0 }}>
           {type === "mobilite"
-            ? <>Une simulation d'entretien de mobilité, dans l'ordre réel : accueil, parcours, projet, compétences, axes de progrès, mise en situation, vos questions. 7 questions liées au poste {posteLabel(p.poste) ? dePoste(posteLabel(p.poste)) : "que vous visez"}. La personne qui vous reçoit lit chaque question à voix haute.</>
-            : <>Une simulation d'entretien, dans l'ordre réel : accueil, présentation, motivation, expériences, qualités, mise en situation, vos questions. 7 questions liées au métier {posteLabel(p.poste) ? dePoste(posteLabel(p.poste)) : "que vous visez"}. Le recruteur lit chaque question à voix haute.</>}
+            ? <>Une simulation d'entretien de mobilité, dans l'ordre réel : accueil, parcours, projet, compétences, axes de progrès, mise en situation, vos questions. 7 questions liées au poste {posteLabel(p.poste) ? dePoste(posteLabel(p.poste)) : "que vous visez"}. La personne qui vous reçoit lit chaque question à voix haute.</>
+            : <>Une simulation d'entretien, dans l'ordre réel : accueil, présentation, motivation, expériences, qualités, mise en situation, vos questions. 7 questions liées au métier {posteLabel(p.poste) ? dePoste(posteLabel(p.poste)) : "que vous visez"}. Le recruteur lit chaque question à voix haute.</>}
         </p>
         <div className="rp-wide-m"><Btn kind="secondary" icon={I.play} onClick={startFull}>Faire un entraînement complet</Btn></div>
       </Card>
@@ -74,7 +74,7 @@ export function Pick({ p, ctx, go }) {
         <form onSubmit={add}>
           <Field id="own" label="Ajouter ma question">
             <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-              <Input id="own" value={own} onChange={e => setOwn(e.target.value)} maxLength={240} placeholder="Par exemple : pourquoi avez-vous quitté votre dernier emploi ?" style={{ flex: "1 1 240px", width: "auto", minWidth: 0 }} />
+              <Input id="own" value={own} onChange={e => setOwn(e.target.value)} maxLength={240} placeholder="Par exemple : pourquoi avez-vous quitté votre dernier emploi ?" style={{ flex: "1 1 240px", width: "auto", minWidth: 0 }} />
               <Btn kind="secondary" disabled={own.trim().length < 5} icon={I.plus}>Ajouter</Btn>
             </div>
           </Field>

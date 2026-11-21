@@ -130,7 +130,8 @@ Les lignes des tableaux de la section 2 qui parlent d'« organismes », de dépl
 
 **Ponctuation française.**
 
-- Espace insécable avant « : », « ; », « ? », « ! », « % » et à l'intérieur des guillemets « ». Dans le code : ` ` ou le caractère lui-même, jamais une espace simple.
+- Espace fine insécable (U+202F) avant « ; », « ? », « ! » et à l'intérieur des guillemets « ». Espace insécable (U+00A0) avant « : » et « % », et entre un nombre et son unité ou son mot (« 2 minutes », « 12 mars », « 6 caractères », « 80 Mo »). Dans le code : le caractère lui-même (ou `\u202F`, `\u00A0`), jamais une espace simple.
+- Contrôle automatique : `npm run test:content` échoue si un texte visible (JSX, chaînes, articles Markdown) contient une espace ordinaire avant « ; ? ! : » % » ou après « « » (`tests/lib/typo-fr.mjs`). Les URL, le code, les expressions régulières et les clés ne sont pas concernés.
 - Dans ce document, les propositions du tableau contiennent déjà ces espaces insécables : elles peuvent être copiées telles quelles.
 - Guillemets français « » uniquement.
 - Aucun tiret cadratin ni demi-cadratin. Pour séparer deux éléments courts : le point médian entouré d'espaces (« Échauffement · rien n'est enregistré »). Pour une incise : deux phrases.

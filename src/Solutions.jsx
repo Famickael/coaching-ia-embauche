@@ -71,12 +71,12 @@ export default function Solutions({ go, openSpace, section }) {
           </div>
         </Section>
 
-        <Section id="commanditaires" eyebrow="Commanditaires" title="Nous confier un accompagnement" sub="Acteurs publics de l'emploi ou entreprises : vous nous confiez des personnes à accompagner. Nos coachs mènent l'accompagnement, La Répét' l'outille.">
+        <Section id="commanditaires" eyebrow="Commanditaires" title="Nous confier un accompagnement" sub="Acteurs publics de l'emploi ou entreprises : vous nous confiez des personnes à accompagner. Nos coachs mènent l'accompagnement, La Répét' l'outille.">
           <Tabs label="Commanditaires" idPrefix="org" tabs={ORG.map(o => [o.tab, <OrgPanel key={o.tab} o={o} />])} />
           <div className="rp-wide-m" style={{ marginTop: 32 }}><Btn kind="objective" onClick={() => go("#/demo")} iconRight={I.arrow}>Parler de votre projet</Btn></div>
         </Section>
 
-        <FinalBand title="Une question sur notre accompagnement ?" text="Les questions fréquentes répondent aux personnes accompagnées, aux coachs et aux commanditaires.">
+        <FinalBand title="Une question sur notre accompagnement ?" text="Les questions fréquentes répondent aux personnes accompagnées, aux coachs et aux commanditaires.">
           <Btn kind="white" size="lg" onClick={() => go("#/a-propos/faq")} iconRight={I.arrow}>Lire les questions fréquentes</Btn>
         </FinalBand>
       </div>
@@ -116,7 +116,7 @@ function AudienceSection({ id, tag, title, sub, features, cta }) {
 }
 
 const BENEF = [
-  [I.lock, "Accès par code, sans compte", "Un code de 6 caractères remis par le coach. Ni adresse électronique, ni mot de passe."],
+  [I.lock, "Accès par code, sans compte", "Un code de 6 caractères remis par le coach. Ni adresse électronique, ni mot de passe."],
   [I.mic, "Échauffement sans analyse", "Des phrases à dire à voix haute, avec une consigne, pour se lancer. Rien n'est enregistré."],
   [I.target, "Questions adaptées au métier", "Une banque de questions selon le poste visé, et la possibilité d'ajouter les siennes."],
   [I.video, "Caméra ou voix seule", "Trois minutes maximum par réponse, relecture avant validation, autant d'essais que souhaité."],
@@ -124,7 +124,7 @@ const BENEF = [
   [I.layers, "Un retour à lire ou à regarder", "Lire le retour, ou se revoir avec les repères placés au bon moment de la vidéo."],
   [I.chat, "Un assistant de préparation d'entretien", "Des réponses aux questions sur l'entretien, sans remplacer le coach. Un entraînement complet simule un entretien dans l'ordre réel."],
   [I.send, "Envoi volontaire", "Chaque réponse reste sur l'appareil tant que la personne ne l'envoie pas."],
-  [I.trash, "Tout supprimer à tout moment", "La personne peut supprimer une réponse. Elle peut aussi retirer son accord : toutes ses réponses sont alors effacées."],
+  [I.trash, "Tout supprimer à tout moment", "La personne peut supprimer une réponse. Elle peut aussi retirer son accord : toutes ses réponses sont alors effacées."],
 ];
 
 const COLLAB = [
@@ -137,39 +137,39 @@ const COLLAB = [
 ];
 
 const COACH = [
-  [I.plus, "Un parcours vite créé", "Prénom et initiale, métier visé : le code et le lien sont prêts à transmettre."],
+  [I.plus, "Un parcours vite créé", "Prénom et initiale, métier visé : le code et le lien sont prêts à transmettre."],
   [I.list, "Réponses à relire", "Une liste claire des réponses reçues, avec le message de la personne."],
-  [I.note, "Remarques placées dans la vidéo", "Mettez en pause, écrivez : votre remarque se place à ce moment de la vidéo."],
+  [I.note, "Remarques placées dans la vidéo", "Mettez en pause, écrivez : votre remarque se place à ce moment de la vidéo."],
   [I.chat, "Nuancer l'assistant", "Confirmez, nuancez ou contredisez chaque repère. Votre lecture prime."],
   [I.send, "Rien ne part sans vous", "Votre brouillon s'enregistre tout seul. Vous envoyez le rapport quand il est prêt. Vous pouvez le corriger et le renvoyer."],
   [I.print, "Support de débriefing", "Rapport imprimable ou exportable en PDF pour l'atelier ou le rendez-vous."],
 ];
 
 const OBSERVE = [
-  ["Rythme de parole", "« Environ 140 mots par minute sur l'ensemble de la réponse. »"],
-  ["Pauses", "« 3 pauses de plus de 2 secondes, la plus longue à 0:42. »"],
-  ["Exemples concrets", "« Vous citez une expérience précise : deux ans à l'accueil d'une mairie. »"],
-  ["Petits mots répétés", "« \"Euh\" revient 4 fois, surtout en début de phrase. »"],
-  ["Structure", "« 5 phrases, avec une phrase de conclusion. »"],
-  ["Vocabulaire", "« Le mot vraiment revient 4 fois. »"],
-  ["Direction du regard", "« Vers l'écran environ 60 % du temps, vers le bas 30 %. »"],
-  ["Durée", "« 1 minute 32 pour une question prévue en deux minutes. »"],
+  ["Rythme de parole", "« Environ 140 mots par minute sur l'ensemble de la réponse. »"],
+  ["Pauses", "« 3 pauses de plus de 2 secondes, la plus longue à 0:42. »"],
+  ["Exemples concrets", "« Vous citez une expérience précise : deux ans à l'accueil d'une mairie. »"],
+  ["Petits mots répétés", "« \"Euh\" revient 4 fois, surtout en début de phrase. »"],
+  ["Structure", "« 5 phrases, avec une phrase de conclusion. »"],
+  ["Vocabulaire", "« Le mot vraiment revient 4 fois. »"],
+  ["Direction du regard", "« Vers l'écran environ 60 % du temps, vers le bas 30 %. »"],
+  ["Durée", "« 1 minute 32 pour une question prévue en deux minutes. »"],
 ];
 
 const ORG = [
   {
     tab: "Acteurs publics", icon: I.compass, title: "Accompagner le retour à l'emploi et l'insertion",
     points: [
-      ["Pour qui", "Services publics de l'emploi, collectivités, départements, structures d'insertion : vous accompagnez des demandeurs d'emploi et vous cherchez un appui pour la préparation aux entretiens."],
+      ["Pour qui", "Services publics de l'emploi, collectivités, départements, structures d'insertion : vous accompagnez des demandeurs d'emploi et vous cherchez un appui pour la préparation aux entretiens."],
       ["Ce que nous faisons", "Nos coachs mènent les rendez-vous et les ateliers. Entre deux séances, les personnes s'entraînent avec La Répét' et arrivent avec des moments concrets à discuter."],
-      ["Un suivi sans surveillance", "Nous rendons compte de l'accompagnement avec des éléments d'ensemble : réponses relues, rapports envoyés, délai de relecture. Jamais une mesure individuelle."],
-      ["Un cadre clair", "Aucune note, aucune émotion devinée, une vidéo qui reste sur l'appareil tant que la personne ne l'envoie pas. Le cadre est détaillé dans l'onglet « Cadre et données »."],
+      ["Un suivi sans surveillance", "Nous rendons compte de l'accompagnement avec des éléments d'ensemble : réponses relues, rapports envoyés, délai de relecture. Jamais une mesure individuelle."],
+      ["Un cadre clair", "Aucune note, aucune émotion devinée, une vidéo qui reste sur l'appareil tant que la personne ne l'envoie pas. Le cadre est détaillé dans l'onglet « Cadre et données »."],
     ],
   },
   {
     tab: "Entreprises", icon: I.building, title: "Accompagner la mobilité de vos collaborateurs",
     points: [
-      ["Pour qui", "Les entreprises qui font accompagner leurs collaborateurs : mobilité interne ou externe, préparation d'un entretien de mobilité, entretien annuel ou professionnel, reconversion."],
+      ["Pour qui", "Les entreprises qui font accompagner leurs collaborateurs : mobilité interne ou externe, préparation d'un entretien de mobilité, entretien annuel ou professionnel, reconversion."],
       ["Ce que nous faisons", "Nos coachs accompagnent chaque collaborateur, en rendez-vous individuels ou en ateliers. La Répét' lui permet de s'entraîner seul, à son rythme, entre deux rendez-vous."],
       ["La confidentialité", "Les réponses restent entre le collaborateur et son coach. L'entreprise ne voit ni les vidéos, ni les retours, ni les rapports."],
       ["Ce que vous recevez", "Un bilan d'ensemble de l'accompagnement, défini avec vous avant le démarrage, sans information sur une personne en particulier."],
