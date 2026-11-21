@@ -7,11 +7,13 @@
    aucune émotion n'est déduite (AI Act, art. 5(1)(f)). */
 
 import { FilesetResolver, FaceLandmarker } from "@mediapipe/tasks-vision";
+import { EYE_KEYS } from "./gazeKeys.js";
 
-const WASM = import.meta.env.VITE_MEDIAPIPE_WASM || "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.2.3/wasm";
+/* Moteur MediaPipe servi par le site (dossier mediapipe/, copié de @mediapipe/tasks-vision 1.2.3 par vite.config.js,
+   SEC-04) ; VITE_MEDIAPIPE_WASM permet de le servir ailleurs. */
+const WASM = import.meta.env.VITE_MEDIAPIPE_WASM || new URL(`${import.meta.env.BASE_URL}mediapipe`, document.baseURI).href;
 const MODEL = import.meta.env.VITE_FACE_MODEL ||
   "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task";
-const EYE_KEYS = ["eyeLookDownLeft", "eyeLookDownRight", "eyeLookOutLeft", "eyeLookOutRight", "eyeLookInLeft", "eyeLookInRight"];
 
 let landmarkerPromise = null;
 function getLandmarker() {
@@ -20,7 +22,7 @@ function getLandmarker() {
       FaceLandmarker.createFromOptions(fs, {
         baseOptions: { modelAssetPath: MODEL, delegate: "GPU" },
         runningMode: "VIDEO", numFaces: 1, outputFaceBlendshapes: true,
-      }));
+      })).catch(e => { landmarkerPromise = null; throw e; }); // nouvel essai possible après un échec réseau (ARC-09)
   }
   return landmarkerPromise;
 }

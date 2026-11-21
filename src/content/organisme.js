@@ -56,10 +56,10 @@ export const contactLine = () => ORG.email ? `Contact : ${ORG.email}${ORG.phone 
 export const HOST_DEFAULT = "GitHub, Inc., 88 Colin P. Kelly Jr. Street, San Francisco, CA 94107, États-Unis (service GitHub Pages, pages.github.com)";
 export const hostLine = () => ORG.host || HOST_DEFAULT;
 
-/* Services tiers qui fournissent les outils d'analyse quand l'organisme ne les héberge pas lui-même.
-   Versions figées : voir src/lib/gaze.js, src/lib/background.js, src/lib/whisper.worker.js. */
+/* Services tiers qui fournissent les modèles d'analyse (des données, pas du code) quand l'organisme ne les héberge pas
+   lui-même. Les moteurs de calcul (ONNX Runtime, MediaPipe) sont servis par le site (SEC-04).
+   Versions figées : voir src/lib/gaze.js, src/lib/background.js, src/lib/whisper.worker.js, vite.config.js. */
 export const THIRD_PARTIES = [
   ["Hugging Face (États-Unis)", "huggingface.co", "Modèle de mise par écrit de la voix (Whisper base, environ 80 Mo)"],
-  ["jsDelivr", "cdn.jsdelivr.net", "Moteurs de calcul : MediaPipe 1.2.3 et ONNX Runtime (version fixée par transformers.js 3.8.1)"],
   ["Google (États-Unis)", "storage.googleapis.com", "Modèles de suivi du visage et de détourage MediaPipe (version 1, environ 4 Mo)"],
 ];

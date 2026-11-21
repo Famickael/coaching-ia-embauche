@@ -3,9 +3,17 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <!--csp-->
     <meta name="description" content="La Répét' : entraînement autonome à l'entretien d'embauche, avec un retour qui décrit sans noter et un coach qui garde la main." />
-    <meta name="theme-color" content="#F8FAFC" />
+    <meta name="theme-color" content="#F8FAFC" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0E141E" media="(prefers-color-scheme: dark)" />
     <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+    <!-- Polices et masques du logo découverts avant le JavaScript (PERF-03, PERF-07) -->
+    <link rel="preload" href="./fonts/manrope-latin-800-normal.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="./fonts/inter-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="stylesheet" href="./fonts/fonts.css" />
+    <link rel="preload" href="./img/logo/bulles.png" as="image" crossorigin />
+    <link rel="preload" href="./img/logo/lettres.png" as="image" crossorigin />
     <title>La Répét' · S'entraîner à l'entretien d'embauche</title>
     <script>
       /* Options d'accessibilité appliquées avant tout affichage (thème, animations) : pas de flash clair en thème sombre.
@@ -45,7 +53,8 @@
     <noscript><style>#rp-loader{display:none}</style></noscript>
   </head>
   <body>
-    <div id="rp-loader" role="status" aria-label="Chargement de La Répét'">
+    <div id="rp-loader" role="status">
+      <span style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap">Chargement de La Répét'</span>
       <svg viewBox="0 0 204 172" aria-hidden="true" focusable="false">
         <defs>
           <linearGradient id="rpl-g" gradientUnits="userSpaceOnUse" x1="0" y1="172" x2="204" y2="0"><stop class="rpl-s1" offset="0" /><stop class="rpl-s2" offset="1" /></linearGradient>

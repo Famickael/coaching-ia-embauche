@@ -175,3 +175,7 @@ Liste de contrôle avant la pull request :
 - [ ] aucune note, aucun score, aucune promesse de résultat, aucune émotion déduite ;
 - [ ] aucun chiffre, témoignage ou nom réel inventé ; pour un `cas`, organisation fictive et générique, effets au conditionnel ;
 - [ ] liens internes vérifiés dans le navigateur.
+
+## Liens autorisés dans les articles
+
+Seuls les liens qui commencent par `https://`, `http://`, `mailto:` ou `#/` (page du site) sont acceptés. Tout autre schéma (`javascript:`, `data:`, etc.) est affiché comme du texte simple et fait échouer `npm run test:design` (règle U1).

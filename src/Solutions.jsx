@@ -1,15 +1,15 @@
 import React from "react";
-import { T, RAD, SH, Btn, Card, Tag, Icon, I, TY, W, SI, img, Eyebrow, Section, PageHero, IconTile, Tabs } from "./ui.jsx";
+import { T, RAD, SH, Btn, Card, Tag, Icon, I, TY, W, img, Eyebrow, Section, PageHero, IconTile, Tabs } from "./ui.jsx";
 import { Reveal, useSectionScroll } from "./motion.jsx";
-import { FinalBand } from "./Home.jsx";
+import { FinalBand } from "./home/FinalBand.jsx";
 
 /* Page « Solutions » (ancienne page Fonctionnement) : le déroulé, puis ce que l'outil apporte à chaque public :
    personnes accompagnées, coachs, organismes (direction, DSI, juridique et DPO). Ancres : #/solutions/<id>. */
 
 const AUDIENCES = [
   ["beneficiaires", "Personnes accompagnées", I.user],
-  ["coachs", "Coachs", SI.users],
-  ["organismes", "Organismes", SI.building],
+  ["coachs", "Coachs", I.users],
+  ["organismes", "Organismes", I.building],
 ];
 
 export default function Solutions({ go, openSpace, section }) {
@@ -79,7 +79,7 @@ export default function Solutions({ go, openSpace, section }) {
 const HeroAside = () => (
   <div className="rp-hide-m" style={{ position: "relative" }}>
     <div style={{ borderRadius: RAD.xl, overflow: "hidden", boxShadow: SH.glow, aspectRatio: "3 / 2", background: T.primaryBg }}>
-      <img src={img("solutions-equipe.webp")} alt="Une coach et une personne accompagnée échangent autour d'une table ronde." width={1200} height={800} style={{ display: "block", width: "100%", height: "100%", objectFit: "cover" }} />
+      <img src={img("solutions-equipe.webp")} alt="Une coach et une personne accompagnée échangent autour d'une table ronde." width={1200} height={800} loading="lazy" decoding="async" style={{ display: "block", width: "100%", height: "100%", objectFit: "cover" }} />
     </div>
     <div style={{ position: "absolute", left: -24, bottom: -24, background: T.surface, borderRadius: RAD.md, padding: "12px 16px", boxShadow: SH.glow, display: "flex", alignItems: "center", gap: 12 }}>
       <IconTile icon={I.shield} />
@@ -110,10 +110,10 @@ function AudienceSection({ id, tag, title, sub, features, cta }) {
 const BENEF = [
   [I.lock, "Accès par code, sans compte", "Un code de 6 caractères remis par le coach. Ni adresse électronique, ni mot de passe."],
   [I.mic, "Échauffement sans analyse", "Des phrases à dire à voix haute, avec une consigne, pour se lancer. Rien n'est enregistré."],
-  [SI.target, "Questions adaptées au métier", "Une banque de questions selon le poste visé, et la possibilité d'ajouter les siennes."],
+  [I.target, "Questions adaptées au métier", "Une banque de questions selon le poste visé, et la possibilité d'ajouter les siennes."],
   [I.video, "Caméra ou voix seule", "Trois minutes maximum par réponse, relecture avant validation, autant d'essais que souhaité."],
   [I.sparkle, "Un retour qui décrit", "Rythme de parole, pauses, exemples, petits mots répétés, regard. Ce qui fonctionne déjà est présenté en premier."],
-  [SI.layers, "Un retour à lire ou à regarder", "Lire le retour, ou se revoir avec les repères placés au bon moment de la vidéo."],
+  [I.layers, "Un retour à lire ou à regarder", "Lire le retour, ou se revoir avec les repères placés au bon moment de la vidéo."],
   [I.chat, "Un assistant de préparation d'entretien", "Des réponses aux questions sur l'entretien, sans remplacer le coach. Un entraînement complet simule un entretien dans l'ordre réel."],
   [I.send, "Envoi volontaire", "Chaque réponse reste sur l'appareil tant que la personne ne l'envoie pas."],
   [I.trash, "Tout supprimer à tout moment", "La personne peut supprimer une réponse. Elle peut aussi retirer son accord : toutes ses réponses sont alors effacées."],
@@ -121,7 +121,7 @@ const BENEF = [
 
 const COACH = [
   [I.plus, "Un parcours vite créé", "Prénom et initiale, métier visé : le code et le lien sont prêts à transmettre."],
-  [SI.list, "Réponses à relire", "Une liste claire des réponses reçues, avec le message de la personne."],
+  [I.list, "Réponses à relire", "Une liste claire des réponses reçues, avec le message de la personne."],
   [I.note, "Remarques placées dans la vidéo", "Mettez en pause, écrivez : votre remarque se place à ce moment de la vidéo."],
   [I.chat, "Nuancer l'assistant", "Confirmez, nuancez ou contredisez chaque repère. Votre lecture prime."],
   [I.send, "Rien ne part sans vous", "Votre brouillon s'enregistre tout seul. Vous envoyez le rapport quand il est prêt. Vous pouvez le corriger et le renvoyer."],
@@ -141,7 +141,7 @@ const OBSERVE = [
 
 const ORG = [
   {
-    tab: "Direction", icon: SI.compass, title: "Un complément à l'accompagnement, pas un substitut",
+    tab: "Direction", icon: I.compass, title: "Un complément à l'accompagnement, pas un substitut",
     points: [
       ["Plus de pratique entre deux rendez-vous", "Les personnes s'entraînent chez elles, à leur rythme, et arrivent en atelier avec des moments concrets à discuter."],
       ["Un pilotage sans surveillance", "Des chiffres d'ensemble uniquement : réponses à relire, parcours, rapports envoyés, délai moyen de relecture. Aucune mesure individuelle."],
@@ -150,7 +150,7 @@ const ORG = [
     ],
   },
   {
-    tab: "DSI", icon: SI.server, title: "Une application web standard, à brancher sur votre infrastructure",
+    tab: "DSI", icon: I.server, title: "Une application web standard, à brancher sur votre infrastructure",
     points: [
       ["Architecture", "Application web React construite avec Vite, servie comme un site statique. Les entraînements sont gardés dans le navigateur de la personne (localStorage, IndexedDB)."],
       ["Raccordement à vos serveurs", "Votre stockage se branche derrière les fonctions de stockage existantes, avec chiffrement au repos et en transit. La vidéo n'est téléversée qu'au moment de l'envoi au coach."],
@@ -159,7 +159,7 @@ const ORG = [
     ],
   },
   {
-    tab: "Juridique et DPO", icon: SI.scale, title: "Conçu pour l'AI Act et le RGPD",
+    tab: "Juridique et DPO", icon: I.scale, title: "Conçu pour l'AI Act et le RGPD",
     points: [
       ["Aucune inférence d'émotion", "L'article 5 du règlement (UE) 2024/1689 interdit la reconnaissance des émotions sur le lieu de travail et dans les établissements d'enseignement. L'outil ne lit jamais les expressions du visage."],
       ["Transparence et supervision humaine", "La personne sait qu'un assistant produit le retour. Le coach peut le contredire, et rien ne parvient à la personne sans envoi explicite."],

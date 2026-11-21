@@ -3,7 +3,7 @@
    Deux modes :
    - si VITE_LLM_ENDPOINT est défini, appel « chat completions » (compatible OpenAI, même convention
      que analysis.js) avec un prompt système cadré et tout l'historique de la conversation ;
-     la sortie passe par isCompliant() et l'on se replie sur la réponse locale en cas d'écart ou d'erreur ;
+     la sortie passe par assistantCompliant() et l'on se replie sur la réponse locale en cas d'écart ou d'erreur ;
    - sinon (site statique, sans serveur), un moteur local dans le navigateur : base de connaissances,
      correspondance par mots-clés normalisés et gestion des relances (« un exemple ? », « pourquoi ? »,
      « et pour… ? », « plus de détails », « merci »).
@@ -12,7 +12,12 @@
    vouvoiement ; aucune note ; aucune déduction d'émotion ou de trait de personnalité
    (AI Act, art. 5(1)(f)) ; aucune donnée personnelle demandée ; renvoi vers le coach au-delà. */
 
-import { isCompliant } from "./analysis.js";
+import { textCompliant } from "./compliance.js";
+import { fillPoste } from "./text.js";
+import { stripAccents } from "./text.js";
+
+/* Garde-fou de l'assistant : il peut parler du trac quand la personne en parle, jamais qualifier la personne ni noter. */
+export const assistantCompliant = t => textCompliant(t, "assistant") && !/\u2014/.test(t);
 
 /* ─── Base de connaissances ───
    q : formulation proposée en suggestion (doit renvoyer vers l'entrée elle-même) ;
@@ -66,7 +71,7 @@ export const KB = [
     keys: ["note", "noter", "score", "evaluation", "evalue", "juge", "jugement", "classement", "suis je bon", "est ce que c etait bien", "c etait bien", "bonne reponse"],
     answer: "La Répét' décrit sans noter. Une note dit peu de choses sur ce que vous pouvez faire concrètement, alors qu'une observation précise vous donne une piste. Les repères sont des conventions, pas des règles : ce qui fonctionne dépend du poste et du recruteur.",
     more: "C'est un choix pédagogique et réglementaire : l'outil ne produit ni note chiffrée, ni classement, ni jauge. Votre coach, lui, peut vous dire ce qui lui semble prioritaire pour votre projet.",
-    example: "Plutôt que « 12 sur 20 », vous lirez par exemple : « Vous citez un élément précis : deux ans en magasin. Les exemples chiffrés rendent une réponse facile à retenir. »",
+    example: "Plutôt qu'une note chiffrée, vous lirez par exemple : « Vous citez un élément précis : deux ans en magasin. Les exemples chiffrés rendent une réponse facile à retenir. »",
     related: ["retour-assistant", "emotions", "coach-partage"],
   },
   {
@@ -74,7 +79,7 @@ export const KB = [
     keys: ["emotion", "stress", "stresse", "nerveux", "nerveuse", "tendu", "angoisse", "detecte", "lire mon visage", "visage", "expression", "air", "avais l air", "sentiment", "ressens", "je me sens", "sourire"],
     answer: "Non. L'assistant ne cherche pas à deviner ce que vous ressentez et ne commente pas votre attitude : c'est interdit par le règlement européen sur l'IA, et ce ne serait pas fiable. Il décrit uniquement des faits, comme le rythme ou les pauses.",
     more: "Le suivi du visage sert seulement à savoir si votre regard est tourné vers l'écran, vers le bas ou sur le côté. Les expressions du visage ne sont jamais lues. Si vous souhaitez parler de votre ressenti, votre coach est là pour cela.",
-    example: "Par exemple, l'assistant peut écrire « 3 pauses de plus de 2 secondes », mais jamais « vous aviez l'air tendu ».",
+    example: "Par exemple, l'assistant peut écrire « 3 pauses de plus de 2 secondes », mais jamais une phrase qui devine ce que vous ressentez.",
     related: ["respiration", "pas-de-note", "confidentialite"],
   },
   {
@@ -143,8 +148,8 @@ export const KB = [
   },
   {
     id: "supprimer", q: "Comment supprimer mes données ?",
-    keys: ["supprimer", "effacer", "suppression", "retirer mon consentement", "consentement", "enlever", "detruire"],
-    answer: "Ouvrez une réponse et appuyez sur « Supprimer » pour l'effacer. Pour tout effacer, utilisez « Retirer mon consentement et supprimer mes données » en bas de votre espace. Aucune justification n'est demandée.",
+    keys: ["supprimer", "effacer", "suppression", "retirer mon consentement", "retirer mon accord", "consentement", "enlever", "detruire"],
+    answer: "Ouvrez une réponse et appuyez sur « Supprimer » pour l'effacer. Pour tout effacer, ouvrez « Mon compte », puis « Retirer mon accord ». Aucune justification n'est demandée.",
     more: "La suppression efface la vidéo et le retour de cet appareil. Si une réponse a déjà été envoyée à votre coach, vous pouvez lui demander de la supprimer de son côté.",
     example: "Par exemple, vous pouvez garder uniquement vos meilleures réponses et supprimer les essais.",
     related: ["confidentialite", "video-devenir"],
@@ -470,7 +475,7 @@ const SYN = {
   accompagnatrice: "coach", accompagnateur: "coach", referente: "coach", referent: "coach", trous: "trou",
   flouter: "flou", floute: "flou", stressee: "stresse", stressant: "stress", angoissee: "angoisse",
 };
-export const normalize = s => (s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "")
+export const normalize = s => stripAccents(s)
   .replace(/œ/g, "oe").replace(/[’'`]/g, " ").replace(/[^a-z0-9?]+/g, " ").replace(/\s+/g, " ").trim();
 const stem = w => (w.length > 4 && /[sx]$/.test(w) ? w.slice(0, -1) : w);
 const tokens = s => normalize(s).replace(/\?/g, " ").split(" ").filter(Boolean).map(w => SYN[w] || w).map(stem).filter(w => !STOP.has(w));
@@ -501,7 +506,7 @@ function scoreAll(toks, lastId) {
   return res.sort((a, b) => b[0] - a[0]);
 }
 
-const fillText = (t, poste) => t.replace(/\{poste\}/g, poste || "le poste visé");
+const fillText = (t, poste) => fillPoste(t, poste, "le poste visé");
 
 /* ─── Suggestions par contexte ─── */
 /* Suggestions : uniquement la préparation d'entretien (les questions sur le site renvoient vers la FAQ). */
@@ -655,14 +660,13 @@ export async function askAssistant(history, { context = "warmup", poste, memory 
           { role: "system", content: `${SYSTEM_PROMPT}\nContexte de l'écran : ${context === "feedback" ? "retour de l'assistant après une réponse enregistrée" : context === "debrief" ? "questionnaire de fin d'échauffement" : "échauffement"}. Métier visé : ${poste || "non précisé"}.` },
           ...history.slice(-16).map(m => ({ role: m.role === "assistant" ? "assistant" : "user", content: String(m.content).slice(0, 2000) })),
         ],
-        temperature: 0.3,
         max_tokens: 400,
       }),
     });
     if (!res.ok) throw new Error(res.status);
     const data = await res.json();
     const text = (data.choices?.[0]?.message?.content ?? "").replace(/\u2014/g, ",").trim();
-    if (!text || text.length > 1800 || !isCompliant({ synthese: text, dimensions: [] })) throw new Error("réponse non conforme");
+    if (!text || text.length > 1800 || !assistantCompliant(text)) throw new Error("réponse non conforme");
     return { ...local, text, source: "llm", fallback: false };
   } catch (e) {
     console.warn("[assistant] modèle de langage indisponible ou réponse non conforme, réponse locale utilisée", e);

@@ -6,7 +6,9 @@
 import { FilesetResolver, ImageSegmenter } from "@mediapipe/tasks-vision";
 import { FIX } from "../tokens.js";
 
-const WASM = import.meta.env.VITE_MEDIAPIPE_WASM || "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.2.3/wasm";
+/* Moteur MediaPipe servi par le site (dossier mediapipe/, copié de @mediapipe/tasks-vision 1.2.3 par vite.config.js,
+   SEC-04) ; VITE_MEDIAPIPE_WASM permet de le servir ailleurs. */
+const WASM = import.meta.env.VITE_MEDIAPIPE_WASM || new URL(`${import.meta.env.BASE_URL}mediapipe`, document.baseURI).href;
 const MODEL = import.meta.env.VITE_SEGMENTER_MODEL ||
   "https://storage.googleapis.com/mediapipe-models/image_segmenter/selfie_segmenter/float16/1/selfie_segmenter.tflite";
 

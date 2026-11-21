@@ -3,18 +3,9 @@
    Pour ajouter un article : déposer un fichier <slug>.md dans src/content/resources/ (format décrit
    dans docs/briefs/chatgpt-ressources.md). Rien d'autre à modifier. */
 
-/* Catégories : identifiant (utilisé dans l'en-tête des articles et dans l'adresse), titre, description,
-   icône (clé de SI ou I) et image d'illustration (public/img/categories/<id>.webp). */
-export const CATEGORIES = [
-  { id: "preparer", title: "Préparer son entretien", desc: "Se présenter, parler de ses expériences, gérer le trac, préparer sa venue.", icon: "target" },
-  { id: "questions", title: "Questions de recruteurs", desc: "Les questions fréquentes, comment y répondre, et celles à poser à votre tour.", icon: "chat" },
-  { id: "visio", title: "Entretien en visio", desc: "Matériel, cadre, regard et attitude pour un entretien à distance.", icon: "monitor" },
-  { id: "guides", title: "Guides La Répét'", desc: "Utiliser La Répét' pas à pas, quand on s'entraîne.", icon: "book" },
-  { id: "coachs", title: "Pour les coachs", desc: "Créer des parcours, relire les réponses, animer un débriefing.", icon: "users" },
-  { id: "organismes", title: "Pour les organismes", desc: "Déployer, héberger, encadrer : direction, DSI, juridique et DPO.", icon: "building" },
-];
-
-export const TYPES = { guide: "Guide", cas: "Scénario d'usage" };
+import { CATEGORIES, TYPES } from "./categories.js";
+import { stripAccents, slugify } from "../lib/text.js";
+export { CATEGORIES, TYPES };
 
 const files = import.meta.glob("./resources/*.md", { query: "?raw", import: "default", eager: true });
 
@@ -34,7 +25,7 @@ function parseFront(raw) {
   return { meta, body: m[2] };
 }
 
-export const slugify = s => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+export { slugify };
 
 /* Blocs : h2, h3, p, ul, ol, quote, callout. Le texte reste brut : la mise en forme en ligne
    (gras, italique, liens) est appliquée au rendu. */
@@ -101,7 +92,7 @@ export const findArticle = slug => ARTICLES.find(a => a.slug === slug);
 export const findCategory = id => CATEGORIES.find(c => c.id === id);
 
 /* Recherche sans accents ni casse. */
-export const norm = s => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+export const norm = stripAccents;
 export function search(q) {
   const t = norm(q).split(/\s+/).filter(Boolean);
   if (!t.length) return ARTICLES;

@@ -9,4 +9,4 @@ http.createServer((req, res) => {
       { start: 0, end: 2.5, text: "Bonjour, euh, je m'appelle Alex et je postule comme agent d'accueil." },
       { start: 3, end: 5, text: "J'ai travaillé deux ans en magasin. C'est pour ça que ce poste me correspond." }] }));
   });
-}).listen(5099);
+}).listen(Number(process.env.E2E_STT_PORT || 5099));

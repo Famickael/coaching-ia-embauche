@@ -2,6 +2,8 @@
    Appliquées avant le premier rendu (src/main.jsx, et script en ligne d'index.html pour le thème) : pas de flash.
    Au premier passage, les préférences du système sont respectées (thème, contraste, animations). */
 
+import { LIGHT, DARK } from "../tokens.js";
+
 export const A11Y_KEY = "larepet.a11y";
 export const FONT_SCALES = [1, 1.125, 1.25, 1.5];                     // taille du texte : 4 niveaux
 export const FONT_LABELS = ["Normale", "Grande", "Très grande", "Maximale"];
@@ -33,7 +35,8 @@ export function saveA11y(s) {
 }
 
 export function resetA11y() {
-  try { localStorage.removeItem(A11Y_KEY); } catch { /* stockage indisponible */ }
+  /* « Réinitialiser » efface aussi le choix « Couper le son » du recruteur oral (SEC-10 : « réglages d'accessibilité et de son »). */
+  try { localStorage.removeItem(A11Y_KEY); localStorage.removeItem("larepet.voix.coupee"); } catch { /* stockage indisponible */ }
   return { ...DEFAULTS, contrast: mq("(prefers-contrast: more)") };
 }
 
@@ -54,11 +57,19 @@ export function applyA11y(s) {
   h.style.setProperty("--fs", String(FONT_SCALES[s.size] || 1));
   /* Texte agrandi (125 % et plus) ou espacé : l'en-tête bascule plus tôt sur le menu repliable (GStyle). */
   d.textsize = (FONT_SCALES[s.size] || 1) >= 1.25 || s.spacing ? "lg" : "normal";
-  h.style.colorScheme = effectiveTheme(s);
+  /* Thème automatique : « light dark » suit le système sans dépendre d'un écouteur (A11Y-21). */
+  h.style.colorScheme = s.theme === "auto" ? "light dark" : s.theme;
+  /* Couleur de la barre du navigateur (A11Y-20) : suit le système, ou le thème choisi. */
+  document.querySelectorAll('meta[name="theme-color"]').forEach(m => {
+    const sys = (m.getAttribute("media") || "").includes("dark") ? "dark" : "light";
+    m.setAttribute("content", (s.theme === "auto" ? sys : s.theme) === "dark" ? DARK.bg : LIGHT.bg);
+  });
   window.dispatchEvent(new CustomEvent("rp-a11y", { detail: s }));
 }
 
-/* Mouvement réduit : réglage du système ou option du site. */
-export const prefersReduced = () => mq("(prefers-reduced-motion: reduce)") || (typeof document !== "undefined" && document.documentElement.dataset.motion === "reduce");
+/* Mouvement réduit : réglage du système ou option du site ; withFocus : le mode concentration compte aussi (il arrête
+   les défilements automatiques et les cartes animées). Détection unique du site (ARC-13). */
+export const prefersReduced = (withFocus = false) => mq("(prefers-reduced-motion: reduce)")
+  || (typeof document !== "undefined" && (document.documentElement.dataset.motion === "reduce" || (withFocus && document.documentElement.dataset.focusmode === "on")));
 /* Mode concentration : pas de défilement automatique, pas de carte animée. */
 export const focusMode = () => typeof document !== "undefined" && document.documentElement.dataset.focusmode === "on";

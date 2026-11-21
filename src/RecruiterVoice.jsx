@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { T, TY, RAD, GAP, Btn, Icon, I } from "./ui.jsx";
+import { prefersReduced } from "./lib/a11y.js";
 
 /* Recruteur oral, sans visage : la question est lue par la synthèse vocale française de l'appareil
    (speechSynthesis, voix fr-FR, aucun service externe). Indicateur discret pendant la lecture,
@@ -10,8 +11,7 @@ import { T, TY, RAD, GAP, Btn, Icon, I } from "./ui.jsx";
 const MUTE_KEY = "larepet.voix.coupee";
 const readMuted = () => { try { return localStorage.getItem(MUTE_KEY) === "1"; } catch { return false; } };
 const writeMuted = v => { try { localStorage.setItem(MUTE_KEY, v ? "1" : "0"); } catch { /* stockage indisponible */ } };
-export const reducedMotion = () => typeof window !== "undefined" && (document.documentElement.dataset.motion === "reduce"
-  || (!!window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches));
+export const reducedMotion = () => prefersReduced();
 
 /* Voix française de l'appareil, ou null. Les voix arrivent parfois après le premier appel (voiceschanged). */
 function frenchVoice() {
@@ -37,11 +37,11 @@ export default function RecruiterVoice({ label = "Question du recruteur", text, 
   const [speaking, setSpeaking] = useState(false);
   const [shown, setShown] = useState(text); // sous-titre (mot à mot pendant la lecture)
   const [available, setAvailable] = useState(true);
-  const timer = useRef(0), run = useRef(0);
+  const timer = useRef(0), run = useRef(0), guard = useRef(0);
 
   const stop = () => {
     run.current++;
-    clearInterval(timer.current);
+    clearInterval(timer.current); clearTimeout(guard.current);
     try { window.speechSynthesis?.cancel(); } catch { /* rien */ }
     setSpeaking(false); onSpeaking?.(false); setShown(text);
   };
@@ -64,8 +64,10 @@ export default function RecruiterVoice({ label = "Question du recruteur", text, 
       gotBoundary = true; clearInterval(timer.current);
       setShown(text.slice(0, e.charIndex + (e.charLength || (text.slice(e.charIndex).match(/^\S+/) || [""])[0].length)));
     };
-    const done = () => { if (id !== run.current) return; clearInterval(timer.current); setSpeaking(false); onSpeaking?.(false); setShown(text); };
+    const done = () => { if (id !== run.current) return; clearInterval(timer.current); clearTimeout(guard.current); setSpeaking(false); onSpeaking?.(false); setShown(text); };
     u.onend = done; u.onerror = done;
+    /* Minuterie de garde (BUG-10) : certains navigateurs coupent un énoncé sans émettre « end ». */
+    guard.current = setTimeout(done, 1500 + words.length * 600);
     window.speechSynthesis.speak(u);
     if (!reduced) { // repli si le navigateur ne fournit pas les événements « boundary »
       let i = 0;
@@ -85,13 +87,13 @@ export default function RecruiterVoice({ label = "Question du recruteur", text, 
         <span aria-hidden className={`rp-voice ${speaking ? "on" : ""}`}><i /><i /><i /><i /></span>
         <span style={{ ...TY.overline, color: T.primary, flex: 1 }}>{label}{speaking ? " · lecture en cours" : ""}</span>
       </div>
-      <div aria-live="polite" style={{ ...TY.h2, color: T.navy, minHeight: "1.25em" }} data-testid="recruiter-subtitle">« {shown || " "} »</div>
-      {/* Texte complet pour les lecteurs d'écran, sans attendre la fin de la lecture */}
-      <span className="rp-sr">{text}</span>
+      <div aria-hidden="true" style={{ ...TY.h2, color: T.navy, minHeight: "1.25em" }} data-testid="recruiter-subtitle">« {shown || " "} »</div>
+      {/* Sous-titre mot à mot masqué aux lecteurs d'écran (A11Y-04) : il serait annoncé mot par mot par-dessus la voix. Le texte complet est lu d'un bloc, sans attendre la fin de la lecture. */}
+      <p className="rp-sr">{label} : {text}</p>
       <div style={{ display: "flex", gap: GAP.actions, flexWrap: "wrap" }} className="noprint">
         <Btn kind="ghost" size="sm" icon={I.redo} onClick={speak} disabled={muted || !available}>Réécouter</Btn>
-        <Btn kind="ghost" size="sm" aria-pressed={muted} onClick={toggleMute} icon={muted ? I.mic : I.ban}>{muted ? "Réactiver le son" : "Couper le son"}</Btn>
-        {!available && <span style={{ ...TY.caption, color: T.muted, alignSelf: "center", display: "inline-flex", gap: 8, alignItems: "center" }}><Icon d={I.info} s={16} />La question s'affiche en texte sur cet appareil.</span>}
+        <Btn kind="ghost" size="sm" aria-pressed={muted} onClick={toggleMute} icon={muted ? I.volume : I.volumeOff}>{muted ? "Réactiver le son" : "Couper le son"}</Btn>
+        {!available && <span style={{ ...TY.caption, color: T.body, alignSelf: "center", display: "inline-flex", gap: 8, alignItems: "center" }}><Icon d={I.info} s={16} />La question s'affiche en texte sur cet appareil.</span>}
       </div>
     </div>
   );

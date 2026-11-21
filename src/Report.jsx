@@ -2,18 +2,23 @@ import React, { useEffect, useRef, useState } from "react";
 import { T, ON, TY, RAD, SH, PAD, GAP, MO, TONE, ringOf, Card, Tag, Bare, Notice, Quote, TimeChip, I } from "./ui.jsx";
 import { loadVideoUrl } from "./lib/store.js";
 import { fmt } from "./lib/analysis.js";
+import { hasMedia, isAudio, noFeedback } from "./lib/takes.js";
 
-export const toneOf = d => (d.type === "appui" ? T.accent : T.violet);
+const toneOf = d => (d.type === "appui" ? T.accent : T.violet);
 
-/* Charge l'URL locale de la vidéo d'une réponse. */
+/* Charge l'URL locale de l'enregistrement d'une réponse : { url, status: "loading" | "ready" | "missing" } (UI-10). */
 export function useVideoUrl(take) {
-  const [url, setUrl] = useState(null);
+  const [st, setSt] = useState({ url: null, status: hasMedia(take) ? "loading" : "missing" });
   useEffect(() => {
     let u = null, alive = true;
-    if (take?.hasVideo) loadVideoUrl(take.id).then(x => { if (alive) { u = x; setUrl(x); } else if (x) URL.revokeObjectURL(x); });
+    if (!hasMedia(take)) { setSt({ url: null, status: "missing" }); return; }
+    setSt({ url: null, status: "loading" });
+    loadVideoUrl(take.id)
+      .then(x => { if (alive) { u = x; setSt({ url: x, status: x ? "ready" : "missing" }); } else if (x) URL.revokeObjectURL(x); })
+      .catch(() => { if (alive) setSt({ url: null, status: "missing" }); });
     return () => { alive = false; if (u) URL.revokeObjectURL(u); };
-  }, [take?.id]);
-  return url;
+  }, [take?.id]); // eslint-disable-line
+  return st;
 }
 
 /* Marqueurs : repères de l'assistant + remarques du coach. */
@@ -36,7 +41,7 @@ export const Mark = ({ kind, s = 12 }) => (
 const kindOf = m => (m.kind === "note" ? "note" : m.type === "appui" ? "appui" : "explore");
 
 /* Lecteur avec barre de repères cliquables (repère et moment de la vidéo liés). */
-export function Player({ take, url, markers, active, onActive, playerRef }) {
+export function Player({ take, url, status = url ? "ready" : "missing", markers, active, onActive, playerRef }) {
   const local = useRef(null);
   const ref = playerRef || local;
   const [cur, setCur] = useState(0);
@@ -60,27 +65,29 @@ export function Player({ take, url, markers, active, onActive, playerRef }) {
     v.play().catch(() => {});
   };
 
-  const isAudio = take.mime?.startsWith("audio");
+  const audio = isAudio(take);
   return (
     <Card pad="none">
-      <div style={{ background: T.videoBg, aspectRatio: isAudio ? "auto" : "16/9", display: "grid", placeItems: "center", padding: isAudio ? 24 : 0 }}>
+      <div style={{ background: T.videoBg, aspectRatio: audio ? "auto" : "16/9", display: "grid", placeItems: "center", padding: audio ? 24 : 0 }}>
         {url
-          ? (isAudio
-            ? <audio ref={ref} src={url} controls style={{ width: "90%" }} />
-            : <video ref={ref} src={url} controls playsInline style={{ width: "100%", height: "100%", objectFit: "contain" }} />)
-          : <div style={{ ...TY.small, color: ON.text, padding: 32 }}>Vidéo non disponible sur cet appareil.</div>}
+          ? (audio
+            ? <audio ref={ref} src={url} controls aria-label="Enregistrement de la réponse" style={{ width: "90%" }} />
+            : <video ref={ref} src={url} controls playsInline aria-label="Vidéo de la réponse" style={{ width: "100%", height: "100%", objectFit: "contain" }} />)
+          : status === "loading" ? <div role="status" style={{ ...TY.small, color: ON.text, padding: 32 }}>Chargement de votre enregistrement…</div>
+          : <div style={{ ...TY.small, color: ON.text, padding: 32 }}>{audio ? "Enregistrement non disponible sur cet appareil." : "Vidéo non disponible sur cet appareil."}</div>}
       </div>
       <div style={{ padding: "16px 16px 16px", display: "grid", gap: 8 }}>
         <div style={{ position: "relative", height: 44 }}>
-          <Bare aria-label="Se placer dans la vidéo" onClick={e => { const r = e.currentTarget.getBoundingClientRect(); seek(((e.clientX - r.left) / r.width) * dur); }}
+          {/* Barre au pointeur seulement (A11Y-09) : au clavier, les commandes natives et les repères suffisent */}
+          <Bare tabIndex={-1} aria-hidden="true" onClick={e => { const r = e.currentTarget.getBoundingClientRect(); seek(((e.clientX - r.left) / r.width) * dur); }}
             style={{ position: "absolute", left: 0, right: 0, top: 0, bottom: 0, display: "flex", alignItems: "center" }}>
             <span style={{ position: "relative", display: "block", width: "100%", height: 8, background: T.lineLt, borderRadius: RAD.pill }}>
               <span style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: `${Math.min(100, (cur / dur) * 100)}%`, background: T.primary, borderRadius: RAD.pill }} />
             </span>
           </Bare>
-          {markers.map(m => (
-            <Bare key={m.id} title={`${fmt(m.t)} · ${m.label}`} aria-label={`${fmt(m.t)} · ${m.label}`} onClick={() => seek(m.t, m.id)}
-              style={{ position: "absolute", left: `${Math.min(100, (m.t / dur) * 100)}%`, top: 0, width: 32, height: 44, transform: `translate(-50%, ${m.kind === "note" ? -8 : 0}px)`, display: "grid", placeItems: "center" }}>
+          {spread(markers, dur).map(({ m, dx }) => (
+            <Bare key={m.id} title={`${fmt(m.t)} · ${m.label}`} aria-label={`Aller à ${fmt(m.t)} : ${m.label}`} onClick={() => seek(m.t, m.id)}
+              style={{ position: "absolute", left: `${Math.min(100, (m.t / dur) * 100)}%`, top: 0, width: 44, height: 44, transform: `translate(calc(-50% + ${dx}px), ${m.kind === "note" ? -8 : 0}px)`, display: "grid", placeItems: "center" }}>
               <span style={{ borderRadius: m.kind === "note" ? RAD.xs : "50%", boxShadow: active === m.id ? ringOf(m.kind === "note" ? T.primaryBg : m.type === "appui" ? T.accentBg : T.violetBg) : "none" }}>
                 <Mark kind={kindOf(m)} s={m.kind === "note" ? 12 : 16} />
               </span>
@@ -88,12 +95,24 @@ export function Player({ take, url, markers, active, onActive, playerRef }) {
           ))}
         </div>
         <div style={{ display: "flex", justifyContent: "space-between", ...TY.time, color: T.muted }}><span>{fmt(cur)}</span><span>{fmt(dur)}</span></div>
-        <div style={{ display: "flex", gap: 16, flexWrap: "wrap", ...TY.caption, color: T.body, marginTop: 4 }}>
-          <Legend kind="appui" t="Point d'appui" /><Legend kind="explore" t="À explorer" /><Legend kind="note" t="Remarque du coach" />
-        </div>
+        {/* Légende des seuls repères présents (aucune légende « Point d'appui » sans retour de l'assistant) */}
+        {markers.length > 0 && (
+          <div style={{ display: "flex", gap: 16, flexWrap: "wrap", ...TY.caption, color: T.body, marginTop: 4 }}>
+            {[["appui", "Point d'appui"], ["explore", "À explorer"], ["note", "Remarque du coach"]].filter(([k]) => markers.some(m => kindOf(m) === k) || (k !== "note" && markers.some(m => m.kind === "ia"))).map(([k, t]) => <Legend key={k} kind={k} t={t} />)}
+          </div>
+        )}
       </div>
     </Card>
   );
+}
+/* Repères à moins de 3 % l'un de l'autre : décalés de 14 px pour rester atteignables au pointeur (A11Y-09). */
+function spread(markers, dur) {
+  let prev = null, dx = 0;
+  return markers.map(m => {
+    dx = prev != null && (m.t - prev) / dur < 0.03 ? dx + 14 : 0;
+    prev = m.t;
+    return { m, dx };
+  });
 }
 const Legend = ({ kind, t }) => <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}><Mark kind={kind} s={12} />{t}</span>;
 
@@ -121,10 +140,29 @@ export function DimCard({ d, comment, active, onClick }) {
   return <div style={st}>{body}</div>;
 }
 
+/* Texte de la réponse, pour la personne comme pour le coach (A11Y-03, référentiel 8 : transcription à côté de la vidéo).
+   onSeek : chaque phrase devient un bouton qui place la lecture à ce moment. */
+export function Transcript({ take, onSeek }) {
+  if (!take.transcript || !take.segments?.length) return null;
+  return (
+    <details>
+      <summary style={{ ...TY.label, color: T.primary, cursor: "pointer", minHeight: 44, display: "flex", alignItems: "center" }}>Afficher le texte de la réponse</summary>
+      <Card style={{ marginTop: 8, display: "grid", gap: 4 }}>
+        <p style={{ ...TY.caption, color: T.muted, margin: "0 0 4px" }}>Ce texte est écrit par un programme, il peut contenir des erreurs.</p>
+        {take.segments.map((sg, i) => {
+          const row = <><span style={{ ...TY.time, color: T.muted, minWidth: 40, paddingTop: 4 }}>{fmt(sg.start)}</span><span style={{ ...TY.small, color: T.navy }}>{sg.text}</span></>;
+          const st = { display: "flex", gap: 12, padding: "4px 0", width: "100%", textAlign: "left" };
+          return onSeek ? <Bare key={i} onClick={() => onSeek(sg.start)} style={st}>{row}</Bare> : <div key={i} style={st}>{row}</div>;
+        })}
+      </Card>
+    </details>
+  );
+}
+
 /* Rapport en lecture : mode "simple" (texte) ou "video" (relecture avec repères). */
 export function ReportBody({ take, mode, counselorName }) {
   const A = take.analysis;
-  const url = useVideoUrl(mode === "video" ? take : null);
+  const { url, status } = useVideoUrl(mode === "video" ? take : null);
   const markers = markersOf(take);
   const [active, setActive] = useState(null);
   const playerRef = useRef(null);
@@ -132,10 +170,10 @@ export function ReportBody({ take, mode, counselorName }) {
   const seekTo = (t, id) => { setActive(id); const v = playerRef.current; if (v) { v.currentTime = t; v.play().catch(() => {}); } };
 
   const intro = rep && (
-    <Card level={2} style={{ borderLeft: `3px solid ${T.primary}`, display: "grid", gap: 8 }}>
-      <div style={{ ...TY.label, color: T.primary }}>Le message de {counselorName || "votre coach"} · votre coach</div>
-      <div style={{ ...TY.bodyLg, color: T.navy, whiteSpace: "pre-wrap" }}>{rep.intro || "Votre coach a regardé votre réponse."}</div>
-    </Card>
+    <Quote size="lg" icon={I.chat}>
+      <div style={{ ...TY.label, color: T.primary, marginBottom: 4 }}>Le message de {counselorName || "votre coach"} · votre coach</div>
+      <div style={{ whiteSpace: "pre-wrap" }}>{rep.intro || "Votre coach a regardé votre réponse."}</div>
+    </Quote>
   );
   const notes = rep?.notes?.length > 0 && (
     <Card>
@@ -149,7 +187,18 @@ export function ReportBody({ take, mode, counselorName }) {
       })}
     </Card>
   );
-  const synth = <Notice tone="info" icon={I.sparkle} style={{ ...TY.bodyLg }}><strong>En résumé.</strong> {A.synthese}</Notice>;
+  /* Sans retour de l'assistant (BUG-05) : ni synthèse ni repères, seulement la réponse et, s'il existe, le rapport du coach. */
+  const synth = noFeedback(take) ? null : <Notice tone="info" icon={I.sparkle} style={{ ...TY.bodyLg }}><strong>En résumé.</strong> {A.synthese}</Notice>;
+  if (mode === "video" && !A.dimensions.length) {
+    return (
+      <div style={{ display: "grid", gap: GAP.stack }}>
+        {intro}
+        <Player take={take} url={url} status={status} markers={markers} active={active} onActive={setActive} playerRef={playerRef} />
+        {synth}{notes}
+        <Transcript take={take} onSeek={t => seekTo(t)} />
+      </div>
+    );
+  }
 
   if (mode !== "video") {
     return (
@@ -157,6 +206,7 @@ export function ReportBody({ take, mode, counselorName }) {
         {intro}{synth}
         {A.dimensions.map(d => <DimCard key={d.id} d={d} comment={rep?.comments?.[d.id]} />)}
         {notes}
+        <Transcript take={take} />
       </div>
     );
   }
@@ -165,9 +215,10 @@ export function ReportBody({ take, mode, counselorName }) {
       {intro}
       <div className="rp-split">
         <div style={{ display: "grid", gap: GAP.stack }}>
-          <Player take={take} url={url} markers={markers} active={active} onActive={setActive} playerRef={playerRef} />
+          <Player take={take} url={url} status={status} markers={markers} active={active} onActive={setActive} playerRef={playerRef} />
           {synth}
           {notes}
+          <Transcript take={take} onSeek={t => seekTo(t)} />
         </div>
         <div style={{ display: "grid", gap: GAP.stack }}>
           {A.dimensions.map(d => <DimCard key={d.id} d={d} comment={rep?.comments?.[d.id]} active={active === d.id} onClick={() => seekTo(d.t, d.id)} />)}

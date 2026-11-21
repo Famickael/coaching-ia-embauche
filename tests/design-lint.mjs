@@ -11,8 +11,8 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const tokens = await import(pathToFileURL(join(ROOT, "src/tokens.js")).href);
 const { SPACE, SIZES, WEIGHTS, PAIRS, FD, FB, FM } = tokens;
 const MAX_WAIVERS = 5;
-const TOKEN_FILES = new Set(["src/tokens.js", "src/ui.jsx"]);
-const BTN_KINDS = ["objective", "ai", "primary", "secondary", "ghost", "danger", "white", "ghostDark"];
+const TOKEN_FILES = new Set(["src/tokens.js", "src/ui.jsx", "src/ui/GStyle.jsx", "src/ui/icons.jsx"]);
+const BTN_KINDS = ["objective", "ai", "primary", "secondary", "ghost", "danger", "white", "ghostDark", "dangerSolid"];
 const BTN_SIZES = ["sm", "md", "lg"];
 const TAG_TONES = ["primary", "appui", "ai", "success", "warning", "error", "muted"];
 const CARD_PADS = ["none", "sm", "md", "lg"];
@@ -185,7 +185,7 @@ function checkFile(file) {
     each(/\bfont-size\s*:\s*(\d+(?:\.\d+)?)px/g, m => { if (!SIZES.includes(+m[1])) report(m.index, "X1", m[0], `taille dans ${SIZES.join(", ")}`); });
     each(/\b(fontWeight|font-weight)\s*:\s*["']?(\d+)/g, m => { if (![...new Set(Object.values(WEIGHTS).flat())].includes(+m[2])) report(m.index, "X1", m[0], "graisse autorisée"); });
     // X2 couleur littérale dans ui.jsx
-    if (file === "src/ui.jsx") {
+    if (file === "src/ui.jsx" || file.startsWith("src/ui/")) {
       each(/(?<![&\w])#[0-9a-fA-F]{3,8}\b/g, m => report(m.index, "X2", text.slice(m.index - 10, m.index + 12), "jeton de tokens.js"));
       each(/\b(rgba?|hsla?)\(/g, m => report(m.index, "X2", text.slice(m.index, m.index + 30), "jeton de tokens.js"));
     }
@@ -194,6 +194,24 @@ function checkFile(file) {
 }
 
 srcFiles.forEach(checkFile);
+
+/* U1 : liens des articles (src/content/resources/*.md) limités à https, http, mailto et aux pages du site (SEC-05). */
+const mdDir = join(ROOT, "src/content/resources");
+readdirSync(mdDir).filter(f => f.endsWith(".md")).forEach(f => readFileSync(join(mdDir, f), "utf8").split("\n").forEach((l, i) => {
+  for (const m of l.matchAll(/\]\(([^)\s]+)\)/g)) if (!/^(https?:|mailto:|#\/)/.test(m[1])) violations.push(`src/content/resources/${f}:${i + 1}  U1  lien « ${m[1]} »  → https:, mailto: ou #/`);
+}));
+
+/* L3 : lexique côté personne accompagnée (docs/redaction.md, 1.2), hors commentaires. A2 : texte muted sur un fond
+   teinté (*Bg), interdit par le référentiel 1.5 (A11Y-13). */
+const PERSON_FILES = f => /^src\/(beneficiary\/|Recorder|WarmupStage|Report|Assistant|RecruiterVoice|Demo|CodeForm|StageIdle|app\/(AccountMenu|Espace))/.test(f);
+const LEXIQUE = [[/Bénéficiaire/, "« Je m'entraîne », « la personne »"], [/consentement/i, "« accord » (hors textes légaux)"], [/mots d'appui/i, "« petits mots répétés »"], [/Analyse de votre réponse/i, "« Préparation de votre retour »"]];
+for (const f of srcFiles) {
+  const text = strip(readFileSync(join(ROOT, f), "utf8"));
+  if (PERSON_FILES(f)) text.split("\n").forEach((l, i) => LEXIQUE.forEach(([re, fix]) => { if (re.test(l)) violations.push(`${f}:${i + 1}  L3  ${excerpt(l)}  → ${fix}`); }));
+  for (const m of text.matchAll(/style=\{\{([^{}]*)\}\}/g)) {
+    if (/background:\s*T\.\w+Bg\b/.test(m[1]) && /(?<!\w)color:\s*T\.muted\b/.test(m[1])) violations.push(`${f}:${lineOf(text, m.index)}  A2  ${excerpt(m[0])}  → T.body sur un fond teinté`);
+  }
+}
 docFiles.forEach(f => readFileSync(join(ROOT, f), "utf8").split("\n").forEach((l, i) => {
   if (l.includes("\u2014")) violations.push(`${f}:${i + 1}  L1  ${excerpt(l)}  → remplacer le tiret cadratin`);
 }));

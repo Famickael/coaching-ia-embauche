@@ -1,5 +1,6 @@
 const { chromium } = require("playwright");
 const SC = process.argv[2] || "tests/screenshots";
+const BASE = process.env.E2E_BASE || "http://localhost:5098/";
 require("fs").mkdirSync(SC, { recursive: true });
 (async () => {
   const b = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || undefined, args: ["--use-fake-device-for-media-stream", "--use-fake-ui-for-media-stream", "--autoplay-policy=no-user-gesture-required"] });
@@ -10,7 +11,8 @@ require("fs").mkdirSync(SC, { recursive: true });
   const errors = [];
   p.on("pageerror", e => errors.push("pageerror " + e.message));
   p.on("console", m => { if (m.type() === "error") errors.push("console " + m.text().slice(0, 160)); });
-  p.on("dialog", d => d.accept());
+  /* Plus aucune boîte native dans le parcours (TST-05, A11Y-17) : seul l'avertissement de sortie (BUG-08) est accepté. */
+  p.on("dialog", d => { if (d.type() === "beforeunload") return d.accept(); errors.push(`boîte native inattendue : ${d.message()}`); d.dismiss(); });
   const overflow = [];
   const shot = async n => {
     await p.waitForTimeout(600); // fin d'un éventuel fondu de changement de page
@@ -23,10 +25,10 @@ require("fs").mkdirSync(SC, { recursive: true });
     catch (e) { await p.screenshot({ path: `${SC}/echec.png`, fullPage: true }).catch(() => {}); throw new Error(`bouton « ${t} » : ${e.message.split("\n")[0]}`); }
   };
 
-  await p.goto("http://localhost:5098/"); await shot("01-accueil");
+  await p.goto(BASE); await shot("01-accueil");
   await p.evaluate(() => window.scrollTo(0, document.body.scrollHeight / 3)); await p.waitForTimeout(900); await shot("01b-accueil-defilement");
-  await p.goto("http://localhost:5098/#/fonctionnement"); await p.waitForTimeout(400); await shot("01c-fonctionnement");
-  await p.goto("http://localhost:5098/#/"); await click("Mon compte"); await shot("01d-mon-espace");
+  await p.goto(BASE + "#/fonctionnement"); await p.waitForTimeout(400); await shot("01c-fonctionnement");
+  await p.goto(BASE + "#/"); await click("Mon compte"); await shot("01d-mon-espace");
   await shot("01e-connexion-coach"); await click("Se connecter");
   await click("Créer un parcours");
   await p.getByPlaceholder("Prénom et initiale").fill("Alex D."); await p.getByPlaceholder(/agent d'accueil/).fill("agent d'accueil");
@@ -133,7 +135,7 @@ require("fs").mkdirSync(SC, { recursive: true });
   await click("Mon compte"); await p.getByRole("dialog", { name: "Mon compte" }).getByRole("button", { name: "Se déconnecter" }).waitFor(); await shot("08b-mon-compte");
   await p.getByRole("dialog", { name: "Mon compte" }).getByRole("button", { name: "Se déconnecter" }).click(); await click("Mon compte"); await click("Se connecter"); await p.waitForTimeout(300); await shot("09-liste-conseiller");
   await click("Relire"); await click("Relire et annoter"); await p.waitForTimeout(800);
-  await p.getByPlaceholder(/Mettez la vidéo en pause/).fill("Belle entrée en matière."); await click("Ajouter");
+  await p.getByPlaceholder("Votre remarque", { exact: true }).fill("Belle entrée en matière."); await click("Ajouter");
   await p.locator("textarea").fill("Alex, ta présentation est claire. On en parle jeudi.");
   await p.getByPlaceholder("Votre remarque sur ce repère (facultatif)").first().fill("D'accord, garde ce rythme.");
   await shot("10-relecture-conseiller");
@@ -157,12 +159,12 @@ require("fs").mkdirSync(SC, { recursive: true });
   await p.keyboard.press("Escape");
   if (await coachAsst.isVisible()) throw new Error("Échap ne ferme pas l'assistant de rédaction");
   await click("Envoyer le rapport"); await shot("11-rapport-envoye");
-  await p.goto(`http://localhost:5098/#/s/${code}`); await p.waitForTimeout(500); await shot("12-espace-benef");
+  await p.goto(BASE + `#/s/${code}`); await p.waitForTimeout(500); await shot("12-espace-benef");
   await p.getByRole("button", { name: "Ouvrir", exact: true }).first().click(); await p.getByText("Lire mon retour").first().click(); await p.waitForTimeout(500); await shot("13-rapport-final");
   if (!(await p.locator("main").innerText()).includes(suggText.slice(0, 40))) throw new Error("la proposition insérée n'apparaît pas dans le rapport final");
   if (!(await p.locator("main").innerText()).includes("Vous pouvez ralentir.")) throw new Error("la note reformulée n'apparaît pas dans le rapport final");
   // Entraînement complet : 7 questions dans l'ordre réel, contextualisées par le métier, recruteur oral, récapitulatif sans score
-  await p.goto(`http://localhost:5098/?complet=1#/s/${code}`); await p.waitForTimeout(800);
+  await p.goto(BASE + `?complet=1#/s/${code}`); await p.waitForTimeout(800);
   await click("Commencer l'entraînement");
   await click("Faire un entraînement complet");
   await see("Entraînement complet · question 1 sur 7"); await see(/Le recruteur · Accueil/i);
@@ -180,7 +182,9 @@ require("fs").mkdirSync(SC, { recursive: true });
   if (/score|\/ ?10|\/ ?20|\bnote\b/i.test(recap)) throw new Error("le récapitulatif ne doit contenir aucun score");
   if ((await p.getByRole("button", { name: "Ouvrir mon retour" }).count()) !== 2) throw new Error("récapitulatif : deux réponses attendues");
   await shot("15-recapitulatif");
-  console.log("erreurs:", errors.filter(e => !/fonts.googleapis|jsdelivr|googleapis|Failed to load resource|ERR_TUNNEL/.test(e)));
+  const realErrors = errors.filter(e => !/fonts.googleapis|jsdelivr|googleapis|huggingface|Failed to load resource|ERR_TUNNEL|ERR_NAME|net::|TensorFlow Lite|XNNPACK/.test(e)); // MediaPipe journalise ses informations en erreur
+  console.log("erreurs:", realErrors);
+  if (realErrors.length) process.exitCode = 1;
   if (overflow.length) { console.error("débordement horizontal:", overflow); process.exitCode = 1; }
   await b.close();
 })().catch(e => { console.error("ECHEC", e.message); process.exit(1); });

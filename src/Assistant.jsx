@@ -8,15 +8,9 @@ import { PHRASES } from "./content/legal.js";
    (à l'ouverture de la page, à la fin d'un enregistrement ou d'un échauffement), qu'on peut fermer
    et qui ne revient pas en boucle. Aucune note, aucune déduction émotionnelle.
 
-   Commandes depuis n'importe quel écran (événements de fenêtre) :
-     openAssistant(context)   ouvre le panneau, avec les suggestions du contexte ;
-     nudgeAssistant(reason)   propose la bulle (une fois par raison et par session) ;
-     setRecording(on)         masque le bouton flottant pendant un enregistrement. */
-const EV = "rp-assistant";
-export const openAssistant = context => window.dispatchEvent(new CustomEvent(EV, { detail: { action: "open", context } }));
-export const nudgeAssistant = reason => window.dispatchEvent(new CustomEvent(EV, { detail: { action: "nudge", reason } }));
-export const closeAssistant = () => window.dispatchEvent(new CustomEvent(EV, { detail: { action: "close" } }));
-export const setRecording = on => window.dispatchEvent(new CustomEvent(EV, { detail: { action: "recording", on } }));
+   Commandes depuis n'importe quel écran : src/lib/bus.js (openAssistant, closeAssistant, nudgeAssistant, setRecording). */
+import { ASSISTANT_EVENT as EV } from "./lib/bus.js";
+export { openAssistant, nudgeAssistant, closeAssistant, setRecording } from "./lib/bus.js";
 
 const NUDGE_KEY = "larepet.nudges";
 const readNudges = () => { try { return JSON.parse(sessionStorage.getItem(NUDGE_KEY) || "null") || { off: false, seen: [] }; } catch { return { off: false, seen: [] }; } };
@@ -124,14 +118,21 @@ function Conversation({ poste, context, ctxKey }) {
     const history = [...msgs.map(({ role, content }) => ({ role, content })), { role: "user", content: question }];
     setMsgs(m => [...m, { role: "user", content: question }]);
     setTyping(true);
-    const t0 = performance.now();
-    const r = await askAssistant(history, { context, poste, memory: memory.current });
-    const wait = Math.max(0, 450 - (performance.now() - t0)); // laisse le temps de voir l'indicateur
-    await new Promise(res => setTimeout(res, wait));
-    if (!alive.current) return;
-    memory.current = r.memory || memory.current;
-    setMsgs(m => [...m, { role: "assistant", content: r.text, suggestions: r.suggestions || [] }]);
-    setTyping(false);
+    /* Le champ n'est jamais bloqué, même si la réponse échoue (ARC-17). */
+    try {
+      const t0 = performance.now();
+      const r = await askAssistant(history, { context, poste, memory: memory.current });
+      const wait = Math.max(0, 450 - (performance.now() - t0)); // laisse le temps de voir l'indicateur
+      await new Promise(res => setTimeout(res, wait));
+      if (!alive.current) return;
+      memory.current = r.memory || memory.current;
+      setMsgs(m => [...m, { role: "assistant", content: r.text, suggestions: r.suggestions || [] }]);
+    } catch (e) {
+      console.error("[assistant]", e);
+      if (alive.current) setMsgs(m => [...m, { role: "assistant", content: "Je n'ai pas pu répondre. Vous pouvez reposer votre question.", suggestions: [] }]);
+    } finally {
+      if (alive.current) setTyping(false);
+    }
   }
 
   const last = msgs[msgs.length - 1];
@@ -142,20 +143,23 @@ function Conversation({ poste, context, ctxKey }) {
     background: mine ? T.primary : T.violetBg, color: mine ? T.surface : T.navy,
   });
   return (<>
-    <div ref={threadRef} role="log" aria-live="polite" aria-relevant="additions" aria-label="Conversation avec l'assistant"
-      style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: "16px 16px 4px", display: "flex", flexDirection: "column", gap: 8 }}>
-      {msgs.map((m, i) => (
-        <div key={i} style={{ display: "flex", justifyContent: m.role === "user" ? "flex-end" : "flex-start" }}>
-          <div style={bubble(m.role === "user")}><span className="rp-sr">{m.role === "user" ? "Vous : " : "Assistant : "}</span>{m.content}</div>
-        </div>
-      ))}
-      {typing && (
-        <div style={{ display: "flex" }}>
-          <div role="status" style={{ ...bubble(false), display: "inline-flex", alignItems: "center", gap: 8, ...TY.small, color: T.violet }}>
-            <span className="rp-dots" aria-hidden><i /><i /><i /></span> L'assistant écrit…
+    {/* Zone défilante : le journal (annoncé) ne contient que les messages ; les suggestions sont à côté, non relues
+        à chaque réponse (A11Y-19). */}
+    <div ref={threadRef} style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: "16px 16px 4px", display: "flex", flexDirection: "column", gap: 8 }}>
+      <div role="log" aria-live="polite" aria-relevant="additions" aria-label="Conversation avec l'assistant" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        {msgs.map((m, i) => (
+          <div key={i} style={{ display: "flex", justifyContent: m.role === "user" ? "flex-end" : "flex-start" }}>
+            <div style={bubble(m.role === "user")}><span className="rp-sr">{m.role === "user" ? "Vous : " : "Assistant : "}</span>{m.content}</div>
           </div>
-        </div>
-      )}
+        ))}
+        {typing && (
+          <div style={{ display: "flex" }}>
+            <div style={{ ...bubble(false), display: "inline-flex", alignItems: "center", gap: 8, ...TY.small, color: T.violet }}>
+              <span className="rp-dots" aria-hidden><i /><i /><i /></span> L'assistant écrit…
+            </div>
+          </div>
+        )}
+      </div>
       {chips.length > 0 && (
         <div style={{ display: "flex", flexWrap: "wrap", gap: 8, paddingTop: 4 }} role="group" aria-label="Suggestions de questions">
           {chips.map(c => <Chip key={c} tone="ai" check={false} onClick={() => send(c)}>{c}</Chip>)}

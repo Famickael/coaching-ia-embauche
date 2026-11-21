@@ -1,5 +1,8 @@
-/* Banque de questions d'entraînement. {poste} est remplacé par le poste visé du parcours. */
-export const WARMUP_QUESTION = "En une phrase, qu'est-ce qui vous a donné envie de postuler à ce poste ?";
+/* Banque de questions d'entraînement. {poste} est remplacé par le poste visé du parcours (fillPoste, src/lib/text.js :
+   « de {poste} » prend l'élision, « d'agent d'accueil »). */
+import { posteLabel, dePoste, fillPoste } from "./text.js";
+import { stripAccents } from "./text.js";
+export { posteLabel, dePoste };
 
 export const QUESTIONS = [
   { id: "presentation", theme: "Présentation de soi", text: "Pouvez-vous vous présenter en deux minutes ?" },
@@ -16,8 +19,7 @@ export const QUESTIONS = [
 ];
 
 /* Libellé de métier inséré dans une phrase : « serveur(se) » devient « serveur ». */
-export const posteLabel = poste => (poste || "").replace(/\s*\([^)]*\)/g, "").trim();
-export const fill = (q, poste) => q.replace("{poste}", posteLabel(poste) || "ce poste");
+export const fill = (q, poste) => fillPoste(q, poste);
 
 /* Échauffement : une seule phrase à la fois, à dire à voix haute. Rien n'est enregistré. */
 export const WARMUP_PHRASES = [
@@ -56,9 +58,7 @@ export const WARMUP_PROMPTS = [
 
 export function fillPhrase(text, { poste, prenom } = {}) {
   const first = (prenom || "").split(" ")[0];
-  return text
-    .replace("{poste}", posteLabel(poste) || "ce poste")
-    .replace("{prenom}", first || "…");
+  return fillPoste(text, poste).replace("{prenom}", first || "…");
 }
 
 /* Tire une phrase au hasard, différente de la précédente. */
@@ -95,19 +95,19 @@ const SITUATIONS = [
   [["batiment", "macon", "electric", "plomb", "peint", "menuis", "chantier", "entretien", "proprete", "jardin", "agent de"], "Pendant votre travail, vous remarquez un risque pour la sécurité d'un collègue. Que faites-vous ?"],
   [["administr", "comptab", "assistant", "gestion", "bureau", "informati", "secretariat"], "On vous confie deux dossiers urgents à rendre en même temps. Comment vous organisez-vous ?"],
 ];
-const normJob = s => (s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+const normJob = stripAccents;
 export function situationFor(poste) {
   const p = normJob(poste);
   const hit = SITUATIONS.find(([keys]) => keys.some(k => p.includes(normJob(k))));
   return hit ? hit[1] : "Décrivez une situation difficile que vous avez su gérer au travail. Qu'avez-vous fait ?";
 }
 export function fullInterview(poste) {
-  const job = posteLabel(poste) || "ce poste";
+  const job = posteLabel(poste), de = job ? ` ${dePoste(job)}` : "";
   return [
-    { step: "Accueil", text: `Pour commencer, comment avez-vous entendu parler de ce poste de ${job} ?` },
+    { step: "Accueil", text: `Pour commencer, comment avez-vous entendu parler de ce poste${de} ?` },
     { step: "Présentation", text: "Pouvez-vous vous présenter en deux minutes ?" },
-    { step: "Motivation", text: `Pourquoi ce poste de ${job} vous intéresse-t-il ?` },
-    { step: "Expériences", text: `Racontez une expérience qui vous prépare au métier de ${job}. Qu'avez-vous fait, concrètement ?` },
+    { step: "Motivation", text: `Pourquoi ce poste${de} vous intéresse-t-il ?` },
+    { step: "Expériences", text: `Racontez une expérience qui vous prépare au métier${de}. Qu'avez-vous fait, concrètement ?` },
     { step: "Qualités et axes de progrès", text: "Quelles qualités apporteriez-vous à ce poste, et sur quel point aimeriez-vous progresser ?" },
     { step: "Mise en situation", text: situationFor(poste) },
     { step: "Vos questions", text: "Nous arrivons à la fin de l'entretien. Avez-vous des questions à nous poser ?" },

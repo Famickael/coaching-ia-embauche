@@ -179,14 +179,19 @@ async function run(b, vw, vh, opts = {}) {
   await visit("#/demo"); await shot("13-demo");
   check(await p.getByRole("checkbox").count() === 0, `[${tag}] formulaire : aucune case de recontact ne doit être obligatoire`);
   check(await p.getByLabel(/Fonction/).count() === 0, `[${tag}] formulaire : le champ « Fonction » (organismes) doit être retiré`);
-  await p.getByRole("button", { name: "Envoyer ma demande" }).click();
+  await p.getByRole("button", { name: "Préparer ma demande" }).click();
   check(await p.locator("[role=alert]").count() >= 3, `[${tag}] formulaire : erreurs non signalées`);
   await shot("13b-demo-erreurs", false);
   await p.getByLabel("Prénom").fill("Alex");
   await p.getByLabel("Votre numéro de téléphone").fill("06 12 34 56 78");
   await p.getByLabel("Vos disponibilités").selectOption({ index: 1 });
-  await p.getByRole("button", { name: "Envoyer ma demande" }).click(); await p.waitForTimeout(300);
-  check(await p.getByRole("heading", { name: /votre demande est enregistrée/ }).count() === 1, `[${tag}] formulaire : écran de confirmation absent`);
+  await p.getByRole("button", { name: "Préparer ma demande" }).click(); await p.waitForTimeout(300);
+  /* Site construit sans VITE_CONTACT_EMAIL (BUG-01) : rien n'est envoyé, l'écran le dit et propose de copier la demande. */
+  check(await p.getByRole("heading", { name: /votre demande est prête/ }).count() === 1, `[${tag}] formulaire : écran de confirmation absent`);
+  const doneText = await p.locator("main").innerText();
+  check(!/recontact|enregistrée|est envoyée/i.test(doneText), `[${tag}] formulaire : la confirmation ne doit pas annoncer un envoi qui n'a pas eu lieu`);
+  check(/transmettez-le à votre coach/.test(doneText), `[${tag}] formulaire : consigne de copie absente`);
+  check(await p.getByRole("button", { name: "Copier ma demande" }).count() === 1, `[${tag}] formulaire : bouton « Copier ma demande » absent`);
   await shot("14-demo-confirmation");
 
   // Pied de page : liens vers les questions fréquentes et les pages « Vos données »
@@ -273,6 +278,20 @@ async function run(b, vw, vh, opts = {}) {
   await top.click(); await p.waitForTimeout(1500);
   check(await p.evaluate(() => scrollY) < 5, `[${tag}] « Revenir en haut » ne remonte pas`);
 
+  /* Passe axe-core (TST-07) : échec sur les défauts « serious » et « critical », hors mots éteints de la phrase
+     d'accueil (.rs-w, effet voulu, A11Y-12). Animations réduites pendant la passe : un élément en cours de fondu
+     fausserait le calcul des contrastes. En thème clair ici ; la passe sombre suit plus bas. */
+  const AXE = fs.readFileSync(require.resolve("axe-core/axe.min.js"), "utf8");
+  const axe = async label => {
+    await p.addScriptTag({ content: AXE });
+    const res = await p.evaluate(async () => (await window.axe.run(document, { runOnly: { type: "tag", values: ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"] } })).violations
+      .filter(v => ["serious", "critical"].includes(v.impact))
+      .map(v => ({ id: v.id, nodes: v.nodes.filter(n => !n.target.join(" ").includes("rs-w")).map(n => n.target.join(" ")) }))
+      .filter(v => v.nodes.length));
+    res.forEach(v => check(false, `[${tag}] axe ${label} : ${v.id} (${v.nodes.slice(0, 3).join(" | ")})`));
+  };
+  if (opts.reduced) for (const h of ["#/", "#/a-propos", "#/solutions", "#/ressources", "#/ressources/se-presenter-en-deux-minutes", "#/demo", "#/espace", "#/vos-donnees"]) { await visit(h); await revealAll(); await axe(h); }
+
   // Options d'accessibilité : thème sombre et grande taille de texte, sans débordement, mémorisées sans flash
   if (!opts.reduced) {
     await visit("#/");
@@ -292,6 +311,10 @@ async function run(b, vw, vh, opts = {}) {
     await visit("#/"); await shot("19-accueil-sombre");
     await visit("#/espace"); await shot("20-mon-espace-sombre");
     await visit("#/vos-donnees"); await shot("21-vos-donnees-sombre");
+    await visit("#/demo"); await shot("21b-demo-sombre"); // flèche du choix et champs en thème sombre (UI-12)
+    await p.emulateMedia({ reducedMotion: "reduce" });
+    for (const h of ["#/", "#/demo", "#/espace"]) { await visit(h); await revealAll(); await axe(`${h} (sombre)`); }
+    await p.emulateMedia({ reducedMotion: "no-preference" });
     await p.goto(BASE + "?sombre=1#/a-propos", { waitUntil: "commit" });
     await p.waitForFunction(() => document.documentElement.dataset.theme !== undefined);
     check(await p.evaluate(() => document.documentElement.dataset.theme === "dark" && document.documentElement.classList.contains("rp-boot-dark")), `[${tag}] accessibilité : thème non appliqué avant l'affichage au rechargement`);
@@ -310,7 +333,7 @@ async function run(b, vw, vh, opts = {}) {
   await visit("#/espace");
   await p.getByRole("button", { name: "Se connecter" }).click();
   await p.waitForFunction(() => location.hash === "#/coach", null, { timeout: 5000 }).catch(() => {}); await p.waitForTimeout(1000);
-  check(((await p.getByRole("heading", { level: 1 }).first().textContent()) || "").startsWith("Bienvenue"), `[${tag}] connexion coach : « Bienvenue » attendu`);
+  check(((await p.getByRole("heading", { level: 1 }).first().textContent()) || "") === "Mes parcours" && (await p.getByText(/^Bienvenue /).count()) > 0, `[${tag}] connexion coach : titre « Mes parcours » et « Bienvenue » attendus`);
   await shot("24-espace-coach");
   await visit("#/ressources");
   const account = p.getByRole("button", { name: "Mon compte" });

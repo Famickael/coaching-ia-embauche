@@ -2,6 +2,144 @@
 
 Audit réalisé le 21 novembre 2026 sur l'arbre de travail de la branche `claude/hopeful-heisenberg-oil2aj` (dernier commit `77bb800`, plus les modifications en cours sur `index.html`, `src/Home.jsx`, `src/tokens.js`, `src/ui.jsx`). Aucun fichier de `src/` n'a été modifié.
 
+## Suivi de la mise en œuvre (21 novembre 2026)
+
+Lots appliqués sur la branche `claude/hopeful-heisenberg-oil2aj`. Commits : lot 1 `b039998`, lot 2 `8f03d29`, lot 3 `4f0c934`, lot 4 `467ff7b`, lot 5 `e835c90`, lot 6 `ca575d0`, lots 7 et 8 `0e18554` (livrés ensemble, mêmes fichiers), lot 9 `1613ee5`, lot 10 `0abb593` et `ab15855`, lot 11 `7dbb007`, lot 12 `f055273`.
+
+Bilan : 127 constats ; 112 corrigés, 4 corrigés en partie, 5 déjà corrigés (vérifiés), 6 non retenus.
+
+| Id | Statut | Commit | Note |
+|---|---|---|---|
+| BUG-01 | corrigé | `b039998` |  |
+| BUG-02 | corrigé | `b039998`, `7dbb007` | refus d'après l'état du stockage ajouté au lot 11 |
+| BUG-03 | corrigé | `4f0c934` |  |
+| BUG-04 | corrigé | `4f0c934` |  |
+| BUG-05 | corrigé | `467ff7b` |  |
+| BUG-06 | corrigé | `467ff7b` |  |
+| BUG-07 | corrigé | `7dbb007` |  |
+| BUG-08 | corrigé | `4f0c934` |  |
+| BUG-09 | corrigé | `4f0c934` |  |
+| BUG-10 | corrigé | `ca575d0` |  |
+| BUG-11 | déjà corrigé | `4f0c934` | vérifié, scénario de navigation rapide ajouté |
+| BUG-12 | corrigé | `e835c90` |  |
+| BUG-13 | corrigé | `4f0c934` |  |
+| BUG-14 | corrigé | `4f0c934` |  |
+| BUG-15 | déjà corrigé |  | vérifié (bouton « Revenir en haut » décalé dans tout l'espace) |
+| BUG-16 | corrigé | `4f0c934` |  |
+| BUG-17 | corrigé | `e835c90` |  |
+| BUG-18 | corrigé | `b039998` |  |
+| BUG-19 | corrigé | `b039998` |  |
+| BUG-20 | corrigé | `ca575d0` |  |
+| BUG-21 | corrigé | `ca575d0` |  |
+| BUG-22 | corrigé | `4f0c934` |  |
+| BUG-23 | corrigé | `ca575d0` |  |
+| BUG-24 | corrigé | `ca575d0` |  |
+| BUG-25 | corrigé | `ca575d0` |  |
+| BUG-26 | corrigé | `ca575d0` |  |
+| BUG-27 | non retenu |  | décision du propriétaire : identifiants coach pré-remplis, aucun texte visible ne parle de démonstration |
+| BUG-28 | corrigé | `0e18554` |  |
+| ARC-01 | corrigé | `ca575d0` |  |
+| ARC-02 | corrigé | `ca575d0` |  |
+| ARC-03 | corrigé | `ca575d0` |  |
+| ARC-04 | corrigé | `ca575d0` |  |
+| ARC-05 | corrigé | `ca575d0` |  |
+| ARC-06 | corrigé | `ca575d0` |  |
+| ARC-07 | corrigé | `ca575d0` |  |
+| ARC-08 | corrigé | `7dbb007` |  |
+| ARC-09 | corrigé | `ca575d0` |  |
+| ARC-10 | corrigé | `0abb593`, `ab15855` | plus aucun fichier d'écran au-delà de 300 lignes ; ui.jsx garde 675 lignes de composants |
+| ARC-11 | corrigé | `ca575d0`, `ab15855` | lib/media.js et StageIdle |
+| ARC-12 | corrigé | `e835c90` |  |
+| ARC-13 | corrigé | `ab15855` |  |
+| ARC-14 | corrigé | `ab15855` |  |
+| ARC-15 | corrigé | `ab15855` |  |
+| ARC-16 | corrigé | `1613ee5` |  |
+| ARC-17 | corrigé | `ca575d0` |  |
+| ARC-18 | corrigé | `ca575d0` |  |
+| ARC-19 | corrigé | `0abb593`, `ab15855` |  |
+| ARC-20 | corrigé | `ab15855` |  |
+| ARC-21 | corrigé | `ab15855` |  |
+| ARC-22 | corrigé | `f055273` |  |
+| SEC-01 | corrigé | `8f03d29` |  |
+| SEC-02 | corrigé | `8f03d29` |  |
+| SEC-03 | corrigé | `8f03d29` |  |
+| SEC-04 | corrigé | `1613ee5` |  |
+| SEC-05 | corrigé | `f055273` |  |
+| SEC-06 | corrigé | `8f03d29` |  |
+| SEC-07 | corrigé en partie | `f055273` | alerte documentée ; passage à transformers.js 4 non tenté |
+| SEC-08 | corrigé | `f055273` |  |
+| SEC-09 | corrigé | `f055273` |  |
+| SEC-10 | corrigé | `f055273` |  |
+| A11Y-01 | corrigé | `0e18554` |  |
+| A11Y-02 | corrigé | `0e18554` |  |
+| A11Y-03 | corrigé | `0e18554` |  |
+| A11Y-04 | corrigé | `0e18554` |  |
+| A11Y-05 | corrigé | `0e18554` |  |
+| A11Y-06 | corrigé | `0e18554` |  |
+| A11Y-07 | corrigé | `0e18554` |  |
+| A11Y-08 | corrigé | `0e18554` |  |
+| A11Y-09 | corrigé | `0e18554` |  |
+| A11Y-10 | corrigé | `0e18554` |  |
+| A11Y-11 | déjà corrigé |  | vérifié (cibles de 44 px sous 760 px) |
+| A11Y-12 | corrigé | `0e18554` |  |
+| A11Y-13 | corrigé | `0e18554`, `f055273` | règle design-lint A2 au lot 12 |
+| A11Y-14 | corrigé | `0e18554` |  |
+| A11Y-15 | corrigé | `0e18554` |  |
+| A11Y-16 | déjà corrigé | `0e18554` | menu vérifié ; fond inerte ajouté sous Modal |
+| A11Y-17 | corrigé | `0e18554` |  |
+| A11Y-18 | corrigé | `0e18554` |  |
+| A11Y-19 | corrigé | `0e18554` |  |
+| A11Y-20 | corrigé | `0e18554` |  |
+| A11Y-21 | corrigé | `0e18554` |  |
+| UI-01 | corrigé | `0e18554` |  |
+| UI-02 | corrigé | `0e18554` |  |
+| UI-03 | corrigé | `467ff7b` |  |
+| UI-04 | corrigé | `e835c90` |  |
+| UI-05 | corrigé | `0e18554` |  |
+| UI-06 | corrigé | `0e18554` |  |
+| UI-07 | corrigé | `0e18554` |  |
+| UI-08 | corrigé | `0e18554` |  |
+| UI-09 | corrigé | `0e18554`, `ab15855` |  |
+| UI-10 | corrigé | `0e18554` |  |
+| UI-11 | corrigé | `0e18554` |  |
+| UI-12 | corrigé | `0e18554` |  |
+| UI-13 | corrigé | `0e18554` |  |
+| UI-14 | corrigé | `ab15855` |  |
+| UI-15 | corrigé | `0e18554` |  |
+| UI-16 | corrigé | `ab15855` |  |
+| RED-01 | non retenu |  | décision du propriétaire : côté coach, on dit « entretiens » (consigné dans docs/redaction.md) |
+| RED-02 | corrigé | `e835c90` |  |
+| RED-03 | corrigé | `e835c90` |  |
+| RED-04 | corrigé | `467ff7b` |  |
+| RED-05 | corrigé | `e835c90` |  |
+| RED-06 | corrigé | `e835c90` |  |
+| RED-07 | corrigé | `e835c90` |  |
+| RED-08 | corrigé | `467ff7b` |  |
+| RED-09 | déjà corrigé | `f055273` | vérifié : aucun texte visible ne parle de test ou de prototype |
+| RED-10 | corrigé en partie | `f055273` | « Relire un entretien… » ; « Votre première répétition » gardé (le propriétaire garde « répétition ») |
+| RED-11 | non retenu |  | passe globale d'espaces insécables à faire après accord du propriétaire ; insécables posées dans lib/format.js et les indicateurs |
+| PERF-01 | corrigé | `1613ee5` |  |
+| PERF-02 | corrigé | `1613ee5` |  |
+| PERF-03 | corrigé | `1613ee5` |  |
+| PERF-04 | non retenu |  | décision du propriétaire : écran de chargement de 2,5 s |
+| PERF-05 | corrigé en partie | `f055273` | position du pied mémorisée, pas de suivi du doigt sur téléphone ; calque non déplacé par transform, mesure à l'onglet Performances non faite |
+| PERF-06 | corrigé | `1613ee5` |  |
+| PERF-07 | corrigé | `1613ee5` |  |
+| PERF-08 | corrigé | `1613ee5` |  |
+| PERF-09 | non retenu |  | rien à faire avant un serveur (finition) |
+| PERF-10 | non retenu |  | aucun changement nécessaire (constat de l'audit) |
+| TST-01 | corrigé | `b039998`, `ca575d0`, `7dbb007` |  |
+| TST-02 | corrigé | `b039998`, `4f0c934`, `467ff7b`, `ca575d0`, `0e18554`, `7dbb007` | 13 scénarios |
+| TST-03 | corrigé | `8f03d29` |  |
+| TST-04 | corrigé | `f055273` |  |
+| TST-05 | corrigé en partie | `f055273` | boîtes natives contrôlées, erreurs JavaScript bloquantes ; des attentes à durée fixe restent |
+| TST-06 | corrigé | `f055273` |  |
+| TST-07 | corrigé | `f055273` |  |
+| TST-08 | corrigé | `f055273` |  |
+| TST-09 | corrigé | `f055273` |  |
+
+---
+
 ## 0. Méthode et limites
 
 | Ce qui a été fait | Détail |

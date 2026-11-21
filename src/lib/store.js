@@ -4,19 +4,42 @@
    Tout reste dans le navigateur. Le passage en production remplace ce module
    par des appels à une API (voir README, section "Passage en production"). */
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 
 const KEY = "larepet.v1";
 const EMPTY = { counselor: null, parcours: {}, takes: {}, lastSpace: null }; // lastSpace : { role: "benef", code } | { role: "coach" }
 const listeners = new Set();
 
+/* Version du schéma (ARC-08) : migrate() met à niveau les données d'une version antérieure à la lecture. */
+const SCHEMA = 1;
+function migrate(d) {
+  // version 0 (sans « v ») → 1 : aucun changement de forme, la version est seulement ajoutée.
+  return { ...d, v: SCHEMA };
+}
 function read() {
   try {
     const raw = localStorage.getItem(KEY);
-    return raw ? { ...EMPTY, ...JSON.parse(raw) } : { ...EMPTY };
+    return migrate(raw ? { ...EMPTY, ...JSON.parse(raw) } : { ...EMPTY });
   } catch {
-    return { ...EMPTY };
+    return migrate({ ...EMPTY });
   }
+}
+
+/* Deux onglets qui écrivent presque en même temps ne s'écrasent plus (ARC-08) : chaque écriture relit le stockage et
+   n'y applique que ce qui a changé ici (par identifiant de parcours et de réponse), au lieu de tout réécrire. */
+function merge(old, next, disk) {
+  const out = { ...disk };
+  for (const k of ["counselor", "lastSpace"]) if (JSON.stringify(old[k] ?? null) !== JSON.stringify(next[k] ?? null)) out[k] = next[k];
+  for (const k of ["parcours", "takes"]) {
+    const o = old[k] || {}, n = next[k] || {}, d = { ...(disk[k] || {}) };
+    for (const id of new Set([...Object.keys(o), ...Object.keys(n)])) {
+      if (!(id in n)) delete d[id];            // supprimé ici
+      else if (o[id] !== n[id]) d[id] = n[id]; // créé ou modifié ici
+    }
+    out[k] = d;
+  }
+  out.v = SCHEMA;
+  return out;
 }
 
 let state = read();
@@ -30,32 +53,45 @@ export const TRIAL_COACH = "Sophie M.";
 export const TRIAL_LOGIN = { email: "sophie.m@exemple.fr", password: "repet-2026", name: TRIAL_COACH };
 function ensureTrial() {
   if (state.parcours[TRIAL_CODE]) return;
+  const old = state;
   state = { ...state, parcours: { ...state.parcours, [TRIAL_CODE]: {
     code: TRIAL_CODE, prenom: "Camille", poste: "agent d'accueil", warmup: true, counselor: "",
     trial: true, createdAt: new Date().toISOString(), openedAt: null, consent: null,
   } } };
-  try { localStorage.setItem(KEY, JSON.stringify(state)); } catch { /* mode privé */ }
-  queueMicrotask(() => listeners.forEach(fn => fn(state))); // pas de mise à jour pendant un rendu
+  state = merge(old, state, read());
+  persist(state);
+  queueMicrotask(notify); // pas de mise à jour pendant un rendu
 }
 
-function write(next) {
-  state = next;
-  try { localStorage.setItem(KEY, JSON.stringify(next)); } catch { /* quota ou mode privé */ }
-  listeners.forEach(fn => fn(state));
+/* Écriture qui peut échouer (stockage plein, mode privé) : jamais en silence (ARC-01). storageError est lu par App,
+   qui affiche un bandeau ; les fonctions qui créent une réponse rejettent l'opération. */
+let storageError = false;
+function persist(next) {
+  try { localStorage.setItem(KEY, JSON.stringify(next)); storageError = false; return true; }
+  catch (e) { console.error("[stockage] écriture impossible", e); storageError = true; return false; }
 }
+const notify = () => listeners.forEach(fn => fn());
+function write(next) {
+  state = merge(state, next, read());
+  const ok = persist(state);
+  notify();
+  return ok;
+}
+export const getStorageError = () => storageError;
 
 export function getState() { return state; }
 
+/* Abonnement unique au module (ARC-07) : un seul écouteur « storage » synchronise les onglets (personne / coach),
+   chaque composant lit l'état par useSyncExternalStore. */
+function subscribe(fn) {
+  listeners.add(fn);
+  return () => listeners.delete(fn);
+}
+if (typeof window !== "undefined" && window.addEventListener) {
+  window.addEventListener("storage", e => { if (e.key === KEY) { state = read(); notify(); } });
+}
 export function useStore() {
-  const [s, setS] = useState(state);
-  useEffect(() => {
-    listeners.add(setS);
-    setS(state); // rattrape une écriture faite avant l'abonnement (parcours d'essai créé pendant le premier rendu)
-    const onStorage = e => { if (e.key === KEY) { state = read(); listeners.forEach(fn => fn(state)); } };
-    window.addEventListener("storage", onStorage); // synchronise deux onglets (bénéficiaire / coach)
-    return () => { listeners.delete(setS); window.removeEventListener("storage", onStorage); };
-  }, []);
-  return s;
+  return useSyncExternalStore(subscribe, getState, getState);
 }
 
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
@@ -65,8 +101,9 @@ const ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
 function newCode() {
   let c;
   do {
-    const bytes = crypto.getRandomValues(new Uint8Array(6));
-    c = Array.from(bytes, b => ALPHABET[b % ALPHABET.length]).join("");
+    /* Tirage par rejet (SEC-09) : un octet n'est gardé que sous 248 (8 × 31), sans biais vers les premières lettres. */
+    c = "";
+    while (c.length < 6) for (const b of crypto.getRandomValues(new Uint8Array(8))) if (b < 248 && c.length < 6) c += ALPHABET[b % ALPHABET.length];
   } while (state.parcours[c]);
   return c;
 }
@@ -113,6 +150,7 @@ export function updateParcours(code, patch) {
 export async function deleteParcours(code) {
   const takes = Object.values(state.takes).filter(t => t.code === code);
   for (const t of takes) await deleteVideo(t.id);
+  clearWarmupDebrief(code); // questionnaire d'échauffement supprimé avec le parcours (BUG-20)
   const nextTakes = { ...state.takes };
   takes.forEach(t => delete nextTakes[t.id]);
   const nextParcours = { ...state.parcours };
@@ -123,6 +161,8 @@ export async function deleteParcours(code) {
 /* Retrait du consentement : supprime réponses et vidéos, garde le parcours (accès coach),
    trace la date du retrait et la version des textes acceptés (RGPD, art. 7(1)). */
 export async function withdrawConsent(code) {
+  if (!state.parcours[code]) return; // pas de parcours fantôme sans code ni prénom (BUG-21)
+  clearWarmupDebrief(code); // le ressenti déclaré part avec les réponses (BUG-20)
   const takes = Object.values(state.takes).filter(t => t.code === code);
   for (const t of takes) await deleteVideo(t.id);
   const nextTakes = { ...state.takes };
@@ -136,16 +176,22 @@ export function takesOf(code, s = state) {
   return Object.values(s.takes).filter(t => t.code === code).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 }
 
+/* Rejette si la vidéo ou les métadonnées ne peuvent pas être écrites (ARC-01) : la personne ne croit jamais
+   sa réponse gardée alors qu'elle disparaîtra au rechargement. La vidéo déjà posée est alors retirée. */
 export async function createTake({ code, question, duration, blob, transcript, segments, gaze, analysis }) {
   const id = uid();
   if (blob) await saveVideo(id, blob);
   const t = {
     id, code, question, duration, transcript, segments, gaze, analysis,
-    hasVideo: !!blob, mime: blob?.type || null,
+    hasMedia: !!blob, mime: blob?.type || null, // hasVideo dans les anciennes données (lib/takes.js)
     createdAt: new Date().toISOString(),
     shared: false, sharedAt: null, note: "", report: null,
   };
-  write({ ...state, takes: { ...state.takes, [id]: t } });
+  if (!write({ ...state, takes: { ...state.takes, [id]: t } })) {
+    const next = { ...state.takes }; delete next[id]; state = { ...state, takes: next }; notify();
+    if (blob) await deleteVideo(id);
+    const e = new Error("Stockage plein ou indisponible"); e.code = "stockage"; throw e;
+  }
   return id;
 }
 
@@ -154,6 +200,23 @@ export function unshareTake(id) {
   const t = state.takes[id];
   if (!t || t.report) return;
   write({ ...state, takes: { ...state.takes, [id]: { ...t, shared: false, sharedAt: null, draft: null } } });
+}
+
+/* Rapport du coach (BUG-02) : refusé si la personne a repris son envoi entre-temps (deux onglets, deux appareils).
+   Renvoie true si le rapport est enregistré. Production : rpc('envoyer_rapport'), qui refuse de la même façon. */
+export function sendReport(id, report) {
+  const t = read().takes[id]; // état du stockage, pas la copie en mémoire : la reprise a pu venir d'un autre onglet
+  if (!t || !t.shared) return false;
+  write({ ...state, takes: { ...state.takes, [id]: { ...t, report, draft: null } } });
+  return true;
+}
+
+/* Brouillon du coach : ignoré si la réponse n'est plus partagée (le brouillon a été effacé par la reprise). */
+export function saveDraft(id, draft) {
+  const t = read().takes[id];
+  if (!t || !t.shared) return false;
+  write({ ...state, takes: { ...state.takes, [id]: { ...t, draft } } });
+  return true;
 }
 
 export function updateTake(id, patch) {
@@ -180,13 +243,22 @@ export function parcoursStatus(p, s = state) {
 }
 
 /* ── IndexedDB (vidéos) ── */
+/* Une seule connexion, gardée (ARC-06) ; refermée si une autre version de la base est ouverte ; rouverte au besoin. */
+let dbp = null;
 function db() {
-  return new Promise((resolve, reject) => {
+  if (!dbp) dbp = new Promise((resolve, reject) => {
     const req = indexedDB.open("larepet", 1);
     req.onupgradeneeded = () => req.result.createObjectStore("videos");
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
+    req.onsuccess = () => {
+      const d = req.result;
+      d.onversionchange = () => { d.close(); dbp = null; };
+      d.onclose = () => { dbp = null; };
+      resolve(d);
+    };
+    req.onerror = () => { dbp = null; reject(req.error); };
+    req.onblocked = () => { dbp = null; reject(new Error("Base de données bloquée par un autre onglet")); };
   });
+  return dbp;
 }
 async function tx(mode, fn) {
   const d = await db();
@@ -195,7 +267,17 @@ async function tx(mode, fn) {
     const r = fn(t.objectStore("videos"));
     t.oncomplete = () => resolve(r?.result);
     t.onerror = () => reject(t.error);
+    t.onabort = () => reject(t.error || new Error("Transaction interrompue")); // quota dépassé, par exemple
   });
+}
+
+/* Espace de stockage (ARC-02) : demande de persistance à l'accord (le navigateur peut sinon purger les vidéos),
+   estimation de la place libre avant un enregistrement. */
+export function requestPersistence() {
+  try { return navigator.storage?.persist?.().catch(() => false) ?? Promise.resolve(false); } catch { return Promise.resolve(false); }
+}
+export async function freeSpace() {
+  try { const e = await navigator.storage?.estimate?.(); return e && e.quota ? e.quota - (e.usage || 0) : null; } catch { return null; }
 }
 export const saveVideo = (id, blob) => tx("readwrite", s => s.put(blob, id));
 export const deleteVideo = id => tx("readwrite", s => s.delete(id)).catch(() => {});

@@ -1,5 +1,6 @@
 /* Métiers courants de l'accompagnement vers l'emploi (France), pour l'autocomplétion du métier visé.
    La saisie libre reste possible : cette liste ne sert qu'à suggérer. */
+import { stripAccents } from "./text.js";
 
 export const JOBS = [
   // Accueil, secrétariat, administration
@@ -53,7 +54,7 @@ export const JOBS = [
 ];
 
 /* Normalise pour la recherche : minuscules, sans accents ni ponctuation. */
-export const norm = s => (s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "")
+export const norm = s => stripAccents(s)
   .replace(/œ/g, "oe").replace(/[^a-z0-9]+/g, " ").trim();
 
 const INDEX = [...new Set(JOBS)].map(j => ({ label: j, n: norm(j) }));

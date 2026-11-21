@@ -1,7 +1,7 @@
 import React from "react";
-import { T, RAD, SH, Btn, Card, Icon, I, TY, W, SI, img, Eyebrow, Section, PageHero, IconTile, Accordion } from "./ui.jsx";
+import { T, RAD, SH, Btn, Card, Icon, I, TY, W, img, Eyebrow, Section, PageHero, IconTile, Accordion } from "./ui.jsx";
 import { Reveal, useSectionScroll } from "./motion.jsx";
-import { FinalBand } from "./Home.jsx";
+import { FinalBand } from "./home/FinalBand.jsx";
 
 /* Page « À propos » : mission, pourquoi ce projet, parti pris, cadre réglementaire, pour qui,
    comment c'est construit, FAQ (#/a-propos/faq). */
@@ -82,8 +82,8 @@ export default function About({ go, openSpace, section }) {
             <p style={{ ...TY.bodyLg, color: T.body, margin: 0 }}>La Répét' s'adresse aux structures qui préparent des personnes aux entretiens d'embauche et à la présentation de soi : structures d'insertion, missions locales, organismes de formation, services emploi des collectivités, associations. Elle s'utilise en complément d'un accompagnement humain, individuel ou collectif.</p>
             <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "grid", gap: 12 }}>
               {[[I.user, "Les personnes accompagnées", "qui veulent s'entraîner à leur rythme, y compris celles qui redoutent l'exercice devant un groupe."],
-                [SI.users, "Les coachs", "qui veulent des supports concrets pour leurs ateliers et leurs rendez-vous."],
-                [SI.building, "Les directions et équipes support", "qui veulent un outil maîtrisé, conforme et hébergé par l'organisme."]].map(([ic, t, d]) => (
+                [I.users, "Les coachs", "qui veulent des supports concrets pour leurs ateliers et leurs rendez-vous."],
+                [I.building, "Les directions et équipes support", "qui veulent un outil maîtrisé, conforme et hébergé par l'organisme."]].map(([ic, t, d]) => (
                 <li key={t} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
                   <IconTile icon={ic} />
                   <span style={{ ...TY.body, color: T.body }}><strong style={{ color: T.navy }}>{t}</strong> {d}</span>
@@ -114,14 +114,14 @@ export default function About({ go, openSpace, section }) {
 
 const AboutAside = () => (
   <div className="rp-hide-m" style={{ borderRadius: RAD.xl, overflow: "hidden", boxShadow: SH.glow, aspectRatio: "3 / 2", background: T.primaryBg }}>
-    <img src={img("a-propos.webp")} alt="Deux femmes échangent autour d'une table ronde, dans un bureau lumineux." width={1200} height={800} style={{ display: "block", width: "100%", height: "100%", objectFit: "cover" }} />
+    <img src={img("a-propos.webp")} alt="Deux femmes échangent autour d'une table ronde, dans un bureau lumineux." width={1200} height={800} loading="lazy" decoding="async" style={{ display: "block", width: "100%", height: "100%", objectFit: "cover" }} />
   </div>
 );
 
 const MISSION = [
   [I.redo, "S'entraîner sans limite", "Autant de répétitions que nécessaire, chez soi, au moment choisi, sans public."],
   [I.sparkle, "Comprendre sans être jugé", "L'assistant dit ce qu'il a remarqué, et à quel moment. Jamais de note."],
-  [SI.users, "Avancer avec son coach", "Le coach relit ce qu'on lui envoie, ajoute ses remarques et prépare le débriefing."],
+  [I.users, "Avancer avec son coach", "Le coach relit ce qu'on lui envoie, ajoute ses remarques et prépare le débriefing."],
 ];
 
 const PRINC = [
@@ -132,7 +132,7 @@ const PRINC = [
 ];
 
 const LAW = [
-  [SI.scale, "Règlement européen sur l'IA", "Aucune reconnaissance d'émotion ni inférence de personnalité (article 5 du règlement 2024/1689 : interdite sur le lieu de travail et dans les établissements d'enseignement ; nous l'excluons partout). Transparence sur le rôle de l'assistant et supervision humaine à chaque étape."],
+  [I.scale, "Règlement européen sur l'IA", "Aucune reconnaissance d'émotion ni inférence de personnalité (article 5 du règlement 2024/1689 : interdite sur le lieu de travail et dans les établissements d'enseignement ; nous l'excluons partout). Transparence sur le rôle de l'assistant et supervision humaine à chaque étape."],
   [I.shield, "RGPD", "Minimisation (prénom et initiale, poste visé), consentement donné option par option et retirable, vidéo conservée sur l'appareil tant que la personne ne l'envoie pas. Analyse d'impact à mener par l'organisme."],
   [I.user, "Accessibilité", "Navigation au clavier, contrastes vérifiés en thème clair et sombre, options d'accessibilité (taille du texte, police lisible, espacement, règle de lecture). Déclaration : non conforme tant qu'aucun audit RGAA n'est réalisé."],
 ];

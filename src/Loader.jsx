@@ -1,5 +1,7 @@
+import { prefersReduced } from "./lib/a11y.js";
+
 /* Écran de chargement : le balisage et les styles sont dans index.html (visibles avant le JavaScript).
-   Cette fonction le retire en fondu au montage de React, après une durée minimale (environ 1,9 s, 0,6 s si « réduire les animations »).
+   Cette fonction le retire en fondu au montage de React, après une durée minimale (2,5 s, 0,6 s si « réduire les animations »).
    Durée minimale comptée depuis le début de la navigation : si le JavaScript arrive tard, aucune attente
    supplémentaire. Sous navigateur piloté (tests automatisés), retrait immédiat. */
 const MIN_MS = 2500;          // une animation complète : bulles qui se rejoignent (1,3 s), puis trois points (référentiel, section 7)
@@ -13,7 +15,7 @@ export function dismissLoader() {
   const el = document.getElementById("rp-loader");
   if (!el) return;
   const auto = typeof navigator !== "undefined" && navigator.webdriver;
-  const reduced = (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) || document.documentElement.dataset.motion === "reduce";
+  const reduced = prefersReduced();
   if (auto) { el.remove(); return; }
   const wait = Math.max(0, (reduced ? MIN_MS_REDUCED : MIN_MS) - performance.now());
   /* Le site est déjà rendu dessous : le calque fixe passe en opacité 0 (transition sur opacity seulement),

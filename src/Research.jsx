@@ -1,7 +1,7 @@
 import React from "react";
 import { T, TY, W, GAP, Card, IconTile, Icon, I, PageHero, Section, Notice, Btn } from "./ui.jsx";
 import { Reveal } from "./motion.jsx";
-import { FinalBand } from "./Home.jsx";
+import { FinalBand } from "./home/FinalBand.jsx";
 
 /* « L'IA et la recherche » (#/a-propos/ia-et-recherche) : ce que fait l'IA dans La Répét', ce qu'elle ne fait pas,
    et ce que disent les études sur l'entraînement aux entretiens avec un interlocuteur virtuel.

@@ -10,6 +10,7 @@ import { ORG, orgName, OrgName, dpoLine, contactLine, hostLine, THIRD_PARTIES, S
 
 const REMOTE_LLM = !!import.meta.env?.VITE_LLM_ENDPOINT;
 const REMOTE_STT = !!import.meta.env?.VITE_STT_ENDPOINT;
+const BACKEND = !!import.meta.env?.VITE_BACKEND_URL;
 export const LEGAL_DATE = "20 novembre 2026";
 export const LEGAL_VERSION = ORG.textsVersion;
 
@@ -46,11 +47,16 @@ export const PHRASES = {
     : "La première fois, votre appareil télécharge un outil d'analyse (environ 85 Mo). Préférez le Wi-Fi. Votre vidéo n'est pas envoyée.",
   share: "Seul votre coach verra cette réponse.",
   sent: "Vous pouvez reprendre votre envoi quand vous voulez, depuis votre espace.",
+  /* Sans serveur, l'envoi reste dans ce navigateur (RED-07) : dit là où la personne envoie. */
+  sameDevice: BACKEND ? "" : "Votre coach lit votre réponse sur cet appareil, dans ce navigateur. Son rapport arrive au même endroit : revenez-y avec le même code.",
   logout: "Se déconnecter n'efface pas les données de cet appareil.",
   coachLogin: "Vous ne voyez que les réponses que l'on vous envoie.",
   noTracking: "Ce site n'utilise pas de cookies publicitaires et ne vous suit pas.",
-  contactInfo: "Vos coordonnées sont transmises uniquement à l'équipe d'accompagnement, pour organiser ce rendez-vous.",
+  contactInfo: "Vos coordonnées servent seulement à organiser ce rendez-vous. Elles sont destinées uniquement à l'équipe d'accompagnement.",
+  /* Écran de confirmation de la demande (BUG-01) : jamais « l'équipe vous recontacte » tant qu'aucun envoi réel n'a eu lieu. */
   contactMail: "Votre messagerie s'ouvre avec votre demande : il vous reste à l'envoyer.",
+  contactCopy: "Copiez ce récapitulatif et transmettez-le à votre coach, par message ou lors de votre prochain rendez-vous. Il organisera la prise en main avec vous.",
+  contactSent: "Votre demande est envoyée. L'équipe d'accompagnement vous recontacte pour fixer le rendez-vous.",
   refuse: "Vous pouvez refuser. Cela ne change rien à votre accompagnement : vous pouvez préparer votre entretien avec votre coach.",
   changeMind: "Vous pouvez changer d'avis à tout moment, dans « Mon compte ».",
   sharedDevice: "Sur un ordinateur partagé, supprimez vos entraînements avant de partir.",
@@ -97,7 +103,7 @@ export const SUMMARY = {
   appareil: [
     ["lock", "Vos entraînements sont gardés **dans ce navigateur, sur cet appareil**."],
     ["ban", "**Pas de publicité. Pas de pistage. Pas de mesure d'audience.**"],
-    ["trash", "Vous effacez tout avec « Retirer mon consentement », dans « Mon compte »."],
+    ["trash", "Vous effacez tout avec « Retirer mon accord », dans « Mon compte »."],
   ],
   conditions: [
     ["mic", "Vous vous entraînez **pour vous**, autant de fois que vous voulez."],
@@ -164,7 +170,7 @@ export const FULL = {
   droits: [
     { p: ["Vos données vous appartiennent. Voici ce que vous pouvez faire."] },
     { h: "Voir vos données.", p: ["Tout ce qui vous concerne est dans votre espace : vos réponses, vos retours, les rapports de votre coach."] },
-    { h: "Les supprimer.", p: ["Ouvrez une réponse, puis appuyez sur « Supprimer cette réponse ». Pour tout effacer : « Retirer mon consentement », dans « Mon compte »."] },
+    { h: "Les supprimer.", p: ["Ouvrez une réponse, puis appuyez sur « Supprimer cette réponse ». Pour tout effacer : « Retirer mon accord », dans « Mon compte »."] },
     { h: "Les récupérer.", p: ["Vous pouvez télécharger votre vidéo et imprimer votre retour."] },
     { h: "Les corriger.", p: ["Vous pouvez changer votre métier dans votre espace. Demandez à votre coach de corriger votre prénom."] },
     { h: "Changer d'avis.", p: ["Vous pouvez retirer votre accord à tout moment. Vos entraînements sont alors effacés. Votre accompagnement continue normalement."] },
@@ -179,6 +185,7 @@ export const FULL = {
       ["Le texte de vos réponses et les retours", "Pour afficher vos retours", "Jusqu'à ce que vous les supprimiez"],
       ["Vos réponses au petit questionnaire d'échauffement", "Pour vous les montrer la fois suivante", "Jusqu'à ce que vous supprimiez tout"],
       ["Vos réglages d'accessibilité et de son", "Pour garder l'affichage que vous avez choisi", "Jusqu'à « Réinitialiser » ou l'effacement du navigateur"],
+      ["Le choix de ne plus voir la bulle de l'assistant", "Pour ne pas vous la proposer deux fois", "Jusqu'à la fermeture de l'onglet"],
       ["L'outil d'analyse", "Pour préparer votre retour sans envoyer votre vidéo", "Gardé par le navigateur"],
     ] } },
     { p: ["Nous n'avons pas besoin de votre accord pour cela, car ces informations sont nécessaires au service que vous demandez. Nous vous le disons quand même. Il n'y a ni publicité, ni pistage, ni mesure d'audience."] },

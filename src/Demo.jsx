@@ -1,10 +1,13 @@
 import React, { useRef, useState } from "react";
-import { T, RAD, SH, GAP, Btn, Icon, I, TY, W, PageHero, IconTile, Field, Input, Textarea, Select, Link, Toggle, Card, Tag, Txt } from "./ui.jsx";
+import { T, RAD, SH, GAP, Btn, Icon, I, TY, W, PageHero, IconTile, Field, Input, Textarea, Select, Link, Toggle, Card, Tag, Txt, RadioGroup } from "./ui.jsx";
 import { PHRASES } from "./content/legal.js";
 
 /* Page « Demander une prise en main » : une personne demande une présentation et une première
-   prise en main accompagnée par un coach. Si VITE_CONTACT_EMAIL est défini, la demande s'ouvre
-   dans la messagerie de la personne (mailto:) ; le branchement à un serveur se fait ici en production. */
+   prise en main accompagnée par un coach. Le site n'envoie rien lui-même (BUG-01) :
+   - avec VITE_CONTACT_EMAIL, la demande s'ouvre dans la messagerie de la personne (mailto:), qui l'envoie ;
+   - sans adresse, la demande est préparée et la personne la copie pour la transmettre à son coach.
+   « L'équipe vous recontacte » (PHRASES.contactSent) est réservé à un envoi réel, par la fonction serveur
+   « demande » de la production (docs/plan-production.md, 1.5) : mode "sent", branché ici le moment venu. */
 
 const CONTACT = import.meta.env.VITE_CONTACT_EMAIL || "";
 const MEANS = [["tel", "Téléphone"], ["mail", "Courriel"], ["coach", "Par mon coach"]];
@@ -47,7 +50,7 @@ export default function Demo({ go }) {
       mailto = `mailto:${CONTACT}?subject=${encodeURIComponent(`Demande de prise en main La Répét' · ${f.prenom}`)}&body=${encodeURIComponent(summary(f))}`;
       window.location.href = mailto;
     }
-    setSent({ ...f, mailto });
+    setSent({ ...f, mailto, mode: mailto ? "mail" : "copy" });
     window.scrollTo({ top: 0 });
   };
 
@@ -62,7 +65,6 @@ export default function Demo({ go }) {
           <Card pad="lg" level={2} topbar>
           <form ref={form} noValidate onSubmit={submit} aria-labelledby="demo-title" style={{ display: "grid", gap: GAP.field }}>
             <div style={{ display: "grid", gap: 12 }}>
-              <div><Tag tone="appui">Bénéficiaire</Tag></div>
               <h2 id="demo-title" style={{ ...TY.h2, color: T.navy, margin: 0 }}>Votre demande</h2>
               <p style={{ ...TY.small, color: T.muted, margin: 0 }}>Le prénom, le moyen de contact et les disponibilités sont obligatoires.</p>
             </div>
@@ -74,9 +76,9 @@ export default function Demo({ go }) {
             <Field id="demo-prenom" label="Prénom" error={err.prenom}><Input id="demo-prenom" autoComplete="given-name" value={f.prenom} onChange={ev("prenom")} error={err.prenom} /></Field>
             <div style={{ display: "grid", gap: 8 }}>
               <span id="demo-moyen" style={{ ...TY.label, color: T.navy }}>Comment préférez-vous être contacté ?</span>
-              <div role="radiogroup" aria-labelledby="demo-moyen" style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              <RadioGroup aria-labelledby="demo-moyen" style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                 {MEANS.map(([k, l]) => <Toggle key={k} on={f.moyen === k} onClick={() => { set("moyen")(k); setErr(x => ({ ...x, contact: undefined })); }}>{l}</Toggle>)}
-              </div>
+              </RadioGroup>
             </div>
             {f.moyen !== "coach" ? (
               <Field id="demo-contact" label={contactLabel} error={err.contact}>
@@ -91,7 +93,7 @@ export default function Demo({ go }) {
               <Textarea id="demo-message" rows={4} value={f.message} onChange={ev("message")} hint="1" />
             </Field>
             <div style={{ display: "grid", gap: 8, marginTop: 4 }}>
-              <div className="rp-wide-m"><Btn kind="objective" size="md" icon={I.send}>Envoyer ma demande</Btn></div>
+              <div className="rp-wide-m"><Btn kind="objective" size="md" icon={I.send}>{CONTACT ? "Envoyer ma demande" : "Préparer ma demande"}</Btn></div>
               <span style={{ ...TY.caption, color: T.muted, display: "flex", gap: 8, alignItems: "flex-start" }}>
                 <Icon d={I.lock} s={16} />
                 <span>{PHRASES.contactInfo} <Link href="#/vos-donnees/notice">Vos données</Link></span>
@@ -126,19 +128,26 @@ export default function Demo({ go }) {
 }
 
 function Done({ f, go, reset }) {
+  const [copied, setCopied] = useState("");
+  const text = summary(f);
+  const copy = async () => {
+    try { await navigator.clipboard.writeText(text); setCopied("Récapitulatif copié."); }
+    catch { setCopied("La copie automatique n'a pas fonctionné : sélectionnez le texte puis copiez-le."); }
+  };
+  const lead = f.mode === "sent" ? PHRASES.contactSent : f.mode === "mail" ? PHRASES.contactMail : PHRASES.contactCopy;
   return (
     <main className="rs-pad" style={{ maxWidth: W.form, margin: "0 auto", padding: "64px 24px 0" }}>
       <div role="status" className="up" style={{ background: T.surface, border: `1px solid ${T.line}`, borderRadius: RAD.lg, boxShadow: SH.sm, padding: 32, display: "grid", gap: 16, justifyItems: "center", textAlign: "center" }}>
         <div style={{ width: 56, height: 56, borderRadius: "50%", background: T.successBg, display: "grid", placeItems: "center" }}><Icon d={I.check} s={28} c={T.successDk} /></div>
-        <h1 className="ty-h1" style={{ ...TY.h1, color: T.navy, margin: 0 }}>Merci {f.prenom}, votre demande est enregistrée</h1>
-        <p style={{ ...TY.bodyLg, color: T.body, margin: 0 }}>
-          {f.mailto ? PHRASES.contactMail : "L'équipe d'accompagnement vous recontacte pour fixer le rendez-vous."} {PHRASES.contactInfo}
-        </p>
-        <pre style={{ ...TY.mono, color: T.navy, background: T.bg, borderRadius: RAD.sm, padding: 16, margin: 0, textAlign: "left", whiteSpace: "pre-wrap", wordBreak: "break-word", width: "100%" }}>{summary(f)}</pre>
+        <h1 className="ty-h1" style={{ ...TY.h1, color: T.navy, margin: 0 }}>{f.mode === "sent" ? `Merci ${f.prenom}, votre demande est envoyée` : `Merci ${f.prenom}, votre demande est prête`}</h1>
+        <p style={{ ...TY.bodyLg, color: T.body, margin: 0 }}>{lead} {PHRASES.contactInfo}</p>
+        <pre data-testid="demo-recap" style={{ ...TY.mono, color: T.navy, background: T.bg, borderRadius: RAD.sm, padding: 16, margin: 0, textAlign: "left", whiteSpace: "pre-wrap", wordBreak: "break-word", width: "100%", userSelect: "all" }}>{text}</pre>
         <div className="rp-wide-m" style={{ display: "flex", gap: 12, flexWrap: "wrap", justifyContent: "center" }}>
-          {f.mailto && <a href={f.mailto} className="rs-link" style={{ ...TY.bodyStrong, padding: "12px 0" }}>Rouvrir ma messagerie</a>}
-          <Btn kind="primary" onClick={() => go("#/")}>Revenir à l'accueil</Btn>
+          {f.mode === "mail" && <a href={f.mailto} className="rs-link" style={{ ...TY.bodyStrong, padding: "12px 0" }}>Rouvrir ma messagerie</a>}
+          {f.mode === "copy" && <Btn kind="primary" icon={I.copy} onClick={copy}>Copier ma demande</Btn>}
+          <Btn kind={f.mode === "copy" ? "secondary" : "primary"} onClick={() => go("#/")}>Revenir à l'accueil</Btn>
         </div>
+        <span role="status" style={{ ...TY.small, color: T.body }}>{copied}</span>
         <Link onClick={reset}>Faire une autre demande</Link>
       </div>
     </main>

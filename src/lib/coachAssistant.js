@@ -9,10 +9,12 @@
    Deux modes, comme l'assistant de préparation (src/lib/assistant.js) :
    - moteur local, base propre au coach (au moins 40 entrées par observation et par situation) ;
    - modèle de langage si VITE_LLM_ENDPOINT est défini, avec un prompt système propre au coach.
-   Toute sortie passe par coachCompliant() (isCompliant + refus des jugements sur la personne) :
+   Toute sortie passe par coachCompliant() (textCompliant strict + refus des jugements sur la personne) :
    ce qui ne passe pas est écarté. Les textes s'adressent à la personne, au vouvoiement. */
 
-import { isCompliant } from "./analysis.js";
+import { textCompliant } from "./compliance.js";
+import { dePoste } from "./text.js";
+import { stripAccents } from "./text.js";
 
 /* ─── Garde-fou ─── */
 /* Jugement sur la personne ou appréciation chiffrée ou globale : refusé, en plus des règles d'isCompliant. */
@@ -22,12 +24,12 @@ export function coachCompliant(text) {
   if (!t || t.length > 900) return false;
   if (/\u2014/.test(t)) return false;
   if (JUDGE.test(t)) return false;
-  return isCompliant({ synthese: t, dimensions: [] });
+  return textCompliant(t, "strict");
 }
 const keep = list => list.filter(coachCompliant);
 
 /* ─── Situations : catégorie de la question posée et famille du métier visé ─── */
-const norm = s => (s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+const norm = stripAccents;
 export const QUESTION_KINDS = {
   presentation: { label: "présentation", keys: ["presenter", "presentez", "parlez-moi de vous", "parlez moi de vous", "votre parcours"] },
   motivation: { label: "motivation", keys: ["pourquoi ce poste", "pourquoi notre", "interesse", "motivation", "envie de postuler", "pourquoi vous"] },
@@ -57,7 +59,7 @@ export function jobFamily(poste) {
   const hit = JOB_FAMILIES.find(([, keys]) => keys.some(k => n.includes(norm(k))));
   return hit ? hit[0] : "generique";
 }
-const jobHook = poste => { const f = JOB_FAMILIES.find(([id]) => id === jobFamily(poste)); return f ? f[2] : poste ? `Pour un poste de ${poste}, des exemples tirés de situations proches du métier rendent la réponse facile à retenir.` : ""; };
+const jobHook = poste => { const f = JOB_FAMILIES.find(([id]) => id === jobFamily(poste)); return f ? f[2] : poste ? `Pour un poste ${dePoste(poste)}, des exemples tirés de situations proches du métier rendent la réponse facile à retenir.` : ""; };
 
 /* Phrases de liaison selon la question posée : pourquoi l'astuce compte pour cette question-là (3 par catégorie). */
 const KIND_HOOKS = {
@@ -76,7 +78,7 @@ const KIND_HOOKS = {
    appui : formulations positives et descriptives, à reprendre telles quelles ou à adapter ;
    explorer : astuces concrètes à proposer, présentées comme des pistes. */
 export const DIM_LABELS = {
-  debit: "Rythme de parole", pauses: "Pauses", exemples: "Exemples concrets", appui: "Petits mots répétés",
+  debit: "Rythme de parole", pauses: "Pauses", exemples: "Exemples concrets", "petits-mots": "Petits mots répétés", appui: "Petits mots répétés",
   structure: "Construction de la réponse", regard: "Direction du regard", repetitions: "Mots qui reviennent", captation: "Son enregistré",
 };
 export const TIPS = {
@@ -164,7 +166,7 @@ export const TIPS = {
       "Une astuce : un exemple court et précis vaut souvent mieux qu'une longue liste d'expériences.",
     ],
   },
-  appui: {
+  "petits-mots": {
     appui: [
       "Les petits mots de liaison restent rares : la réponse est fluide.",
       "Votre réponse va droit au but, sans mots de remplissage.",
@@ -172,7 +174,7 @@ export const TIPS = {
       "Les quelques petits mots présents ne gênent pas la compréhension.",
       "Vous remplacez les hésitations par de courts silences, ce qui rend la réponse plus nette.",
       "Les transitions entre vos idées sont claires et directes.",
-      "Votre réponse garde un fil continu, avec très peu de mots d'appui.",
+      "Votre réponse garde un fil continu, avec très peu de petits mots répétés.",
       "Vous commencez vos phrases directement par l'idée principale.",
       "Le texte de votre réponse se lit facilement : les mots de remplissage sont peu nombreux.",
       "Vous passez d'une idée à l'autre avec des mots de liaison utiles (« ensuite », « par exemple »).",
@@ -267,7 +269,7 @@ export const TIPS = {
   captation: {
     appui: ["Le son est clair et permet de bien comprendre la réponse."],
     explorer: [
-      "Vous pouvez vous rapprocher du micro ou choisir une pièce plus calme pour la prochaine prise.",
+      "Vous pouvez vous rapprocher du micro ou choisir une pièce moins bruyante pour la prochaine réponse.",
       "Une piste : faire un court essai de son avant de répondre, puis réécouter.",
       "Vous pouvez couper les sources de bruit (télévision, fenêtre) le temps de l'enregistrement.",
     ],
@@ -287,9 +289,13 @@ export const KIND_TIPS = {
   generique: ["Vous pouvez reprendre la même question à l'entraînement en visant une seule amélioration à la fois.", "Une piste : réécouter la réponse le lendemain, avec un regard neuf.", "Vous pouvez noter les questions qui vous semblent les plus difficiles et les travailler en premier."],
 };
 
+/* Repère « Petits mots répétés » : identifiant « petits-mots », ancien « appui » encore lu (ARC-19). */
+export const dimKey = id => (id === "appui" ? "petits-mots" : id);
+
 /* Entrées d'une observation dans une situation donnée : formulations de base, puis variantes reliées
    à la question posée et au métier visé. Au moins 40 entrées par observation principale et par situation. */
-export function entriesFor(dimId, type, { question, poste } = {}) {
+export function entriesFor(dimId0, type, { question, poste } = {}) {
+  const dimId = dimKey(dimId0);
   const base = TIPS[dimId]?.[type === "appui" ? "appui" : "explorer"] || [];
   const kind = questionKind(question);
   const hooks = [...KIND_HOOKS[kind], ...KIND_HOOKS.generique];
@@ -319,7 +325,7 @@ export function introIdeas({ prenom, question, poste, dims = [] }) {
   const ap = dims.find(d => d.type === "appui");
   const ex = dims.find(d => d.type === "explorer");
   const q = question ? `« ${question} »` : "cette question";
-  const job = poste ? ` pour le poste de ${poste}` : "";
+  const job = poste ? ` pour le poste ${dePoste(poste)}` : "";
   return keep([
     `${hi}merci de m'avoir envoyé votre réponse à ${q}. Je l'ai regardée avec attention et je vous propose quelques repères pour la suite.`,
     `${hi}j'ai relu votre réponse à ${q}. ${ap ? `Je retiens d'abord un point d'appui : ${ap.titre.toLowerCase()}. ` : ""}Vous trouverez mes remarques à côté de chaque repère.`,
@@ -345,7 +351,7 @@ export function debriefIdeas({ question, poste, dims = [] }) {
     "Faire un jeu de rôle court : un participant joue le recruteur et pose la question, un autre observe un seul repère.",
     "Comparer deux versions de la même réponse (avant et après l'atelier) en réécoutant seulement la première phrase.",
     "Terminer l'atelier en demandant à chacun la piste qu'il travaillera avant le prochain entraînement.",
-    `Préparer en binôme les deux questions que la personne pourrait poser au recruteur${poste ? ` pour un poste de ${poste}` : ""}.`,
+    `Préparer en binôme les deux questions que la personne pourrait poser au recruteur${poste ? ` pour un poste ${dePoste(poste)}` : ""}.`,
     "Afficher les repères de l'assistant et demander au groupe de les formuler avec ses propres mots.",
   ];
   if (ex.length) out.unshift(`Choisir avec la personne une seule piste parmi celles repérées (${ex.slice(0, 3).join(", ")}) et la travailler pendant l'atelier.`);
@@ -409,7 +415,7 @@ export function localSuggestions(ctx) {
     return { items: pick(pool, N, page).map(text => ({ text, dimId: dim.id })) };
   }
   if (mode === "positive") {
-    const pool = dim && dim.type === "appui" ? entriesFor(dim.id, "appui", { question, poste }) : [...(dim ? keep(TIPS[dim.id]?.appui || []) : []), ...keep(POSITIVE_GENERIC)];
+    const pool = dim && dim.type === "appui" ? entriesFor(dim.id, "appui", { question, poste }) : [...(dim ? keep(TIPS[dimKey(dim.id)]?.appui || []) : []), ...keep(POSITIVE_GENERIC)];
     return { items: pick(pool, N, page).map(text => ({ text, dimId: dim?.id })) };
   }
   if (mode === "intro") return { items: pick(introIdeas({ prenom, question, poste, dims }), N, page).map(text => ({ text })) };
@@ -454,7 +460,7 @@ export async function coachSuggest(ctx) {
           { role: "system", content: COACH_SYSTEM_PROMPT },
           { role: "user", content: `${MODE_ASK[ctx.mode]}\nQuestion posée : ${ctx.question || "non précisée"}\nMétier visé : ${ctx.poste || "non précisé"}\nObservations de l'assistant :\n${facts || "aucune"}${dim ? `\nObservation choisie : ${dim.titre}` : ""}${ctx.mode === "rephrase" ? `\nRemarque du coach : ${String(ctx.text).slice(0, 1200)}` : ""}` },
         ],
-        temperature: 0.4, max_tokens: 500,
+        max_tokens: 500,
       }),
     });
     if (!res.ok) throw new Error(res.status);
