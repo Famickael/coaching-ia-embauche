@@ -130,7 +130,7 @@ export const GStyle = () => (
     .strike{position:relative;display:inline-block}
     .strike::after{content:"";position:absolute;left:-2px;right:-2px;top:50%;height:2px;background:${T.error};transform:scaleX(0);transform-origin:left;transition:transform .4s ease .2s}
     .is-in .strike::after{transform:scaleX(1)}
-    .is-in .strike{opacity:.7;transition:opacity .3s ease .6s}
+    /* Texte barré lisible (contraste muted conservé, TST-07) : seul le trait rouge apparaît */
     .navlink{white-space:nowrap;font:${F("bodyStrong")};color:${T.body};background:none;border:none;cursor:pointer;padding:8px 4px;text-decoration:none;text-underline-offset:6px;text-decoration-thickness:2px}
     .navlink:hover{color:${T.primary}}
     .navlink.on{color:${T.primary};text-decoration:underline}

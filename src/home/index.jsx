@@ -39,10 +39,14 @@ export function MouseGlow() {
   useEffect(() => {
     const el = ref.current; if (!el) return;
     let px = 0.72, py = 0.18, x = px, y = py, sy = 0, raf = 0;
-    const foot = () => document.querySelector("footer");
+    /* Position du pied de page mémorisée (PERF-05) : relue au redimensionnement seulement, pas à chaque image. */
+    let footTop = null;
+    const measure = () => { const f = document.querySelector("footer"); footTop = f ? f.getBoundingClientRect().top + window.scrollY : null; };
+    measure();
+    const ro = typeof ResizeObserver !== "undefined" ? new ResizeObserver(() => { measure(); paint(); }) : null;
+    ro?.observe(document.body);
     const paint = () => {
-      const f = foot();
-      el.style.setProperty("--fy", `${Math.round(f ? f.getBoundingClientRect().top : window.innerHeight * 2)}px`);
+      el.style.setProperty("--fy", `${Math.round(footTop != null ? footTop - window.scrollY : window.innerHeight * 2)}px`);
       el.style.setProperty("--mx", `${(x * 100).toFixed(2)}%`); el.style.setProperty("--my", `${((y + sy) * 100).toFixed(2)}%`);
     };
     const target = () => {
@@ -58,10 +62,10 @@ export function MouseGlow() {
     const kick = () => { if (!raf) raf = requestAnimationFrame(tick); };
     paint();
     const onScroll = () => { ts = target(); if (reduced) paint(); else kick(); };
-    const onResize = () => paint();
+    const onResize = () => { measure(); paint(); };
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onResize);
-    if (reduced) return () => { window.removeEventListener("scroll", onScroll); window.removeEventListener("resize", onResize); };
+    if (reduced) return () => { ro?.disconnect(); window.removeEventListener("scroll", onScroll); window.removeEventListener("resize", onResize); };
     const mv = e => {
       if (e.pointerType !== "mouse") return;
       px = e.clientX / window.innerWidth; py = e.clientY / window.innerHeight; kick();
@@ -72,8 +76,10 @@ export function MouseGlow() {
       px = 0.72 + (t.clientX / window.innerWidth - 0.72) * 0.5; py = 0.18 + (t.clientY / window.innerHeight - 0.18) * 0.5; kick();
     };
     window.addEventListener("pointermove", mv, { passive: true });
-    window.addEventListener("touchmove", tm, { passive: true });
+    /* Téléphone (sous 760 px) : pas de suivi du doigt, seule la dérive au défilement reste (PERF-05). */
+    if (window.innerWidth > 760) window.addEventListener("touchmove", tm, { passive: true });
     return () => {
+      ro?.disconnect();
       window.removeEventListener("scroll", onScroll); window.removeEventListener("resize", onResize);
       window.removeEventListener("pointermove", mv); window.removeEventListener("touchmove", tm); cancelAnimationFrame(raf);
     };

@@ -1,6 +1,9 @@
 /* Contenus et formats (sans navigateur) : node tests/content.test.mjs */
 import assert from "assert/strict";
-import { fill, fillPhrase, fullInterview, QUESTIONS, WARMUP_PHRASES } from "../src/lib/questions.js";
+import { fill, fillPhrase, fullInterview, situationFor, QUESTIONS, WARMUP_PHRASES } from "../src/lib/questions.js";
+import { searchJobs } from "../src/lib/jobs.js";
+import { CATEGORIES } from "../src/content/categories.js";
+import { readFileSync, readdirSync, existsSync } from "fs";
 import { dePoste, fillPoste } from "../src/lib/text.js";
 import { clock, duration } from "../src/lib/format.js";
 
@@ -37,3 +40,26 @@ assert.match(PHRASES.contactSent, /recontacte/);
 /* RED-07 : sans serveur, l'envoi est décrit comme local. */
 assert.match(PHRASES.sameDevice, /cet appareil/);
 console.log("content.test : textes de la démo OK");
+
+/* TST-09 : une mise en situation propre à chaque famille de métiers, repli générique sinon. */
+const generic = situationFor("astronaute");
+for (const job of ["agent d'accueil", "vendeur", "serveur(se)", "aide-soignant(e)", "électricien", "cariste"]) {
+  const sit = situationFor(job);
+  assert.ok(sit && sit.endsWith("?"), `mise en situation pour ${job}`);
+}
+assert.notEqual(situationFor("serveur(se)"), generic, "famille restauration reconnue");
+assert.ok(searchJobs("serv", 8).some(j => /serveur/.test(j)), "recherche de métier");
+assert.ok(searchJobs("élec", 8).length > 0, "recherche sans tenir compte des accents");
+
+/* TST-09 : chaque article a un titre, une catégorie connue, une image présente dans public/img/. */
+const dir = new URL("../src/content/resources/", import.meta.url);
+const cats = new Set(CATEGORIES.map(c => c.id));
+for (const f of readdirSync(dir).filter(f => f.endsWith(".md"))) {
+  const front = (readFileSync(new URL(f, dir), "utf8").match(/^---\n([\s\S]*?)\n---/) || [])[1] || "";
+  const val = k => (front.match(new RegExp(`^${k}:\\s*(.+)$`, "m")) || [])[1]?.trim();
+  assert.ok(val("title"), `${f} : titre`);
+  assert.ok(cats.has(val("category")), `${f} : catégorie inconnue ${val("category")}`);
+  const img = val("image");
+  assert.ok(img && existsSync(new URL(`../public/img/${img}`, import.meta.url)), `${f} : image absente ${img}`);
+}
+console.log("content.test : métiers et articles OK");

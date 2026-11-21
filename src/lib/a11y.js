@@ -35,7 +35,8 @@ export function saveA11y(s) {
 }
 
 export function resetA11y() {
-  try { localStorage.removeItem(A11Y_KEY); } catch { /* stockage indisponible */ }
+  /* « Réinitialiser » efface aussi le choix « Couper le son » du recruteur oral (SEC-10 : « réglages d'accessibilité et de son »). */
+  try { localStorage.removeItem(A11Y_KEY); localStorage.removeItem("larepet.voix.coupee"); } catch { /* stockage indisponible */ }
   return { ...DEFAULTS, contrast: mq("(prefers-contrast: more)") };
 }
 

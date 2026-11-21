@@ -11,7 +11,8 @@ require("fs").mkdirSync(SC, { recursive: true });
   const errors = [];
   p.on("pageerror", e => errors.push("pageerror " + e.message));
   p.on("console", m => { if (m.type() === "error") errors.push("console " + m.text().slice(0, 160)); });
-  p.on("dialog", d => d.accept());
+  /* Plus aucune boîte native dans le parcours (TST-05, A11Y-17) : seul l'avertissement de sortie (BUG-08) est accepté. */
+  p.on("dialog", d => { if (d.type() === "beforeunload") return d.accept(); errors.push(`boîte native inattendue : ${d.message()}`); d.dismiss(); });
   const overflow = [];
   const shot = async n => {
     await p.waitForTimeout(600); // fin d'un éventuel fondu de changement de page
@@ -181,7 +182,9 @@ require("fs").mkdirSync(SC, { recursive: true });
   if (/score|\/ ?10|\/ ?20|\bnote\b/i.test(recap)) throw new Error("le récapitulatif ne doit contenir aucun score");
   if ((await p.getByRole("button", { name: "Ouvrir mon retour" }).count()) !== 2) throw new Error("récapitulatif : deux réponses attendues");
   await shot("15-recapitulatif");
-  console.log("erreurs:", errors.filter(e => !/fonts.googleapis|jsdelivr|googleapis|Failed to load resource|ERR_TUNNEL/.test(e)));
+  const realErrors = errors.filter(e => !/fonts.googleapis|jsdelivr|googleapis|huggingface|Failed to load resource|ERR_TUNNEL|ERR_NAME|net::|TensorFlow Lite|XNNPACK/.test(e)); // MediaPipe journalise ses informations en erreur
+  console.log("erreurs:", realErrors);
+  if (realErrors.length) process.exitCode = 1;
   if (overflow.length) { console.error("débordement horizontal:", overflow); process.exitCode = 1; }
   await b.close();
 })().catch(e => { console.error("ECHEC", e.message); process.exit(1); });

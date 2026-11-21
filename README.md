@@ -261,8 +261,15 @@ npm run test:design                                     # référentiel UI/UX : 
 npx playwright install chromium && npm run test:e2e     # parcours complet dans Chromium
 # ou, avec un Chromium déjà installé : CHROMIUM_PATH=/chemin/vers/chromium npm run test:e2e
 E2E_VIEWPORT=390x844 npm run test:e2e                 # même parcours en taille téléphone, échoue si une page déborde en largeur
-npm run test:site                                       # pages publiques : navigation, menu mobile, strate, FAQ, ressources, démo
+npm run test:site                                       # pages publiques : navigation, menu mobile, strate, FAQ, ressources, démo, passe axe-core
+npm run test:store && npm run test:content              # données locales, contenus et formats, sans navigateur
+npm run test:cas                                        # cas limites de bout en bout (13 scénarios)
+node tests/whisper-real.cjs http://localhost:4173/      # essai réel de Whisper et de MediaPipe (réseau requis, site construit sans VITE_STT_ENDPOINT)
 ```
+
+Intégration continue : `.github/workflows/verifier.yml` rejoue la construction et tous les tests sur chaque pull request ; la publication (`pages.yml`) n'a lieu qu'après les tests sans navigateur et le référentiel.
+
+Alerte connue (SEC-07) : `npm audit --omit=dev` signale deux alertes hautes sur `sharp`, dépendance de `@huggingface/transformers` 3.8.1 utilisée seulement côté Node, jamais embarquée dans le navigateur (scripts d'installation désactivés par `.npmrc`). Le correctif passe par la version 4 de transformers.js, non compatible : à essayer avec `tests/whisper-real.cjs`. Ne pas lancer `npm audit fix --force`.
 
 `test:site` construit le site dans `node_modules/.cache/site-dist`, balaie d'abord 11 largeurs (320 à 1280 px) plus 320 × 568 et 844 × 390 en paysage, déconnecté puis connecté, menu mobile ouvert (débordement, chevauchement dans l'en-tête, fermeture visible, page bloquée et inerte derrière le menu, panneau « Mon compte » dans l'écran), puis visite toutes les pages publiques à 1280 et 390 px et avec « réduire les animations », et échoue en cas d'erreur JavaScript, de débordement horizontal ou d'élément attendu absent. Captures dans `tests/screenshots/site/`.
 

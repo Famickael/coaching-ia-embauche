@@ -72,6 +72,14 @@ const fe = r.dimensions.findIndex(d => d.type === "explorer");
 assert.ok(fe === -1 || r.dimensions.slice(fe).every(d => d.type === "explorer"), "points d'appui d'abord après rapprochement");
 assert.equal(reconcile({ synthese: "x" }, a), null, "forme invalide refusée");
 
+/* ARC-22 : « bon », « voilà pourquoi », « ce genre de », « chez » seul ne sont pas des repères. */
+const m22 = localAnalysis({ segments: [{ start: 0, end: 8, text: "J'ai un bon contact avec les gens, voilà pourquoi je postule chez vous pour ce genre de poste et je reste disponible." }], duration: 8 });
+assert.equal(m22.metrics.fillerTotal, 0, "aucun petit mot répété compté");
+assert.equal(m22.metrics.concreteAt, null, "« chez » seul n'est pas un exemple concret");
+const m22b = localAnalysis({ segments: [{ start: 0, end: 8, text: "Euh, par exemple, j'ai travaillé deux ans en magasin, euh, avec beaucoup de clients chaque jour de la semaine." }], duration: 8 });
+assert.equal(m22b.metrics.fillers.euh, 2, "les vrais petits mots restent comptés");
+assert.notEqual(m22b.metrics.concreteAt, null, "« par exemple » et « deux ans » restent des exemples concrets");
+
 /* SEC-06 : le suivi du regard ne lit que les coefficients de direction des yeux. */
 assert.ok(EYE_KEYS.length > 0 && EYE_KEYS.every(k => k.startsWith("eyeLook")), "seuls les coefficients eyeLook* sont lus");
 

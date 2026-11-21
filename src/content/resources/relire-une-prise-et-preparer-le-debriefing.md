@@ -1,8 +1,8 @@
 ---
-title: Relire une prise et préparer le débriefing
+title: Relire un entretien et préparer le débriefing
 category: coachs
 type: guide
-summary: Créer un parcours, relire une prise avec des notes horodatées, nuancer l'assistant et renvoyer un rapport qui prépare l'atelier.
+summary: Créer un parcours, relire un entretien avec des notes horodatées, nuancer l'assistant et renvoyer un rapport qui prépare l'atelier.
 image: ressources/relire-une-prise-et-preparer-le-debriefing.webp
 imageAlt: Un coach à lunettes prend des notes dans un carnet devant son ordinateur portable.
 date: 2026-11-20
@@ -17,9 +17,9 @@ Ce guide s'adresse aux coachs et conseillers qui utilisent La Répét' avec les 
 
 Dans l'espace coach, « Nouveau parcours » demande le prénom et l'initiale de la personne, et le poste visé. Un **code de 6 caractères** et un lien sont générés. Transmettez-les de vive voix ou par le canal habituel de votre structure. Aucun identifiant administratif ni adresse électronique n'est demandé : c'est un choix de minimisation des données.
 
-## Relire une prise
+## Relire un entretien
 
-Les prises envoyées apparaissent « À relire ». La relecture se fait en trois gestes :
+Les entretiens envoyés apparaissent « À relire ». La relecture se fait en trois gestes :
 
 1. **Regarder la vidéo** ou lire la transcription, avec les repères de l'assistant sur la barre de lecture.
 2. **Ajouter des notes horodatées** : mettez la vidéo en pause au bon moment et écrivez votre remarque. Elle sera placée à cet instant précis.
@@ -47,4 +47,4 @@ Le rapport sert de support au débriefing, en atelier ou en rendez-vous :
 - convenir d'une question à retravailler, puis d'un nouvel essai.
 
 > [!attention] Des indicateurs agrégés, jamais individuels
-> L'espace coach affiche des indicateurs d'ensemble (prises à relire, rapports envoyés, délai moyen de relecture). Il ne propose aucune mesure de performance individuelle, ni des personnes accompagnées, ni des coachs.
+> L'espace coach affiche des indicateurs d'ensemble (entretiens à relire, rapports envoyés, délai moyen de relecture). Il ne propose aucune mesure de performance individuelle, ni des personnes accompagnées, ni des coachs.

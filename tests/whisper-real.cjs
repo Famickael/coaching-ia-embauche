@@ -1,4 +1,5 @@
-/* Essai réel de la transcription dans le navigateur (hors suite automatique, réseau requis) :
+/* Essai réel des modèles dans le navigateur (hors suite automatique, réseau requis) : Whisper, puis le détourage
+   MediaPipe de l'échauffement, sous la politique de sécurité du contenu du site construit.
    node tests/whisper-real.cjs <adresse du site construit sans VITE_STT_ENDPOINT>
    Vérifie que le worker Whisper charge le moteur ONNX depuis le site (pas de jsDelivr), télécharge le modèle et rend
    une transcription (le micro simulé de Chromium émet un bip : le texte peut être vide). Proxy : HTTPS_PROXY. */
@@ -15,7 +16,8 @@ const now = () => new Date().toISOString();
   ctx.on("request", r => hosts.add(new URL(r.url()).host));
   ctx.on("weberror", e => errors.push(e.error().message));
   const p = await ctx.newPage();
-  p.on("console", m => { if (/whisper|onnx|transcri/i.test(m.text())) console.log("  console:", m.text().slice(0, 200)); });
+  const csp = [];
+  p.on("console", m => { if (/Content Security Policy/i.test(m.text())) csp.push(m.text().slice(0, 200)); if (/whisper|onnx|transcri|fond|regard/i.test(m.text())) console.log("  console:", m.text().slice(0, 200)); });
   await p.goto(BASE + "#/s/REALWH");
   await p.getByRole("button", { name: "Commencer l'entraînement" }).click();
   await p.getByRole("checkbox", { name: /Pouvez-vous vous présenter/ }).click();
@@ -32,9 +34,20 @@ const now = () => new Date().toISOString();
   ]);
   console.log(`transcription : ${ok ? "réussie" : "échec"} en ${Math.round((Date.now() - t0) / 1000)} s`);
   if (!ok) console.log(await p.locator("main").innerText());
+  /* Détourage MediaPipe (moteur servi par le site, modèle chez Google) pendant l'échauffement */
+  await p.goto(BASE + "#/s/REALWH"); await p.waitForTimeout(500);
+  await p.getByRole("button", { name: "M'échauffer" }).click();
+  await p.getByRole("button", { name: "Activer la caméra" }).click();
+  await p.getByRole("radio", { name: "Flou" }).click();
+  const bg = await Promise.race([
+    p.waitForFunction(() => { const c = document.querySelector("canvas[role=img]"); return c && getComputedStyle(c).display === "block"; }, null, { timeout: 120000 }).then(() => true),
+    p.getByText("Votre appareil ne permet pas de changer l'arrière-plan").waitFor({ timeout: 120000 }).then(() => false),
+  ]).catch(() => false);
+  console.log(`détourage MediaPipe : ${bg ? "actif" : "indisponible"}`);
   console.log("hôtes contactés :", [...hosts].join(", "));
+  if (csp.length) console.log("violations de la politique de sécurité :", csp);
   const cdn = [...hosts].filter(h => /jsdelivr/.test(h));
   await b.close();
-  if (!ok || cdn.length) { console.error("ECHEC", cdn.length ? "jsDelivr contacté" : ""); process.exit(1); }
+  if (!ok || !bg || cdn.length || csp.length) { console.error("ECHEC", cdn.length ? "jsDelivr contacté" : ""); process.exit(1); }
   console.log("whisper-real : OK");
 })().catch(e => { console.error("ECHEC", e.message); process.exit(1); });

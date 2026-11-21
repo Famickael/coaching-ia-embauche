@@ -45,12 +45,19 @@ npm ci
 npm run build
 npm run test:analysis
 node tests/assistant.test.mjs
+npm run test:store    # données locales (stockage simulé)
+npm run test:content  # élision, formats, articles, textes de la démo
 npm run test:design   # référentiel UI/UX (docs/design-system.md, section 11), bloquant
-npm run test:site     # pages publiques, si Chromium est disponible
+npm run test:site     # pages publiques et passe axe-core, si Chromium est disponible
 # si Chromium est disponible :
 npm run test:e2e
 E2E_VIEWPORT=390x844 npm run test:e2e
+npm run test:cas      # cas limites (deux onglets, retrait de l'accord, voix seule, navigation par l'adresse…)
 ```
+
+Chromium : `playwright` est figé en 1.65.1 (Chromium 1255). Dans les sessions distantes où le Chromium fourni est
+plus ancien, ne pas lancer `playwright install` : passer son chemin, `CHROMIUM_PATH=/opt/pw-browsers/chromium`.
+Les pull requests sont vérifiées par `.github/workflows/verifier.yml` (mêmes commandes).
 
 ## 7. Où se trouvent les contenus
 

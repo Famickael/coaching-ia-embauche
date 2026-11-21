@@ -16,8 +16,11 @@
 import { feedbackCompliant, textCompliant } from "./compliance.js";
 import { clock } from "./format.js";
 
-const FILLERS = ["euh", "heu", "hum", "ben", "bah", "en fait", "du coup", "genre", "voilà", "quoi", "tu vois", "vous voyez", "bon"];
-const CONCRETE = /\b(\d+|un|deux|trois|quatre|cinq|six|dix)\s+(ans?|années?|mois|semaines?|clients?|personnes?|projets?|équipes?)\b|\bpar exemple\b|\bquand j'(ai|étais)\b|\blors de\b|\bchez\b/i;
+/* Petits mots comptés (ARC-22) : sans « bon » ni « quoi », trop souvent employés au sens plein (« un bon contact »). */
+const FILLERS = ["euh", "heu", "hum", "ben", "bah", "en fait", "du coup", "genre", "voilà", "tu vois", "vous voyez"];
+/* « voilà pourquoi » conclut, « ce genre de poste » n'est pas un tic : non comptés. */
+const FILLER_RE = Object.fromEntries(FILLERS.map(f => [f, f === "voilà" ? "\\svoilà\\s(?!pourquoi)" : f === "genre" ? "\\sgenre\\s(?!de\\s|d')" : `\\s${f}\\s`]));
+const CONCRETE = /\b(\d+|un|deux|trois|quatre|cinq|six|dix)\s+(ans?|années?|mois|semaines?|clients?|personnes?|projets?|équipes?)\b|\bpar exemple\b|\bquand j'(ai|étais)\b|\blors de\b/i; // « chez » seul ne suffit plus (ARC-22)
 const CLOSING = /\b(c'est pour(quoi| ça)|en résumé|pour conclure|voilà pourquoi|c'est la raison|donc je)\b/i;
 
 const fmt = clock; // horloge « m:ss » unique (src/lib/format.js)
@@ -36,11 +39,11 @@ export function computeMetrics(segments, duration) {
   const lower = " " + text.toLowerCase().replace(/[.,;!?]/g, " ") + " ";
   const fillers = {};
   for (const f of FILLERS) {
-    const n = (lower.match(new RegExp(`\\s${f}\\s`, "g")) || []).length;
+    const n = (lower.match(new RegExp(FILLER_RE[f], "g")) || []).length;
     if (n) fillers[f] = n;
   }
   const fillerTotal = Object.values(fillers).reduce((a, b) => a + b, 0);
-  const firstFillerSeg = segments.find(s => FILLERS.some(f => (" " + s.text.toLowerCase() + " ").includes(` ${f} `)));
+  const firstFillerSeg = segments.find(s => FILLERS.some(f => new RegExp(FILLER_RE[f]).test(" " + s.text.toLowerCase().replace(/[.,;!?]/g, " ") + " ")));
 
   // pauses : silences de plus de 2 s entre segments
   const pauses = [];

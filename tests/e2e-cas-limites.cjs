@@ -32,7 +32,7 @@ const take = (id, code, extra = {}) => ({ id, code, question: "Pouvez-vous vous 
   async function fresh(state, perms = ["camera", "microphone"]) {
     const ctx = await b.newContext({ viewport: { width: vw, height: vh }, isMobile: mobile, hasTouch: mobile, permissions: perms });
     if (state) await ctx.addInitScript(([k, v]) => { try { if (!localStorage.getItem("e2e.seeded")) { localStorage.setItem(k, v); localStorage.setItem("e2e.seeded", "1"); } } catch { /* about:blank */ } }, [KEY, JSON.stringify(state)]);
-    const watch = p => { p.on("pageerror", e => errors.push(`${p.url()} : ${e.message}`)); p.on("console", m => { if (m.type() === "error" && !/Failed to load resource|ERR_|jsdelivr|googleapis|huggingface/.test(m.text())) errors.push(`${p.url()} : ${m.text().slice(0, 160)}`); }); };
+    const watch = p => { p.on("pageerror", e => errors.push(`${p.url()} : ${e.message}`)); p.on("console", m => { if (m.type() === "error" && !/Failed to load resource|ERR_|jsdelivr|googleapis|huggingface|TensorFlow Lite|XNNPACK/.test(m.text())) errors.push(`${p.url()} : ${m.text().slice(0, 160)}`); }); };
     ctx.on("page", watch);
     const p = await ctx.newPage();
     return { ctx, p };

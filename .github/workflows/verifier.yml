@@ -1,0 +1,37 @@
+name: Vérifier une pull request
+
+# TST-04 : toute pull request (dont celles de Codex) passe la construction, les tests sans navigateur,
+# le référentiel UI/UX, puis les tests dans Chromium.
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: verifier-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verifier:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: npm run test:analysis
+      - run: node tests/assistant.test.mjs
+      - run: npm run test:store
+      - run: npm run test:content
+      - run: npm run test:design
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:site
+      - run: npm run test:e2e
+      - run: E2E_VIEWPORT=390x844 npm run test:e2e
+      - run: npm run test:cas

@@ -278,6 +278,20 @@ async function run(b, vw, vh, opts = {}) {
   await top.click(); await p.waitForTimeout(1500);
   check(await p.evaluate(() => scrollY) < 5, `[${tag}] « Revenir en haut » ne remonte pas`);
 
+  /* Passe axe-core (TST-07) : échec sur les défauts « serious » et « critical », hors mots éteints de la phrase
+     d'accueil (.rs-w, effet voulu, A11Y-12). Animations réduites pendant la passe : un élément en cours de fondu
+     fausserait le calcul des contrastes. En thème clair ici ; la passe sombre suit plus bas. */
+  const AXE = fs.readFileSync(require.resolve("axe-core/axe.min.js"), "utf8");
+  const axe = async label => {
+    await p.addScriptTag({ content: AXE });
+    const res = await p.evaluate(async () => (await window.axe.run(document, { runOnly: { type: "tag", values: ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"] } })).violations
+      .filter(v => ["serious", "critical"].includes(v.impact))
+      .map(v => ({ id: v.id, nodes: v.nodes.filter(n => !n.target.join(" ").includes("rs-w")).map(n => n.target.join(" ")) }))
+      .filter(v => v.nodes.length));
+    res.forEach(v => check(false, `[${tag}] axe ${label} : ${v.id} (${v.nodes.slice(0, 3).join(" | ")})`));
+  };
+  if (opts.reduced) for (const h of ["#/", "#/a-propos", "#/solutions", "#/ressources", "#/ressources/se-presenter-en-deux-minutes", "#/demo", "#/espace", "#/vos-donnees"]) { await visit(h); await revealAll(); await axe(h); }
+
   // Options d'accessibilité : thème sombre et grande taille de texte, sans débordement, mémorisées sans flash
   if (!opts.reduced) {
     await visit("#/");
@@ -298,6 +312,9 @@ async function run(b, vw, vh, opts = {}) {
     await visit("#/espace"); await shot("20-mon-espace-sombre");
     await visit("#/vos-donnees"); await shot("21-vos-donnees-sombre");
     await visit("#/demo"); await shot("21b-demo-sombre"); // flèche du choix et champs en thème sombre (UI-12)
+    await p.emulateMedia({ reducedMotion: "reduce" });
+    for (const h of ["#/", "#/demo", "#/espace"]) { await visit(h); await revealAll(); await axe(`${h} (sombre)`); }
+    await p.emulateMedia({ reducedMotion: "no-preference" });
     await p.goto(BASE + "?sombre=1#/a-propos", { waitUntil: "commit" });
     await p.waitForFunction(() => document.documentElement.dataset.theme !== undefined);
     check(await p.evaluate(() => document.documentElement.dataset.theme === "dark" && document.documentElement.classList.contains("rp-boot-dark")), `[${tag}] accessibilité : thème non appliqué avant l'affichage au rechargement`);

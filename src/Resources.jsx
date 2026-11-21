@@ -176,7 +176,9 @@ function inline(text) {
     else if (m[2]) out.push(<em key={k++}>{m[2]}</em>);
     else {
       const href = m[4], ext = /^https?:/.test(href);
-      out.push(<a key={k++} href={href} {...(ext ? { target: "_blank", rel: "noopener noreferrer" } : {})}>{m[3]}</a>);
+      /* Seuls les liens web, courriel et internes au site sont rendus (SEC-05) ; tout autre schéma reste du texte. */
+      if (!/^(https?:|mailto:|#\/)/.test(href)) out.push(m[3]);
+      else out.push(<a key={k++} href={href} {...(ext ? { target: "_blank", rel: "noopener noreferrer" } : {})}>{m[3]}</a>);
     }
     last = re.lastIndex;
   }

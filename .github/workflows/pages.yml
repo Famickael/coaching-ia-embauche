@@ -24,7 +24,12 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      # Conformité et référentiel avant toute publication (SEC-08)
       - run: npm run test:analysis
+      - run: node tests/assistant.test.mjs
+      - run: npm run test:store
+      - run: npm run test:content
+      - run: npm run test:design
       - run: npm run build
       - uses: actions/upload-pages-artifact@v3
         with:

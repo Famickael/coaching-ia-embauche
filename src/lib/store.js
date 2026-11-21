@@ -101,8 +101,9 @@ const ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
 function newCode() {
   let c;
   do {
-    const bytes = crypto.getRandomValues(new Uint8Array(6));
-    c = Array.from(bytes, b => ALPHABET[b % ALPHABET.length]).join("");
+    /* Tirage par rejet (SEC-09) : un octet n'est gardé que sous 248 (8 × 31), sans biais vers les premières lettres. */
+    c = "";
+    while (c.length < 6) for (const b of crypto.getRandomValues(new Uint8Array(8))) if (b < 248 && c.length < 6) c += ALPHABET[b % ALPHABET.length];
   } while (state.parcours[c]);
   return c;
 }

@@ -185,6 +185,7 @@ export const FULL = {
       ["Le texte de vos réponses et les retours", "Pour afficher vos retours", "Jusqu'à ce que vous les supprimiez"],
       ["Vos réponses au petit questionnaire d'échauffement", "Pour vous les montrer la fois suivante", "Jusqu'à ce que vous supprimiez tout"],
       ["Vos réglages d'accessibilité et de son", "Pour garder l'affichage que vous avez choisi", "Jusqu'à « Réinitialiser » ou l'effacement du navigateur"],
+      ["Le choix de ne plus voir la bulle de l'assistant", "Pour ne pas vous la proposer deux fois", "Jusqu'à la fermeture de l'onglet"],
       ["L'outil d'analyse", "Pour préparer votre retour sans envoyer votre vidéo", "Gardé par le navigateur"],
     ] } },
     { p: ["Nous n'avons pas besoin de votre accord pour cela, car ces informations sont nécessaires au service que vous demandez. Nous vous le disons quand même. Il n'y a ni publicité, ni pistage, ni mesure d'audience."] },

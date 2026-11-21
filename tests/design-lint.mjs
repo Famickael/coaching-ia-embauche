@@ -194,6 +194,24 @@ function checkFile(file) {
 }
 
 srcFiles.forEach(checkFile);
+
+/* U1 : liens des articles (src/content/resources/*.md) limités à https, http, mailto et aux pages du site (SEC-05). */
+const mdDir = join(ROOT, "src/content/resources");
+readdirSync(mdDir).filter(f => f.endsWith(".md")).forEach(f => readFileSync(join(mdDir, f), "utf8").split("\n").forEach((l, i) => {
+  for (const m of l.matchAll(/\]\(([^)\s]+)\)/g)) if (!/^(https?:|mailto:|#\/)/.test(m[1])) violations.push(`src/content/resources/${f}:${i + 1}  U1  lien « ${m[1]} »  → https:, mailto: ou #/`);
+}));
+
+/* L3 : lexique côté personne accompagnée (docs/redaction.md, 1.2), hors commentaires. A2 : texte muted sur un fond
+   teinté (*Bg), interdit par le référentiel 1.5 (A11Y-13). */
+const PERSON_FILES = f => /^src\/(beneficiary\/|Recorder|WarmupStage|Report|Assistant|RecruiterVoice|Demo|CodeForm|StageIdle|app\/(AccountMenu|Espace))/.test(f);
+const LEXIQUE = [[/Bénéficiaire/, "« Je m'entraîne », « la personne »"], [/consentement/i, "« accord » (hors textes légaux)"], [/mots d'appui/i, "« petits mots répétés »"], [/Analyse de votre réponse/i, "« Préparation de votre retour »"]];
+for (const f of srcFiles) {
+  const text = strip(readFileSync(join(ROOT, f), "utf8"));
+  if (PERSON_FILES(f)) text.split("\n").forEach((l, i) => LEXIQUE.forEach(([re, fix]) => { if (re.test(l)) violations.push(`${f}:${i + 1}  L3  ${excerpt(l)}  → ${fix}`); }));
+  for (const m of text.matchAll(/style=\{\{([^{}]*)\}\}/g)) {
+    if (/background:\s*T\.\w+Bg\b/.test(m[1]) && /(?<!\w)color:\s*T\.muted\b/.test(m[1])) violations.push(`${f}:${lineOf(text, m.index)}  A2  ${excerpt(m[0])}  → T.body sur un fond teinté`);
+  }
+}
 docFiles.forEach(f => readFileSync(join(ROOT, f), "utf8").split("\n").forEach((l, i) => {
   if (l.includes("\u2014")) violations.push(`${f}:${i + 1}  L1  ${excerpt(l)}  → remplacer le tiret cadratin`);
 }));

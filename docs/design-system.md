@@ -581,14 +581,17 @@ Décrire, ne jamais noter. Formulation positive, appui avant exploration. Un bou
 | O1 | `boxShadow` reçoit autre chose que `SH.*`, `ringOf(…)` ou `"none"` | `boxShadow:\s*([^,}]+)` | ternaire dont les deux branches sont permises |
 | M1 | une transition est écrite à la main | `transition:\s*["'\`]` sans `MO.` ; tout `transition` contenant `all` | aucune |
 | K1 | un élément natif de formulaire ou un bouton natif est utilisé | `<(input\|textarea\|select\|button)\b` | `<input type="file">` s'il apparaît un jour |
-| K2 | `<Btn kind=` vaut autre chose que `objective`, `ai`, `primary`, `secondary`, `ghost`, `danger`, `white`, `ghostDark` ; `size` autre que `sm`, `md`, `lg` | valeur littérale ou branches d'un ternaire | aucune |
+| K2 | `<Btn kind=` vaut autre chose que `objective`, `ai`, `primary`, `secondary`, `ghost`, `danger`, `white`, `ghostDark`, `dangerSolid` ; `size` autre que `sm`, `md`, `lg` | valeur littérale ou branches d'un ternaire | aucune |
 | K3 | `<Tag tone=` vaut autre chose que `primary`, `appui`, `ai`, `success`, `warning`, `error`, `muted` | idem, y compris les tons renvoyés par `lib/store.js` (`tone: "…"`) | aucune |
 | K4 | un élément non interactif porte `onClick` | `<(div\|span\|p\|li)\b[^>]*\bonClick=` | voile de modale dans `ui.jsx` |
 | K5 | une icône est espacée à la main | `&nbsp;\s*<Icon` ou `<Icon[^>]*/>\s*&nbsp;` | aucune |
 | L1 | un tiret cadratin ou un emoji figure dans une chaîne | le caractère U+2014 ; `\p{Extended_Pictographic}` (drapeau `u`) | aucune ; s'applique aussi à `docs/*.md` pour le tiret |
-| X1 | dans `tokens.js` et `ui.jsx` : une taille de police hors de `SIZES`, une graisse hors de `WEIGHTS` | `(\d+(?:\.\d+)?)px` dans les valeurs `font`, `font-size` ; `\b[1-9]00\b` en tête de `font` | logos (`RepetLogo`, `OrgLogo`) dont la taille est calculée à partir de `s` ; les valeurs non littérales (`${TY.h3.font}`) ne sont pas contrôlées |
-| X2 | dans `ui.jsx` : une couleur hexadécimale ou `rgba` hors de l'import de `tokens.js` | motifs C1 et C2 | ombres colorées de `Btn`, à déplacer dans `tokens.js` (`SH.btn*`) pour ramener l'exception à zéro |
+| X1 | dans `tokens.js`, `ui.jsx` et `src/ui/` : une taille de police hors de `SIZES`, une graisse hors de `WEIGHTS` | `(\d+(?:\.\d+)?)px` dans les valeurs `font`, `font-size` ; `\b[1-9]00\b` en tête de `font` | logos (`RepetLogo`, `OrgLogo`) dont la taille est calculée à partir de `s` ; les valeurs non littérales (`${TY.h3.font}`) ne sont pas contrôlées |
+| X2 | dans `ui.jsx` et `src/ui/` : une couleur hexadécimale ou `rgba` hors de l'import de `tokens.js` | motifs C1 et C2 | ombres colorées de `Btn`, à déplacer dans `tokens.js` (`SH.btn*`) pour ramener l'exception à zéro |
 | A1 | une paire texte/fond déclarée dans `tokens.js` (`PAIRS`) a un contraste inférieur à son seuil | calcul WCAG de la luminance relative | aucune |
+| A2 | un objet de style en ligne pose `background: T.*Bg` et `color: T.muted` (contraste sous 4,5:1, section 1.5) | `style={{…}}` d'un seul niveau | aucune ; passer le texte en `T.body` |
+| L3 | lexique côté personne accompagnée (`docs/redaction.md`, 1.2) : « Bénéficiaire », « consentement », « mots d'appui », « Analyse de votre réponse » | chaînes et textes JSX de `src/beneficiary/`, `Recorder`, `WarmupStage`, `Report`, `Assistant`, `RecruiterVoice`, `Demo`, `CodeForm`, `StageIdle`, `app/AccountMenu`, `app/Espace` (commentaires exclus) | les textes légaux (`content/legal.js`) et les pages destinées aux organismes |
+| U1 | un lien d'article (`src/content/resources/*.md`) utilise un autre schéma que `https:`, `http:`, `mailto:` ou `#/` | `\]\(([^)\s]+)\)` | aucune |
 
 Dans les motifs du tableau, `\|` se lit `|` (échappement imposé par le format du tableau).
 
