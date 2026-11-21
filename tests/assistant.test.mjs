@@ -1,10 +1,9 @@
 /* Test du moteur local de l'assistant (sans navigateur) : node tests/assistant.test.mjs */
 import assert from "assert/strict";
-import { KB, localReply, feelingAck, FEELINGS, CONTEXT_SUGGESTIONS } from "../src/lib/assistant.js";
-import { isCompliant } from "../src/lib/analysis.js";
+import { KB, localReply, feelingAck, FEELINGS, CONTEXT_SUGGESTIONS, assistantCompliant } from "../src/lib/assistant.js";
 import { TIPS, KIND_TIPS, entriesFor, localSuggestions, coachSuggest, coachCompliant, rephrase, introIdeas, debriefIdeas, questionKind, jobFamily, MODES } from "../src/lib/coachAssistant.js";
 
-const ok = t => isCompliant({ synthese: t, dimensions: [] }) && !/—/.test(t);
+const ok = t => assistantCompliant(t) && !/—/.test(t);
 
 assert.ok(KB.length >= 40, `au moins 40 entrées (${KB.length})`);
 const ids = new Set(KB.map(e => e.id));
@@ -16,7 +15,8 @@ for (const e of KB) {
   const r = localReply(e.q, {}, { poste: "agent d'accueil" });
   assert.equal(r.topic, e.id, `la suggestion « ${e.q} » doit mener à ${e.id} (obtenu ${r.topic})`);
 }
-Object.values(CONTEXT_SUGGESTIONS).flat().forEach(q => assert.ok(!localReply(q).fallback, `suggestion sans réponse : ${q}`));
+Object.values(CONTEXT_SUGGESTIONS).flat().forEach(q => { const r = localReply(q); assert.ok(!r.fallback, `suggestion sans réponse : ${q}`); assert.ok(ok(r.text), `réponse locale non conforme : ${r.text}`); });
+for (const q of ["bonjour", "merci", "non", "oui", "", "je suis nerveux", "j'ai peur de bafouiller", "comment rester calme ?"]) { const r = localReply(q); assert.ok(ok(r.text), `réponse locale non conforme pour « ${q} » : ${r.text}`); }
 FEELINGS.forEach(f => assert.ok(ok(feelingAck(f.id)), `accusé de réception non conforme : ${f.id}`));
 
 // Conversation multi-tours avec relances

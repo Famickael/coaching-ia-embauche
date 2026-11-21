@@ -89,7 +89,7 @@ Cette analyse est une aide à la décision. Elle ne remplace pas la qualificatio
 
 **Ce qui est acquis.**
 
-- **Pratique interdite (art. 5(1)(f)) : non.** Le système ne déduit aucune émotion. C'est vérifiable dans le code et testé (`tests/analysis.test.mjs`). Il faut le maintenir, y compris avec un modèle de langage : le filtre `isCompliant` est un garde-fou lexical, pas une garantie.
+- **Pratique interdite (art. 5(1)(f)) : non.** Le système ne déduit aucune émotion. C'est vérifiable dans le code et testé (`tests/analysis.test.mjs`). Il faut le maintenir, y compris avec un modèle de langage : le filtre `isCompliant` (`src/lib/compliance.js`) est un garde-fou lexical, pas une garantie. La liste des coefficients lus par le suivi du regard est dans `src/lib/gazeKeys.js` ; `tests/analysis.test.mjs` échoue si une clé ne commence pas par `eyeLook`.
 - **Annexe III, point 1 (biométrie) : non.** Pas d'identification, pas de catégorisation, pas de reconnaissance d'émotions. Le suivi du regard utilise des repères du visage, donc des données biométriques au sens large, mais pour aucun de ces usages.
 
 **Ce qui est discutable.**

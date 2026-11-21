@@ -50,7 +50,9 @@ export default function Counselor() {
   );
 }
 
-/* Indicateur agrégé (aucune mesure individuelle). */
+/* Indicateur agrégé (aucune mesure individuelle, règle 7) : en dessous de MIN_AGG parcours, un pourcentage décrirait
+   une personne précise (SEC-03). */
+const MIN_AGG = 5;
 function Stat({ n, l, c = T.primary }) {
   return (
     <Card style={{ display: "flex", alignItems: "center", gap: 16 }}>
@@ -77,10 +79,10 @@ function List({ s, open, create }) {
           <Stat n={rows.filter(r => r.st.key === "toreview").length} l="Entretiens à relire" c={T.accent} />
           <Stat n={rows.length} l="Parcours en cours" />
           <Stat n={reviewed.length} l="Rapports envoyés" c={T.successDk} />
-          <Stat n={benefWithTakes ? `${Math.round((retrain / benefWithTakes) * 100)} %` : <span style={{ ...TY.h4, color: T.muted }}>Aucune donnée</span>} l="Personnes qui se réentraînent" />
+          <Stat n={benefWithTakes >= MIN_AGG ? `${Math.round((retrain / benefWithTakes) * 100)}\u00a0%` : <span style={{ ...TY.h4, color: T.muted }}>Pas assez de parcours pour un chiffre</span>} l="Personnes qui se réentraînent" />
         </div>
         <Txt v="caption" color={T.muted}>
-          Ces chiffres portent sur l'ensemble de vos parcours. Aucun ne mesure une personne.{avgDelay != null && ` Délai moyen de relecture : ${avgDelay} h.`}
+          Ces chiffres portent sur l'ensemble de vos parcours. Aucun ne mesure une personne : le pourcentage s'affiche à partir de {MIN_AGG} parcours avec au moins une réponse.{avgDelay != null && ` Votre délai moyen de relecture, pour vous seul : ${avgDelay} h.`}
         </Txt>
       </div>
       {rows.length === 0 ? (

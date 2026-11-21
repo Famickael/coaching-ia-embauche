@@ -7,11 +7,11 @@
    aucune émotion n'est déduite (AI Act, art. 5(1)(f)). */
 
 import { FilesetResolver, FaceLandmarker } from "@mediapipe/tasks-vision";
+import { EYE_KEYS } from "./gazeKeys.js";
 
 const WASM = import.meta.env.VITE_MEDIAPIPE_WASM || "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.2.3/wasm";
 const MODEL = import.meta.env.VITE_FACE_MODEL ||
   "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task";
-const EYE_KEYS = ["eyeLookDownLeft", "eyeLookDownRight", "eyeLookOutLeft", "eyeLookOutRight", "eyeLookInLeft", "eyeLookInRight"];
 
 let landmarkerPromise = null;
 function getLandmarker() {

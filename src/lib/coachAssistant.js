@@ -9,10 +9,10 @@
    Deux modes, comme l'assistant de préparation (src/lib/assistant.js) :
    - moteur local, base propre au coach (au moins 40 entrées par observation et par situation) ;
    - modèle de langage si VITE_LLM_ENDPOINT est défini, avec un prompt système propre au coach.
-   Toute sortie passe par coachCompliant() (isCompliant + refus des jugements sur la personne) :
+   Toute sortie passe par coachCompliant() (textCompliant strict + refus des jugements sur la personne) :
    ce qui ne passe pas est écarté. Les textes s'adressent à la personne, au vouvoiement. */
 
-import { isCompliant } from "./analysis.js";
+import { textCompliant } from "./compliance.js";
 
 /* ─── Garde-fou ─── */
 /* Jugement sur la personne ou appréciation chiffrée ou globale : refusé, en plus des règles d'isCompliant. */
@@ -22,7 +22,7 @@ export function coachCompliant(text) {
   if (!t || t.length > 900) return false;
   if (/\u2014/.test(t)) return false;
   if (JUDGE.test(t)) return false;
-  return isCompliant({ synthese: t, dimensions: [] });
+  return textCompliant(t, "strict");
 }
 const keep = list => list.filter(coachCompliant);
 
@@ -267,7 +267,7 @@ export const TIPS = {
   captation: {
     appui: ["Le son est clair et permet de bien comprendre la réponse."],
     explorer: [
-      "Vous pouvez vous rapprocher du micro ou choisir une pièce plus calme pour la prochaine prise.",
+      "Vous pouvez vous rapprocher du micro ou choisir une pièce moins bruyante pour la prochaine réponse.",
       "Une piste : faire un court essai de son avant de répondre, puis réécouter.",
       "Vous pouvez couper les sources de bruit (télévision, fenêtre) le temps de l'enregistrement.",
     ],
@@ -454,7 +454,7 @@ export async function coachSuggest(ctx) {
           { role: "system", content: COACH_SYSTEM_PROMPT },
           { role: "user", content: `${MODE_ASK[ctx.mode]}\nQuestion posée : ${ctx.question || "non précisée"}\nMétier visé : ${ctx.poste || "non précisé"}\nObservations de l'assistant :\n${facts || "aucune"}${dim ? `\nObservation choisie : ${dim.titre}` : ""}${ctx.mode === "rephrase" ? `\nRemarque du coach : ${String(ctx.text).slice(0, 1200)}` : ""}` },
         ],
-        temperature: 0.4, max_tokens: 500,
+        max_tokens: 500,
       }),
     });
     if (!res.ok) throw new Error(res.status);

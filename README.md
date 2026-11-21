@@ -92,7 +92,7 @@ Les photos suivantes proviennent de Pexels et sont utilisées sous la [licence P
 | Échauffement ni enregistré ni analysé | `Warmup` (`Beneficiary.jsx`) et `WarmupStage.jsx` : aperçu en direct sans `MediaRecorder`, une phrase à la fois tirée au hasard (`WARMUP_PHRASES`, relances `WARMUP_PROMPTS`), astuces, questionnaire de fin gardé sur l'appareil (`saveWarmupDebrief`, clé séparée) |
 | Fond flou ou couleur unie pendant l'échauffement, en local | `src/lib/background.js` (MediaPipe Image Segmenter, modèle selfie segmenter, rendu sur canvas) ; option désactivée si le modèle ne charge pas |
 | Choix du métier visé avec autocomplétion | `JobField` (combobox accessible) et `src/lib/jobs.js` (environ 150 métiers, recherche sans accents), saisie libre ; met à jour `poste` du parcours |
-| Assistant de préparation d'entretien en panneau latéral (bouton flottant, bulle d'invitation ; questions sur le site : renvoi vers la FAQ) | `src/Assistant.jsx` et `src/lib/assistant.js` : moteur local (53 sujets, relances « un exemple ? », « pourquoi ? », « et pour… ? ») ou modèle de langage via `VITE_LLM_ENDPOINT`, sortie filtrée par `isCompliant()` |
+| Assistant de préparation d'entretien en panneau latéral (bouton flottant, bulle d'invitation ; questions sur le site : renvoi vers la FAQ) | `src/Assistant.jsx` et `src/lib/assistant.js` : moteur local (53 sujets, relances « un exemple ? », « pourquoi ? », « et pour… ? ») ou modèle de langage via `VITE_LLM_ENDPOINT`, sortie filtrée par `assistantCompliant()` |
 | Entraînement complet : simulation d'entretien dans l'ordre réel (accueil, présentation, motivation, expériences, qualités et axes de progrès, mise en situation selon le métier, question au recruteur), puis récapitulatif sans score | `fullInterview`, `situationFor` (`src/lib/questions.js`), vue `recap` (`Beneficiary.jsx`) |
 | Recruteur oral sans visage : question lue par la synthèse vocale française de l'appareil, sous-titre mot à mot, « Réécouter », « Couper le son » ; repli silencieux sans voix française | `src/RecruiterVoice.jsx` |
 | Sélection de plusieurs questions, contextualisées par le poste visé, et ajout de questions personnelles | `Pick` puis enchaînement question par question (`ctx.queue`), « Question suivante (2/N) », arrêt possible ; `src/lib/questions.js` |
@@ -100,7 +100,7 @@ Les photos suivantes proviennent de Pexels et sont utilisées sous la [licence P
 | Transcription horodatée **dans le navigateur** | `src/lib/whisper.worker.js` (transformers.js, Whisper base, WebGPU si disponible, sinon WASM), ou service serveur via `VITE_STT_ENDPOINT` |
 | Suivi du regard et de la présence dans le cadre, en local | `src/lib/gaze.js` (MediaPipe Face Landmarker, 2 images par seconde) |
 | Retour descriptif, sans note ni inférence émotionnelle | `src/lib/analysis.js` : débit, pauses, exemples concrets, mots d'appui, structure, vocabulaire, regard |
-| Reformulation facultative par un modèle de langage | `analyze()` via `VITE_LLM_ENDPOINT`, sortie filtrée par `isCompliant()`, repli sur l'analyse locale |
+| Reformulation facultative par un modèle de langage | `analyze()` via `VITE_LLM_ENDPOINT`, sortie rapprochée de l'analyse locale (`reconcile`) puis filtrée par `isCompliant()`, repli sur l'analyse locale |
 | Choix rapport écrit ou relecture vidéo | `Choose`, `ReportBody` (`Report.jsx`) |
 | Repères cliquables sur la barre de lecture (repère ↔ moment) | `Player` (`Report.jsx`) |
 | Partage volontaire prise par prise, avec un mot au coach | `Share` |
@@ -208,7 +208,7 @@ Toutes les variables sont facultatives. Sans elles, l'application fonctionne ent
 
 Ces règles traduisent le cadre réglementaire (AI Act, RGPD) et les partis pris pédagogiques du projet. Toute évolution doit les préserver.
 
-1. **Aucune inférence d'émotion ni de trait de personnalité** (article 5(1)(f) du Règlement (UE) 2024/1689, applicable depuis le 2 février 2025). `gaze.js` ne lit que les coefficients `eyeLook*` et la position des repères du visage, jamais les coefficients d'expression. `analysis.js` filtre tout retour contenant un vocabulaire émotionnel (`FORBIDDEN`) ou une note (`isCompliant`).
+1. **Aucune inférence d'émotion ni de trait de personnalité** (article 5(1)(f) du Règlement (UE) 2024/1689, applicable depuis le 2 février 2025). `gaze.js` ne lit que les coefficients `eyeLook*` (liste dans `src/lib/gazeKeys.js`, vérifiée par `tests/analysis.test.mjs`) et la position des repères du visage, jamais les coefficients d'expression. `src/lib/compliance.js` (module sans dépendance, frontières Unicode, accents) écarte toute sortie qui note, apprécie globalement ou qualifie l'état de la personne : `isCompliant` (retour, niveau strict), `coachCompliant` (coach, niveau strict) et `assistantCompliant` (assistant de préparation : il peut parler du trac quand la personne en parle, jamais la qualifier). La sortie d'un modèle de langage est en plus rapprochée de l'analyse locale (`reconcile`).
 2. **Décrire, jamais noter.** Pas de score, de note, de classement ni de jauge de performance.
 3. **Points d'appui avant points à explorer**, formulation positive, repères présentés comme des conventions de secteur.
 4. **La vidéo reste sur l'appareil** tant que la personne ne décide pas de l'envoyer, prise par prise. Seul du texte peut partir vers un modèle de langage.
