@@ -213,7 +213,8 @@ export const GStyle = () => (
     .on .rs-line{animation:rsUp .45s ${MO.soft} both}
     /* Fond de l'accueil qui suit la souris */
     .rs-glow{position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden;-webkit-mask:${FADE_FOOT};mask:${FADE_FOOT}}
-    .rs-glow>i{position:absolute;inset:-12%;background:radial-gradient(48vmax circle at var(--mx,72%) var(--my,18%),${GLOW.violet},transparent 70%),radial-gradient(56vmax circle at calc(100% - var(--mx,72%)) calc(100% - var(--my,18%)),${GLOW.blue},transparent 70%);animation:rsDrift 26s ${MO.soft} infinite alternate}
+    .rs-glow>i{position:absolute;inset:-12%;background:radial-gradient(48vmax circle at var(--vx,72%) var(--vy,18%),${GLOW.violet},transparent 70%),radial-gradient(56vmax circle at var(--bx,28%) var(--by,82%),${GLOW.blue},transparent 70%);animation:rsDrift 26s ${MO.soft} infinite alternate}
+    .rs-glow>b{position:absolute;inset:0;background:radial-gradient(22vmax circle at var(--px,50%) var(--py,50%),${T.bg} 0,${T.bg} 30%,transparent 100%);opacity:var(--clear,0);transition:opacity ${MO.slow} ${MO.soft}}
     @keyframes rsDrift{0%{transform:translate3d(0,0,0)}33%{transform:translate3d(-5%,3%,0)}66%{transform:translate3d(4%,-3%,0)}100%{transform:translate3d(-2%,5%,0)}}
     .rs-in{opacity:0;transform:translateY(12px);transition:opacity ${MO.reveal} ${MO.soft},transform ${MO.reveal} ${MO.soft}}
     .on .rs-in{opacity:1;transform:none}

@@ -11,15 +11,15 @@ const SOURCES = [
   ["Essai randomisé sur l'entraînement aux entretiens en réalité virtuelle (VR-JIT), Psychiatric Services", "https://psychiatryonline.org/doi/10.1176/appi.ps.202100516"],
   ["Étude sur l'entraînement VR-JIT, Journal of Experimental Criminology (2025)", "https://link.springer.com/article/10.1007/s11292-025-09684-7"],
   ["Étude sur l'entraînement VR-JIT, notice PubMed 38881730", "https://pubmed.ncbi.nlm.nih.gov/38881730/"],
-  ["MACH : My Automated Conversation coacH, MIT Media Lab (Hoque et coll., 2013)", "https://www.media.mit.edu/publications/mach-my-automated-conversation-coach/"],
+  ["MACH : My Automated Conversation coacH, MIT Media Lab (Hoque et coll., 2013)", "https://www.media.mit.edu/publications/mach-my-automated-conversation-coach/"],
   ["Prépublication arXiv 2305.00077", "https://arxiv.org/pdf/2305.00077"],
   ["Prépublication arXiv 2601.10824", "https://arxiv.org/html/2601.10824v1"],
 ];
-const Ref = ({ n }) => <a href={SOURCES[n - 1][1]} target="_blank" rel="noopener" className="rp-link" style={{ ...TY.link }} aria-label={`Source ${n} : ${SOURCES[n - 1][0]} (nouvel onglet)`}>[{n}]</a>;
+const Ref = ({ n }) => <a href={SOURCES[n - 1][1]} target="_blank" rel="noopener" className="rp-link" style={{ ...TY.link }} aria-label={`Source ${n} : ${SOURCES[n - 1][0]} (nouvel onglet)`}>[{n}]</a>;
 
 const DOES = [
   [I.mic, "Mettre votre réponse par écrit", "Votre voix devient un texte, sur votre appareil. Ce texte sert à repérer vos exemples, vos pauses et les petits mots répétés."],
-  [I.sparkle, "Décrire votre réponse", "L'assistant produit des repères descriptifs, placés au bon moment : rythme de parole, pauses, exemples, construction, regard."],
+  [I.sparkle, "Décrire votre réponse", "L'assistant produit des repères descriptifs, placés au bon moment : rythme de parole, pauses, exemples, construction, regard."],
   [I.chat, "Répondre à vos questions", "L'assistant de préparation d'entretien répond à partir d'une liste préparée à l'avance. Il rappelle qu'il est un programme."],
 ];
 const DOESNT = [
@@ -47,21 +47,21 @@ export default function Research({ go, openSpace }) {
               <p style={{ ...TY.bodyLg, color: T.body, margin: 0 }}>
                 Des essais randomisés menés par Smith et ses collègues ont testé un entraînement aux entretiens avec un recruteur virtuel (VR-JIT), auprès de personnes avec des troubles psychiques, de personnes autistes et de personnes sortant de prison <Ref n={1} /> <Ref n={2} /> <Ref n={3} />. Les participants entraînés ont montré de meilleures compétences d'entretien, et un meilleur accès à l'emploi.
               </p>
-              <p style={{ ...TY.bodyLg, color: T.body, margin: 0 }}>À garder en tête : les échantillons sont petits, et ces essais viennent en grande partie de la même équipe de recherche. Ces résultats sont encourageants, pas définitifs.</p>
+              <p style={{ ...TY.bodyLg, color: T.body, margin: 0 }}>À garder en tête : les échantillons sont petits, et ces essais viennent en grande partie de la même équipe de recherche. Ces résultats sont encourageants, pas définitifs.</p>
             </article>
             <article style={{ display: "grid", gap: 8 }}>
               <h3 style={{ ...TY.h2, color: T.navy, margin: 0 }}>MACH, au MIT Media Lab</h3>
               <p style={{ ...TY.bodyLg, color: T.body, margin: 0 }}>
                 En 2013, Hoque et ses collègues ont présenté MACH, un agent conversationnel pour s'entraîner aux entretiens <Ref n={4} />. Des conseillers, qui ne savaient pas qui avait été entraîné, ont jugé que les participants avaient progressé.
               </p>
-              <Notice tone="ai" icon={I.shield}>MACH analysait les expressions du visage. La Répét' refuse de le faire : l'assistant ne lit jamais les expressions et ne cherche pas à deviner les émotions.</Notice>
+              <Notice tone="ai" icon={I.shield}>MACH analysait les expressions du visage. La Répét' refuse de le faire : l'assistant ne lit jamais les expressions et ne cherche pas à deviner les émotions.</Notice>
             </article>
             <article style={{ display: "grid", gap: 8 }}>
-              <h3 style={{ ...TY.h2, color: T.navy, margin: 0 }}>Présence sociale ou pression ?</h3>
+              <h3 style={{ ...TY.h2, color: T.navy, margin: 0 }}>Présence sociale ou pression ?</h3>
               <p style={{ ...TY.bodyLg, color: T.body, margin: 0 }}>
                 Des travaux récents discutent un compromis <Ref n={5} /> <Ref n={6} />. Un interlocuteur incarné rapproche de la situation réelle. Une voix seule intimide moins.
               </p>
-              <p style={{ ...TY.bodyLg, color: T.body, margin: 0 }}>C'est ce qui nous a fait choisir un recruteur oral, sans visage : la question est lue à voix haute, pour se rapprocher d'un vrai entretien, sans ajouter un visage qui observe. Vous pouvez couper le son à tout moment.</p>
+              <p style={{ ...TY.bodyLg, color: T.body, margin: 0 }}>C'est ce qui nous a fait choisir un recruteur oral, sans visage : la question est lue à voix haute, pour se rapprocher d'un vrai entretien, sans ajouter un visage qui observe. Vous pouvez couper le son à tout moment.</p>
             </article>
           </div>
         </Section>
@@ -79,7 +79,7 @@ export default function Research({ go, openSpace }) {
             <Card style={{ display: "grid", gap: 12, alignContent: "start" }}>
               <h3 style={{ ...TY.h3, color: T.navy, margin: 0 }}>Nos principes</h3>
               <ul style={{ ...TY.body, color: T.body, margin: 0, paddingLeft: 20, display: "grid", gap: 8 }}>
-                <li>Pas d'inférence émotionnelle : le règlement européen sur l'IA l'interdit sur le lieu de travail et dans les établissements d'enseignement, et nous l'excluons partout.</li>
+                <li>Pas d'inférence émotionnelle : le règlement européen sur l'IA l'interdit sur le lieu de travail et dans les établissements d'enseignement, et nous l'excluons partout.</li>
                 <li>L'assistant décrit, il ne note pas. Un humain, votre coach, garde la main.</li>
                 <li>La vidéo reste sur votre appareil tant que vous ne l'envoyez pas.</li>
               </ul>
@@ -87,9 +87,9 @@ export default function Research({ go, openSpace }) {
           </div>
         </Section>
 
-        <Section eyebrow="Pour les organismes" title="Évaluer l'outil chez vous">
+        <Section eyebrow="Pour les commanditaires" title="Rendre compte sans surveiller">
           <p style={{ ...TY.bodyLg, color: T.body, margin: 0, maxWidth: W.read }}>
-            L'espace coach donne des chiffres d'ensemble, jamais une mesure individuelle : réponses à relire, rapports envoyés, part des personnes qui se réentraînent, délai moyen de relecture. Avec les retours des coachs et des personnes accompagnées, ils permettent de suivre l'usage et d'ajuster l'accompagnement, sans surveiller personne.
+            L'espace coach donne des chiffres d'ensemble, jamais une mesure individuelle : réponses à relire, rapports envoyés, part des personnes qui se réentraînent, délai moyen de relecture. Avec les retours des coachs et des personnes accompagnées, ils nous permettent d'ajuster l'accompagnement et d'en rendre compte à nos commanditaires, sans surveiller personne.
           </p>
         </Section>
 

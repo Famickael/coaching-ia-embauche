@@ -25,17 +25,17 @@ export function Features() {
         <FCard title="Un échauffement sans enregistrement" text="Des phrases à lire à voix haute pour se mettre en route. Rien n'est enregistré ni analysé.">
           <div style={{ ...TY.overline, color: T.muted, marginBottom: 8 }}>Échauffement · lisez à voix haute</div>
           <div className="rs-cyc" style={{ display: "grid" }}>
-            {["« Je vous remercie de me recevoir. »", "« J'ai travaillé deux ans en boutique. »", "« Je suis disponible dès lundi. »"].map(t => (
+            {["« Je vous remercie de me recevoir. »", "« J'ai travaillé deux ans en boutique. »", "« Je suis disponible dès lundi. »"].map(t => (
               <div key={t} style={{ ...miniCard, ...TY.h3, color: T.navy }}>{t}</div>
             ))}
           </div>
         </FCard>
-        <FCard title="Des questions adaptées au métier" text="Choisissez le métier visé : les questions s'y adaptent. Vous pouvez aussi ajouter les vôtres.">
+        <FCard title="Des questions adaptées au métier" text="Choisissez le métier visé : les questions s'y adaptent. Vous pouvez aussi ajouter les vôtres.">
           <div className="rs-jobs" style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
             {["agent d'accueil", "serveur(se)", "aide-soignant(e)"].map(j => <span key={j} style={{ ...TY.tag, padding: "8px 12px", borderRadius: RAD.pill, border: `1.5px solid ${T.line}`, background: T.surface, color: T.body }}>{j}</span>)}
           </div>
           <div className="rs-cyc" style={{ display: "grid" }}>
-            {["« Comment accueillez-vous une personne mécontente ? »", "« Comment gérez-vous un service chargé ? »", "« Comment réagissez-vous face à une urgence ? »"].map(t => (
+            {["« Comment accueillez-vous une personne mécontente ? »", "« Comment gérez-vous un service chargé ? »", "« Comment réagissez-vous face à une urgence ? »"].map(t => (
               <div key={t} style={{ ...miniCard, ...TY.label, color: T.navy }}>{t}</div>
             ))}
           </div>
@@ -61,16 +61,16 @@ export function Features() {
             <span className="rs-ftag t2"><Tag tone="ai" icon={I.search}>Mot d'appui</Tag></span>
           </div>
         </FCard>
-        <FCard title="Un assistant pour vos questions" text="Une hésitation sur un retour ou sur une question difficile ? L'assistant répond, votre coach complète.">
+        <FCard title="Un assistant pour vos questions" text="Une hésitation sur un retour ou sur une question difficile ? L'assistant répond, votre coach complète.">
           <div style={{ display: "grid", gap: 8 }}>
-            <div style={{ ...miniCard, justifySelf: "end", background: T.primaryBg, ...TY.small, color: T.navy, maxWidth: "85%" }}>Comment parler d'un trou dans mon CV ?</div>
+            <div style={{ ...miniCard, justifySelf: "end", background: T.primaryBg, ...TY.small, color: T.navy, maxWidth: "85%" }}>Comment parler d'un trou dans mon CV ?</div>
             <div style={{ position: "relative", ...miniCard, background: T.violetBg, ...TY.small, color: T.navy, maxWidth: "90%", minHeight: 44 }}>
               <span className="rs-typing rp-dots" style={{ color: T.violet }}><i /><i /><i /></span>
               <span className="rs-answer" style={{ display: "block" }}>Restez simple et honnête, puis parlez de ce que vous avez fait pendant cette période.</span>
             </div>
           </div>
         </FCard>
-        <FCard title="Rapport écrit ou vidéo, au choix" text="Découvrez votre retour comme vous le préférez : en lisant, ou en vous revoyant avec des repères.">
+        <FCard title="Rapport écrit ou vidéo, au choix" text="Découvrez votre retour comme vous le préférez : en lisant, ou en vous revoyant avec des repères.">
           <div className="rs-seg"><i /><span>Rapport écrit</span><span>Me revoir en vidéo</span></div>
           <div style={{ ...miniCard, marginTop: 12, display: "flex", alignItems: "center", gap: 8 }}>
             <Pin ap /><span style={{ ...TY.caption, color: T.navy, flex: 1 }}>Ouverture directe à 0:04</span><span style={{ ...TY.time, color: T.muted }}>0:04</span>
@@ -111,12 +111,12 @@ export function NotDo() {
 /* ─── Pour qui ─── */
 export function ForWho({ go }) {
   const doors = [
-    { top: true, t: "Vous avez un code d'accès", d: "Votre coach vous a donné un code d'accès de 6 caractères. Il ouvre votre espace.", b: <Btn kind="secondary" onClick={() => go("#/espace")} iconRight={I.arrow}>Ouvrir mon espace</Btn> },
+    { top: true, t: "Vous avez un code d'accès", d: "Votre coach vous a donné un code d'accès de 6 caractères. Il ouvre votre espace.", b: <Btn kind="secondary" onClick={() => go("#/espace")} iconRight={I.arrow}>Ouvrir mon espace</Btn> },
     { top: "coach", t: "Vous êtes coach", d: "Créez un parcours et transmettez le code d'accès. Relisez les réponses que l'on vous envoie. Préparez vos débriefings.", b: <Btn kind="secondary" onClick={() => go("#/espace")}>Me connecter à l'espace coach</Btn> },
-    { top: "ai", t: "Vous représentez un organisme", d: "Direction, DSI, juridique : voyez comment l'outil s'installe chez vous, avec vos règles et votre hébergement.", b: <Btn kind="secondary" onClick={() => go("#/solutions/organismes")}>Voir le déploiement</Btn> },
+    { top: "ai", t: "Vous portez un projet d'accompagnement", d: "Acteur public de l'emploi ou entreprise : confiez-nous l'accompagnement de demandeurs d'emploi ou de collaborateurs en mobilité.", b: <Btn kind="secondary" onClick={() => go("#/demo")}>Parler de votre projet</Btn> },
   ];
   return (
-    <Section eyebrow="Pour qui" title="Par où commencer ?">
+    <Section eyebrow="Pour qui" title="Par où commencer ?">
       <div className="rs-g3">
         {doors.map((x, i) => (
           <Reveal key={x.t} delay={i * 90} style={{ height: "100%" }}>

@@ -1,4 +1,4 @@
-/* Pages publiques : navigation, menu mobile, strate épinglée, FAQ, ressources, formulaire de démo.
+/* Pages publiques : navigation, menu mobile, strate épinglée, FAQ, ressources, formulaire de contact.
    Échoue en cas d'erreur JavaScript, de débordement horizontal ou d'élément attendu absent. */
 const { chromium } = require("playwright");
 const fs = require("fs");
@@ -52,7 +52,7 @@ async function run(b, vw, vh, opts = {}) {
   // Accueil
   await visit("#/", "accueil");
   check(await p.locator("#rp-loader").count() === 0, `[${tag}] écran de chargement encore présent`);
-  check(await p.getByRole("heading", { level: 1 }).first().textContent().then(t => t.includes("Répétez votre entretien d'embauche")), `[${tag}] titre du héros absent`);
+  check(await p.getByRole("heading", { level: 1 }).first().textContent().then(t => t.includes("Répétez votre entretien")), `[${tag}] titre du héros absent`);
   await p.getByRole("button", { name: "Lancer ma première répétition" }).waitFor();
   await shot("01-accueil", false);
   const dot = p.getByRole("button", { name: /Scène 2 sur 4/ });
@@ -60,6 +60,21 @@ async function run(b, vw, vh, opts = {}) {
   check(await dot.getAttribute("aria-current") === "true", `[${tag}] le point de navigation des scènes ne change pas la scène`);
   await shot("01a-heros-scene2", false);
   await shot("01z-accueil-complet");
+  /* Fond de l'accueil (souris) : le pointeur repousse le violet et le bleu et dégage une zone claire sous lui ;
+     en mouvement réduit, rien ne bouge. */
+  if (!mobile) {
+    await p.evaluate(() => scrollTo(0, 0)); await p.waitForTimeout(300);
+    const hb = await p.getByRole("heading", { level: 1 }).first().boundingBox();
+    await p.mouse.move(hb.x + 40, hb.y + 40); await p.mouse.move(hb.x + hb.width / 2, hb.y + hb.height / 2, { steps: 10 }); await p.waitForTimeout(1500);
+    const g = await p.locator(".rs-glow").evaluate(el => Object.fromEntries(["--clear", "--px", "--vx", "--vy", "--bx", "--by"].map(k => [k, el.style.getPropertyValue(k)])));
+    if (opts.reduced) check(!g["--clear"], `[${tag}] fond de l'accueil : la zone claire ne doit pas apparaître en mouvement réduit`);
+    else {
+      const px = parseFloat(g["--px"]) / 100 * vw, pointer = hb.x + hb.width / 2;
+      check(g["--clear"] === "1" && Math.abs(px - pointer) < vw * 0.05, `[${tag}] fond de l'accueil : zone claire absente sous le pointeur (${JSON.stringify(g)})`);
+      check(parseFloat(g["--vx"]) > 72 || parseFloat(g["--vy"]) < 18, `[${tag}] fond de l'accueil : le violet n'est pas repoussé par le pointeur (${JSON.stringify(g)})`);
+      await shot("01y-accueil-souris", false);
+    }
+  }
 
   if (!opts.reduced) {
     // Phrase qui se colore
@@ -114,18 +129,24 @@ async function run(b, vw, vh, opts = {}) {
     await visit("#/", "nav");
     await p.getByRole("navigation", { name: "Navigation principale" }).getByRole("link", { name: "Ressources" }).click(); await p.waitForTimeout(300);
     check(p.url().endsWith("#/ressources"), `[${tag}] lien Ressources de l'en-tête`);
-    check(await p.getByRole("button", { name: "Demander une prise en main" }).first().isVisible(), `[${tag}] bouton « Demander une prise en main » absent`);
+    check(await p.getByRole("button", { name: "Nous contacter" }).first().isVisible(), `[${tag}] bouton « Nous contacter » absent`);
   }
 
   // Redirection de l'ancienne adresse
   await visit("#/fonctionnement");
   check(p.url().endsWith("#/solutions"), `[${tag}] #/fonctionnement ne redirige pas vers #/solutions`);
   await shot("06-solutions");
-  const tab = p.getByRole("tab", { name: "DSI" });
+  const tab = p.getByRole("tab", { name: "Entreprises" });
   await tab.click();
-  check(await tab.getAttribute("aria-selected") === "true", `[${tag}] onglet DSI non sélectionné`);
+  check(await tab.getAttribute("aria-selected") === "true", `[${tag}] onglet Entreprises non sélectionné`);
   await p.keyboard.press("ArrowRight");
-  check(await p.getByRole("tab", { name: "Juridique et DPO" }).getAttribute("aria-selected") === "true", `[${tag}] onglets : la flèche droite ne change pas d'onglet`);
+  check(await p.getByRole("tab", { name: "Cadre et données" }).getAttribute("aria-selected") === "true", `[${tag}] onglets : la flèche droite ne change pas d'onglet`);
+  /* Repositionnement : publics de l'organisme, aucun discours de logiciel vendu. */
+  for (const id of ["demandeurs-emploi", "collaborateurs", "coachs", "commanditaires"]) check(await p.locator(`#${id}`).count() === 1, `[${tag}] Solutions : section #${id} absente`);
+  const solText = await p.locator("main").innerText();
+  check(!/licence|abonnement|tarif|équipez votre structure|Claude|Anthropic/i.test(solText), `[${tag}] Solutions : discours de logiciel ou nom du fournisseur d'IA`);
+  await visit("#/solutions/organismes");
+  check(p.url().endsWith("#/solutions/commanditaires"), `[${tag}] #/solutions/organismes ne redirige pas vers #/solutions/commanditaires`);
 
   // À propos et FAQ
   await visit("#/a-propos"); await shot("07-a-propos");
@@ -175,23 +196,26 @@ async function run(b, vw, vh, opts = {}) {
   await visit("#/ressources/inexistant");
   check(await p.getByRole("heading", { name: "Cette ressource est introuvable" }).count() === 1, `[${tag}] article inconnu : message absent`);
 
-  // Demander une prise en main (formulaire destiné aux personnes accompagnées)
+  // Nous contacter (formulaire destiné aux commanditaires : acteurs publics, entreprises)
   await visit("#/demo"); await shot("13-demo");
+  const status = p.getByTestId("demo-status");
+  const DEMO_MSG = "Aucune demande envoyée, version de démonstration";
   check(await p.getByRole("checkbox").count() === 0, `[${tag}] formulaire : aucune case de recontact ne doit être obligatoire`);
-  check(await p.getByLabel(/Fonction/).count() === 0, `[${tag}] formulaire : le champ « Fonction » (organismes) doit être retiré`);
-  await p.getByRole("button", { name: "Préparer ma demande" }).click();
+  check(await p.getByRole("radio", { name: "Acteur public" }).count() === 1 && await p.getByRole("radio", { name: "Entreprise" }).count() === 1, `[${tag}] formulaire : type de structure absent`);
+  check((await p.locator("main").innerText()).indexOf(DEMO_MSG) < 0, `[${tag}] formulaire : le message de démonstration ne doit pas s'afficher avant l'envoi`);
+  await p.getByRole("button", { name: "Envoyer ma demande" }).click();
   check(await p.locator("[role=alert]").count() >= 3, `[${tag}] formulaire : erreurs non signalées`);
+  check((await status.textContent()) === "", `[${tag}] formulaire : message de démonstration affiché alors que des champs manquent`);
   await shot("13b-demo-erreurs", false);
-  await p.getByLabel("Prénom").fill("Alex");
-  await p.getByLabel("Votre numéro de téléphone").fill("06 12 34 56 78");
-  await p.getByLabel("Vos disponibilités").selectOption({ index: 1 });
-  await p.getByRole("button", { name: "Préparer ma demande" }).click(); await p.waitForTimeout(300);
-  /* Site construit sans VITE_CONTACT_EMAIL (BUG-01) : rien n'est envoyé, l'écran le dit et propose de copier la demande. */
-  check(await p.getByRole("heading", { name: /votre demande est prête/ }).count() === 1, `[${tag}] formulaire : écran de confirmation absent`);
-  const doneText = await p.locator("main").innerText();
-  check(!/recontact|enregistrée|est envoyée/i.test(doneText), `[${tag}] formulaire : la confirmation ne doit pas annoncer un envoi qui n'a pas eu lieu`);
-  check(/transmettez-le à votre coach/.test(doneText), `[${tag}] formulaire : consigne de copie absente`);
-  check(await p.getByRole("button", { name: "Copier ma demande" }).count() === 1, `[${tag}] formulaire : bouton « Copier ma demande » absent`);
+  await p.getByLabel("Votre nom", { exact: true }).fill("Alex Martin");
+  await p.getByLabel("Nom de votre structure").fill("Structure d'exemple");
+  await p.getByLabel("Adresse électronique").fill("alex.martin@exemple.fr");
+  await p.getByLabel("Public accompagné").selectOption({ index: 1 });
+  await p.getByRole("button", { name: "Envoyer ma demande" }).click(); await p.waitForTimeout(300);
+  /* Le formulaire n'envoie rien : au clic, après validation, le message de statut le dit, mot pour mot. */
+  check(await status.getAttribute("role") === "status" && (await status.textContent()) === DEMO_MSG, `[${tag}] formulaire : message « ${DEMO_MSG} » absent après l'envoi`);
+  check(p.url().endsWith("#/demo"), `[${tag}] formulaire : la page ne doit pas changer`);
+  check(!/recontact|enregistrée|est envoyée|Copier ma demande/i.test(await p.locator("main").innerText()), `[${tag}] formulaire : aucun envoi ni copie ne doit être annoncé`);
   await shot("14-demo-confirmation");
 
   // Pied de page : liens vers les questions fréquentes et les pages « Vos données »
@@ -206,11 +230,12 @@ async function run(b, vw, vh, opts = {}) {
   const LEGAL = [["#/vos-donnees", "Vos données, vos choix"], ["#/vos-donnees/video", "Que devient ma vidéo ?"], ["#/vos-donnees/assistant", "Ce que fait l'assistant, et ce qu'il ne fait pas"],
     ["#/vos-donnees/droits", "Vos droits"], ["#/vos-donnees/appareil", "Ce qui est gardé sur cet appareil"], ["#/vos-donnees/notice", "Information complète sur vos données"],
     ["#/vos-donnees/coachs", "Coachs : vos données"], ["#/conditions", "Règles d'utilisation"], ["#/mentions-legales", "Mentions légales"], ["#/accessibilite", "Accessibilité"]];
+  const plain = x => x.replace(/[\u00A0\u202F]/g, " "); // espaces insécables de la typographie française (RED-11)
   for (const [h, t] of LEGAL) {
     await visit(h);
-    const h1 = (await p.getByRole("heading", { level: 1 }).first().textContent()) || "";
+    const h1 = plain((await p.getByRole("heading", { level: 1 }).first().textContent()) || "");
     check(h1.trim() === t, `[${tag}] ${h} : titre « ${t} » attendu, lu « ${h1.trim()} »`);
-    check((await p.title()).startsWith(t), `[${tag}] ${h} : titre du document non mis à jour (${await p.title()})`);
+    check(plain(await p.title()).startsWith(t), `[${tag}] ${h} : titre du document non mis à jour (${await p.title()})`);
     await overflow(h);
     const body = await p.locator("main").innerText();
     check(!/prototype|à compléter|version d'essai/i.test(body), `[${tag}] ${h} : mention de prototype ou de champ à compléter visible`);

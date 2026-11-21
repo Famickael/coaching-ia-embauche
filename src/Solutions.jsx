@@ -3,21 +3,24 @@ import { T, RAD, SH, Btn, Card, Tag, Icon, I, TY, W, img, Eyebrow, Section, Page
 import { Reveal, useSectionScroll } from "./motion.jsx";
 import { FinalBand } from "./home/FinalBand.jsx";
 
-/* Page « Solutions » (ancienne page Fonctionnement) : le déroulé, puis ce que l'outil apporte à chaque public :
-   personnes accompagnées, coachs, organismes (direction, DSI, juridique et DPO). Ancres : #/solutions/<id>. */
+/* Page « Solutions » (ancienne page Fonctionnement) : le déroulé, puis ce que l'accompagnement apporte à chaque public :
+   demandeurs d'emploi, collaborateurs en mobilité, coachs (les accompagnateurs de l'organisme) et commanditaires
+   (acteurs publics, entreprises). La Répét' est l'outil de l'organisme, pas un logiciel vendu seul.
+   Ancres : #/solutions/<id> (anciennes ancres beneficiaires et organismes redirigées dans router.js). */
 
 const AUDIENCES = [
-  ["beneficiaires", "Personnes accompagnées", I.user],
+  ["demandeurs-emploi", "Demandeurs d'emploi", I.user],
+  ["collaborateurs", "Collaborateurs en mobilité", I.compass],
   ["coachs", "Coachs", I.users],
-  ["organismes", "Organismes", I.building],
+  ["commanditaires", "Commanditaires", I.building],
 ];
 
 export default function Solutions({ go, openSpace, section }) {
   useSectionScroll(section);
   return (
     <main>
-      <PageHero eyebrow="Solutions" title="Ce que La Répét' apporte à chacun"
-        lead="Un même outil pour trois publics : la personne qui s'entraîne, le coach qui l'accompagne, l'organisme qui le met en place."
+      <PageHero eyebrow="Solutions" title="Un accompagnement outillé, pour chaque public"
+        lead="Nos coachs accompagnent des demandeurs d'emploi et des collaborateurs d'entreprise. Entre deux rendez-vous, chacun s'entraîne avec La Répét', notre outil. Acteurs publics et entreprises nous confient cet accompagnement."
         aside={<HeroAside />}>
         <nav aria-label="Publics" className="rs-chips" style={{ marginTop: 8 }}>
           {AUDIENCES.map(([id, l, ic]) => <a key={id} href={`#/solutions/${id}`} className="rs-chip" style={{ textDecoration: "none" }}><Icon d={ic} s={16} /> {l}</a>)}
@@ -29,12 +32,16 @@ export default function Solutions({ go, openSpace, section }) {
           <Reveal><Flow /></Reveal>
         </Section>
 
-        <AudienceSection id="beneficiaires" tag="Personnes accompagnées" title="S'entraîner seul, sans être jugé"
-          sub="Un espace personnel, ouvert avec un code, pour répéter autant que nécessaire avant le jour J."
+        <AudienceSection id="demandeurs-emploi" tag="Demandeurs d'emploi" title="Préparer ses entretiens d'embauche, sans être jugé"
+          sub="Dans le cadre d'un accompagnement vers l'emploi, un espace personnel ouvert avec un code, pour répéter autant que nécessaire avant le jour J."
           features={BENEF} cta={<Btn kind="objective" onClick={() => go("#/espace")} iconRight={I.arrow}>Lancer ma première répétition</Btn>} />
 
-        <AudienceSection id="coachs" tag="Coachs" title="Relire, nuancer, préparer le débriefing"
-          sub="Vous voyez seulement ce que la personne choisit de vous envoyer, et vous décidez de ce qui lui revient."
+        <AudienceSection id="collaborateurs" tag="Collaborateurs en mobilité" title="Préparer un entretien de mobilité ou d'évolution"
+          sub="Votre entreprise vous propose un accompagnement. Vous vous entraînez avec votre coach, en toute confidentialité vis-à-vis de votre employeur."
+          features={COLLAB} cta={<Btn kind="secondary" onClick={() => go("#/espace")} iconRight={I.arrow}>Ouvrir mon espace</Btn>} />
+
+        <AudienceSection id="coachs" tag="Coachs" title="Nos coachs relisent, nuancent et préparent le débriefing"
+          sub="Les coachs de notre organisme mènent l'accompagnement. Ils voient seulement ce que la personne choisit de leur envoyer, et décident de ce qui lui revient."
           features={COACH} cta={<Btn kind="secondary" onClick={() => go("#/espace")}>Me connecter à l'espace coach</Btn>} />
 
         <Section id="assistant" eyebrow="L'assistant" title="Ce que l'assistant observe, et ce qu'il n'observe pas" sub="Des faits, situés à un moment précis de la réponse. Jamais une note.">
@@ -64,11 +71,12 @@ export default function Solutions({ go, openSpace, section }) {
           </div>
         </Section>
 
-        <Section id="organismes" eyebrow="Organismes" title="Construit et hébergé par votre organisme" sub="Chaque fonction a ses questions. Voici les réponses.">
-          <Tabs label="Fonctions de l'organisme" idPrefix="org" tabs={ORG.map(o => [o.tab, <OrgPanel key={o.tab} o={o} />])} />
+        <Section id="commanditaires" eyebrow="Commanditaires" title="Nous confier un accompagnement" sub="Acteurs publics de l'emploi ou entreprises : vous nous confiez des personnes à accompagner. Nos coachs mènent l'accompagnement, La Répét' l'outille.">
+          <Tabs label="Commanditaires" idPrefix="org" tabs={ORG.map(o => [o.tab, <OrgPanel key={o.tab} o={o} />])} />
+          <div className="rp-wide-m" style={{ marginTop: 32 }}><Btn kind="objective" onClick={() => go("#/demo")} iconRight={I.arrow}>Parler de votre projet</Btn></div>
         </Section>
 
-        <FinalBand title="Une question sur La Répét' ?" text="Les questions fréquentes répondent aux personnes accompagnées, aux coachs et aux organismes.">
+        <FinalBand title="Une question sur notre accompagnement ?" text="Les questions fréquentes répondent aux personnes accompagnées, aux coachs et aux commanditaires.">
           <Btn kind="white" size="lg" onClick={() => go("#/a-propos/faq")} iconRight={I.arrow}>Lire les questions fréquentes</Btn>
         </FinalBand>
       </div>
@@ -108,7 +116,7 @@ function AudienceSection({ id, tag, title, sub, features, cta }) {
 }
 
 const BENEF = [
-  [I.lock, "Accès par code, sans compte", "Un code de 6 caractères remis par le coach. Ni adresse électronique, ni mot de passe."],
+  [I.lock, "Accès par code, sans compte", "Un code de 6 caractères remis par le coach. Ni adresse électronique, ni mot de passe."],
   [I.mic, "Échauffement sans analyse", "Des phrases à dire à voix haute, avec une consigne, pour se lancer. Rien n'est enregistré."],
   [I.target, "Questions adaptées au métier", "Une banque de questions selon le poste visé, et la possibilité d'ajouter les siennes."],
   [I.video, "Caméra ou voix seule", "Trois minutes maximum par réponse, relecture avant validation, autant d'essais que souhaité."],
@@ -116,55 +124,64 @@ const BENEF = [
   [I.layers, "Un retour à lire ou à regarder", "Lire le retour, ou se revoir avec les repères placés au bon moment de la vidéo."],
   [I.chat, "Un assistant de préparation d'entretien", "Des réponses aux questions sur l'entretien, sans remplacer le coach. Un entraînement complet simule un entretien dans l'ordre réel."],
   [I.send, "Envoi volontaire", "Chaque réponse reste sur l'appareil tant que la personne ne l'envoie pas."],
-  [I.trash, "Tout supprimer à tout moment", "La personne peut supprimer une réponse. Elle peut aussi retirer son accord : toutes ses réponses sont alors effacées."],
+  [I.trash, "Tout supprimer à tout moment", "La personne peut supprimer une réponse. Elle peut aussi retirer son accord : toutes ses réponses sont alors effacées."],
+];
+
+const COLLAB = [
+  [I.compass, "Mobilité interne ou externe", "Préparer un entretien pour un autre poste dans l'entreprise, ou pour un projet ailleurs."],
+  [I.chat, "Entretien professionnel ou annuel", "S'entraîner à parler de son parcours, de ses compétences et de ses souhaits d'évolution, côté salarié."],
+  [I.redo, "Reconversion", "Mettre des mots sur un nouveau projet et expliquer ce que l'on apporte d'un métier à l'autre."],
+  [I.target, "Des questions adaptées", "Une banque de questions propre aux entretiens de mobilité et d'évolution, et la possibilité d'ajouter les siennes."],
+  [I.sparkle, "Le même retour qui décrit", "Rythme de parole, pauses, exemples, regard. Jamais de note, jamais d'émotion devinée."],
+  [I.lock, "Confidentiel vis-à-vis de l'employeur", "Votre employeur ne voit pas vos réponses. Seul votre coach voit ce que vous choisissez de lui envoyer."],
 ];
 
 const COACH = [
-  [I.plus, "Un parcours vite créé", "Prénom et initiale, métier visé : le code et le lien sont prêts à transmettre."],
+  [I.plus, "Un parcours vite créé", "Prénom et initiale, métier visé : le code et le lien sont prêts à transmettre."],
   [I.list, "Réponses à relire", "Une liste claire des réponses reçues, avec le message de la personne."],
-  [I.note, "Remarques placées dans la vidéo", "Mettez en pause, écrivez : votre remarque se place à ce moment de la vidéo."],
+  [I.note, "Remarques placées dans la vidéo", "Mettez en pause, écrivez : votre remarque se place à ce moment de la vidéo."],
   [I.chat, "Nuancer l'assistant", "Confirmez, nuancez ou contredisez chaque repère. Votre lecture prime."],
   [I.send, "Rien ne part sans vous", "Votre brouillon s'enregistre tout seul. Vous envoyez le rapport quand il est prêt. Vous pouvez le corriger et le renvoyer."],
   [I.print, "Support de débriefing", "Rapport imprimable ou exportable en PDF pour l'atelier ou le rendez-vous."],
 ];
 
 const OBSERVE = [
-  ["Rythme de parole", "« Environ 140 mots par minute sur l'ensemble de la réponse. »"],
-  ["Pauses", "« 3 pauses de plus de 2 secondes, la plus longue à 0:42. »"],
-  ["Exemples concrets", "« Vous citez une expérience précise : deux ans à l'accueil d'une mairie. »"],
-  ["Petits mots répétés", "« \"Euh\" revient 4 fois, surtout en début de phrase. »"],
-  ["Structure", "« 5 phrases, avec une phrase de conclusion. »"],
-  ["Vocabulaire", "« Le mot vraiment revient 4 fois. »"],
-  ["Direction du regard", "« Vers l'écran environ 60 % du temps, vers le bas 30 %. »"],
-  ["Durée", "« 1 minute 32 pour une question prévue en deux minutes. »"],
+  ["Rythme de parole", "« Environ 140 mots par minute sur l'ensemble de la réponse. »"],
+  ["Pauses", "« 3 pauses de plus de 2 secondes, la plus longue à 0:42. »"],
+  ["Exemples concrets", "« Vous citez une expérience précise : deux ans à l'accueil d'une mairie. »"],
+  ["Petits mots répétés", "« \"Euh\" revient 4 fois, surtout en début de phrase. »"],
+  ["Structure", "« 5 phrases, avec une phrase de conclusion. »"],
+  ["Vocabulaire", "« Le mot vraiment revient 4 fois. »"],
+  ["Direction du regard", "« Vers l'écran environ 60 % du temps, vers le bas 30 %. »"],
+  ["Durée", "« 1 minute 32 pour une question prévue en deux minutes. »"],
 ];
 
 const ORG = [
   {
-    tab: "Direction", icon: I.compass, title: "Un complément à l'accompagnement, pas un substitut",
+    tab: "Acteurs publics", icon: I.compass, title: "Accompagner le retour à l'emploi et l'insertion",
     points: [
-      ["Plus de pratique entre deux rendez-vous", "Les personnes s'entraînent chez elles, à leur rythme, et arrivent en atelier avec des moments concrets à discuter."],
-      ["Un pilotage sans surveillance", "Des chiffres d'ensemble uniquement : réponses à relire, parcours, rapports envoyés, délai moyen de relecture. Aucune mesure individuelle."],
-      ["Indépendance vis-à-vis d'un éditeur", "L'outil est construit et opéré par l'organisme, avec des briques standards maîtrisables par une équipe interne."],
-      ["Un projet cadré", "Cadre AI Act et analyse d'impact, cadre psychosociologique, cahier des charges fonctionnel : la conception a précédé le code."],
+      ["Pour qui", "Services publics de l'emploi, collectivités, départements, structures d'insertion : vous accompagnez des demandeurs d'emploi et vous cherchez un appui pour la préparation aux entretiens."],
+      ["Ce que nous faisons", "Nos coachs mènent les rendez-vous et les ateliers. Entre deux séances, les personnes s'entraînent avec La Répét' et arrivent avec des moments concrets à discuter."],
+      ["Un suivi sans surveillance", "Nous rendons compte de l'accompagnement avec des éléments d'ensemble : réponses relues, rapports envoyés, délai de relecture. Jamais une mesure individuelle."],
+      ["Un cadre clair", "Aucune note, aucune émotion devinée, une vidéo qui reste sur l'appareil tant que la personne ne l'envoie pas. Le cadre est détaillé dans l'onglet « Cadre et données »."],
     ],
   },
   {
-    tab: "DSI", icon: I.server, title: "Une application web standard, à brancher sur votre infrastructure",
+    tab: "Entreprises", icon: I.building, title: "Accompagner la mobilité de vos collaborateurs",
     points: [
-      ["Architecture", "Application web React construite avec Vite, servie comme un site statique. Les entraînements sont gardés dans le navigateur de la personne (localStorage, IndexedDB)."],
-      ["Raccordement à vos serveurs", "Votre stockage se branche derrière les fonctions de stockage existantes, avec chiffrement au repos et en transit. La vidéo n'est téléversée qu'au moment de l'envoi au coach."],
-      ["Modèles auto-hébergés", "Transcription Whisper et suivi du regard MediaPipe exécutés dans le navigateur, à partir de fichiers que vous pouvez héberger chez vous."],
-      ["Options par configuration", "Transcription serveur ou reformulation par un modèle de langage de votre choix, qui ne reçoit que du texte, filtré par un garde-fou de conformité."],
+      ["Pour qui", "Les entreprises qui font accompagner leurs collaborateurs : mobilité interne ou externe, préparation d'un entretien de mobilité, entretien annuel ou professionnel, reconversion."],
+      ["Ce que nous faisons", "Nos coachs accompagnent chaque collaborateur, en rendez-vous individuels ou en ateliers. La Répét' lui permet de s'entraîner seul, à son rythme, entre deux rendez-vous."],
+      ["La confidentialité", "Les réponses restent entre le collaborateur et son coach. L'entreprise ne voit ni les vidéos, ni les retours, ni les rapports."],
+      ["Ce que vous recevez", "Un bilan d'ensemble de l'accompagnement, défini avec vous avant le démarrage, sans information sur une personne en particulier."],
     ],
   },
   {
-    tab: "Juridique et DPO", icon: I.scale, title: "Conçu pour l'AI Act et le RGPD",
+    tab: "Cadre et données", icon: I.scale, title: "Conçu pour l'AI Act et le RGPD",
     points: [
       ["Aucune inférence d'émotion", "L'article 5 du règlement (UE) 2024/1689 interdit la reconnaissance des émotions sur le lieu de travail et dans les établissements d'enseignement. L'outil ne lit jamais les expressions du visage."],
-      ["Transparence et supervision humaine", "La personne sait qu'un assistant produit le retour. Le coach peut le contredire, et rien ne parvient à la personne sans envoi explicite."],
+      ["Transparence et supervision humaine", "La personne sait qu'un assistant IA produit le retour. Le coach peut le contredire, et rien ne parvient à la personne sans envoi explicite."],
       ["Minimisation et consentement", "Prénom et initiale, métier visé. Consentement donné option par option, daté et retirable. Le retrait supprime les réponses."],
-      ["Ce qui reste à faire", "Qualification du système selon votre usage, analyse d'impact (AIPD) obligatoire avant tout déploiement, durées de conservation, validation des textes de « Vos données » fournis comme documents de travail."],
+      ["Avant tout démarrage", "Notre organisme, responsable du traitement, mène l'analyse d'impact (AIPD) et la qualification au regard de l'AI Act, et fixe les durées de conservation avec son délégué à la protection des données."],
     ],
   },
 ];

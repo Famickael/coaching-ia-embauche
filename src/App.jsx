@@ -13,16 +13,16 @@ import { Espace, NotFound } from "./app/Espace.jsx";
 import { Footer } from "./app/Footer.jsx";
 import { ToTop } from "./app/ToTop.jsx";
 
-/* La Répét' : entraînement à l'entretien d'embauche, avec un assistant IA et votre coach.
+/* La Répét' : outil d'entraînement aux entretiens (embauche, mobilité, entretien professionnel) d'un organisme d'accompagnement, avec un assistant IA et un coach.
    Routes (dans l'ancre de l'adresse, pour que le bouton Retour du navigateur fonctionne) :
      #/                         accueil
      #/a-propos(/faq)           à propos (et sa FAQ) ; #/a-propos/ia-et-recherche : L'IA et la recherche
-     #/solutions(/public)       solutions par public : beneficiaires, coachs, organismes
+     #/solutions(/public)       solutions par public : demandeurs-emploi, collaborateurs, coachs, commanditaires
      #/fonctionnement           ancienne adresse, redirigée vers #/solutions
      #/ressources               centre de ressources (catégories, articles mis en avant, recherche)
      #/ressources/c/CATEGORIE   liste des ressources d'une catégorie
      #/ressources/SLUG          article
-     #/demo                     demande de prise en main accompagnée
+     #/demo                     « Nous contacter » : projet d'accompagnement d'un commanditaire
      #/espace                   « Mon espace » : code d'accès ou connexion coach
      #/s/CODE(/écran)           espace de la personne ; l'écran suit l'ancre (src/lib/viewHash.js)
      #/beneficiaire             saisie du code

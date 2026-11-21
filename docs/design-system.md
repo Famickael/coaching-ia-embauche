@@ -91,12 +91,12 @@ Demande du propriétaire : plus de profondeur et de présence de la marque sur l
 | `GRAD_SECTION` | `bg`, `primaryBg` au milieu, `bg` | Fond de la strate épinglée (section clé) |
 | `GRAD_PAGE` | `primaryBg` vers `bg` | Fond de `PageHero` (pages secondaires) |
 | `GLOW.blue`, `GLOW.violet` | bleu clair 22 %, violet 20 % | Halos (`Halo`) derrière les photos et le héros : décor, jamais sous du texte |
-| `FADE_FOOT` | masque opaque puis transparent sur 160 px avant le pied de page | Fond de l'accueil qui suit la souris : il s'efface avant le pied de page |
+| `FADE_FOOT` | masque opaque puis transparent sur 160 px avant le pied de page | Fond de l'accueil (repoussé par la souris) : il s'efface avant le pied de page |
 | `HL.appui`, `HL.ai`, `HL.primary` | teintes de fond des rôles | Surlignage progressif d'un passage (cartes animées, strate) |
 
 Début du titre d'accroche (« Répétez votre entretien d'embauche, ») : couleur pleine `navy` dans les deux thèmes (presque blanc en sombre), sans dégradé ; seule la fin d'accroche qui change garde `GRAD_ACCROCHE`.
 
-**Fond de l'accueil.** Un seul calque fixe (`.rs-glow`) derrière toutes les sections de l'accueil, qui n'ont aucun fond propre (ni halo de section, ni `GRAD_HERO`, ni `GRAD_SECTION`) : aucune rupture entre le héros, la phrase et la strate. Il suit la souris ; sur tactile, il dérive lentement seul (`rsDrift`, 26 s, aller-retour, `transform` seulement) et glisse un peu au défilement et au doigt (`touchmove`), avec lissage, sans capteur d'orientation. Il s'efface avant le pied de page (`FADE_FOOT`, variable `--fy`), et le pied de page garde son fond opaque au-dessus. Fixe en mouvement réduit, masqué en mode concentration.
+**Fond de l'accueil.** Un seul calque fixe (`.rs-glow`) derrière toutes les sections de l'accueil, qui n'ont aucun fond propre (ni halo de section, ni `GRAD_HERO`, ni `GRAD_SECTION`) : aucune rupture entre le héros, la phrase et la strate. Souris : le pointeur **repousse** le violet et le bleu, chacun de son côté (`pushed`, `src/home/index.jsx` : poussée qui décroît avec la distance, depuis leurs positions de repos), et dégage sous lui une zone claire au fond du thème (`.rs-glow>b`, `T.bg`), pour que le texte pointé reste lisible dans les quatre thèmes ; la zone s'efface quand la souris quitte la fenêtre. Sur tactile, il dérive lentement seul (`rsDrift`, 26 s, aller-retour, `transform` seulement) et glisse un peu au défilement et au doigt (`touchmove`), avec lissage, sans capteur d'orientation. Il s'efface avant le pied de page (`FADE_FOOT`, variable `--fy`), et le pied de page garde son fond opaque au-dessus. Fixe en mouvement réduit, masqué en mode concentration.
 
 Le bleu et le violet de ces dégradés et halos relèvent de l'exception « dégradé de la marque » ci-dessous : ils ne signalent ni l'assistant ni une action.
 
@@ -169,7 +169,7 @@ Combinaisons **interdites** (mesurées dans le code actuel) : blanc sur `blue` 3
 
 ## 2. Typographie
 
-Trois familles, sans exception : **Manrope** (`FD`) pour les titres, **Inter** (`FB`) pour le texte et l'interface, **JetBrains Mono** (`FM`) pour les chiffres, codes et horodatages.
+Trois familles, sans exception : **Outfit** (`FD`, la police du logo) pour les titres (`h1` à `h4`, `display`, `xl`, `pageTitle`, `quote`, intertitres des articles), **Inter** (`FB`) pour le texte et l'interface, **JetBrains Mono** (`FM`) pour les chiffres, codes et horodatages.
 
 **Règle** : hors de `tokens.js`, il est interdit d'écrire `font:`, `fontSize`, `fontWeight`, `fontFamily`, `lineHeight` ou `letterSpacing`. On écrit `style={{ ...TY.h2, color: T.navy }}` ou `<Txt v="h2">`. **Pourquoi** : le code actuel contient 91 combinaisons taille/graisse/interlignage différentes, dont sept tailles de titre de page (24, 26, 27, 28, 30, 32, 34) et des demi-pixels (10,5 · 11,5 · 12,5 · 13,5 · 14,5 · 15,5).
 
@@ -177,12 +177,12 @@ Trois familles, sans exception : **Manrope** (`FD`) pour les titres, **Inter** (
 
 | Niveau | Jeton | Famille | Graisse | Taille / interligne | Espacement | Mobile (≤ 760 px) | Usage unique |
 |---|---|---|---|---|---|---|---|
-| Titre d'accroche | `TY.display` | Manrope | 800 | 54 / 1,05 | -0,035em | 38 | Titre du héros de l'accueil, une fois dans le site |
-| Titre de section éditoriale | `TY.xl` | Manrope | 800 | 32 / 1,15 | -0,03em | 26 | `h2` des pages Accueil et Fonctionnement, bandeau d'appel final |
-| Titre de page | `TY.h1` | Manrope | 800 | 28 / 1,15 | -0,02em | 24 | Le `h1` de chaque écran d'application, titre de `GradHead`, titre d'étape du défilement de l'accueil |
-| Titre de section | `TY.h2` | Manrope | 800 | 20 / 1,25 | -0,01em | 20 | Sections d'un écran (« Mes prises »), titre de modale, titre d'une carte vedette |
-| Titre de carte | `TY.h3` | Manrope | 700 | 16 / 1,3 | 0 | 16 | Cartes de grille, observation, nom dans une liste, état vide |
-| Titre de bloc | `TY.h4` | Manrope | 700 | 14 / 1,4 | 0 | 14 | Intitulé d'un bloc dans une carte, question d'une prise dans une liste |
+| Titre d'accroche | `TY.display` | Outfit | 800 | 54 / 1,05 | -0,035em | 38 | Titre du héros de l'accueil, une fois dans le site |
+| Titre de section éditoriale | `TY.xl` | Outfit | 800 | 32 / 1,15 | -0,03em | 26 | `h2` des pages Accueil et Fonctionnement, bandeau d'appel final |
+| Titre de page | `TY.h1` | Outfit | 800 | 28 / 1,15 | -0,02em | 24 | Le `h1` de chaque écran d'application, titre de `GradHead`, titre d'étape du défilement de l'accueil |
+| Titre de section | `TY.h2` | Outfit | 800 | 20 / 1,25 | -0,01em | 20 | Sections d'un écran (« Mes prises »), titre de modale, titre d'une carte vedette |
+| Titre de carte | `TY.h3` | Outfit | 700 | 16 / 1,3 | 0 | 16 | Cartes de grille, observation, nom dans une liste, état vide |
+| Titre de bloc | `TY.h4` | Outfit | 700 | 14 / 1,4 | 0 | 14 | Intitulé d'un bloc dans une carte, question d'une prise dans une liste |
 | Surtitre | `TY.overline` | Inter | 700 | 11 / 1,3 | 0,08em, capitales | 11 | Au-dessus d'un titre ou d'une valeur ; jamais plus de 4 mots |
 | Chapeau | `TY.lead` | Inter | 400 | 18 / 1,6 | 0 | 16 | Paragraphe sous `display` ou `xl` |
 | Corps de lecture | `TY.bodyLg` | Inter | 400 | 16 / 1,6 | 0 | 16 | Ce que la personne doit lire attentivement : mot du coach, synthèse, phrase sous un `h1` |
@@ -199,11 +199,11 @@ Trois familles, sans exception : **Manrope** (`FD`) pour les titres, **Inter** (
 | Code saisi | `TY.code` | JetBrains Mono | 700 | 24 / 1 | 0,25em | 24 | Champ du code à 6 caractères |
 | Horodatage | `TY.time` | JetBrains Mono | 700 | 11 / 1 | 0 | 11 | Pastille « 0:03 », numéro d'étape |
 | Mono | `TY.mono` | JetBrains Mono | 500 | 12 / 1,5 | 0 | 12 | Code dans une liste, durée, lien affiché, message technique |
-| Titre de page secondaire | `TY.pageTitle` | Manrope | 800 | 38 / 1,1 | -0,03em | 26 | `h1` de `PageHero` et titre d'article (rendu validé) |
-| Citation | `TY.quote` | Manrope | 700 | 20 / 1,45 | 0 | 18 | Citation d'article |
+| Titre de page secondaire | `TY.pageTitle` | Outfit | 800 | 38 / 1,1 | -0,03em | 26 | `h1` de `PageHero` et titre d'article (rendu validé) |
+| Citation | `TY.quote` | Outfit | 700 | 20 / 1,45 | 0 | 18 | Citation d'article |
 | Mise en avant | `TY.strong` | | 700 | | | | `<strong>` dans un paragraphe |
 
-Tailles autorisées (px) : **11, 12, 13, 14, 16, 18, 20, 24, 26, 28, 32, 38, 54**. Graisses autorisées : Manrope 700 et 800 ; Inter 400, 600, 700 ; JetBrains Mono 500 et 700. Toute autre valeur est une erreur (Inter 500 disparaît : `body` ou `bodyStrong`).
+Tailles autorisées (px) : **11, 12, 13, 14, 16, 18, 20, 24, 26, 28, 32, 38, 54**. Graisses autorisées : Outfit 700 et 800 ; Inter 400, 600, 700 ; JetBrains Mono 500 et 700. Toute autre valeur est une erreur (Inter 500 disparaît : `body` ou `bodyStrong`).
 
 Règles d'emploi :
 - Un seul `h1` par écran, et l'ordre des niveaux HTML suit l'ordre visuel (le composant `Txt` sépare la balise `as` du style `v`).
@@ -480,7 +480,7 @@ Remplace 1000, 920, 820, 720, 680, 640, 580, 560, 460.
 | `MO.soft` (v3.1) | `cubic-bezier(.45,0,.55,1)` | Courbe douce (ease-in-out) des transitions lentes ci-dessus |
 | `PACE.scene` (v3.2) | 11 500 ms | Durée d'une scène du héros (laisse le temps de lire la scène à côté du titre). Pause au survol, au focus et par le bouton pause |
 | `PACE.accroche` (v3.2) | 11 500 ms | Fin d'accroche synchronisée avec sa scène : même cadence, même fondu (`MO.fade`) |
-| Écran de chargement (v3.2) | 2,5 s minimum (rapprochement des bulles 1,3 s, puis les points), fondu de sortie 0,7 s sur `opacity` seule, calque retiré à `transitionend` | Durée comptée depuis le début de la navigation, pour jouer une fois l'animation complète (bulles qui se rejoignent, puis trois points). « Réduire les animations » : écran statique, 0,6 s. Navigateur piloté : retrait immédiat. Retrait de secours en CSS à 10 s (`index.html`, `src/Loader.jsx`) |
+| Écran de chargement (v3.4) | 2,5 s minimum (décision du propriétaire : rapprochement des bulles 1,3 s, puis les points), barre de chargement de 3 px sous le logo, sortie en un seul mouvement de 0,8 s (`MO.soft`) | Durée comptée depuis le début de la navigation. **Barre** : 112 × 3 px, `RAD` 2, remplissage `T.violet` sur piste `T.line` (valeurs recopiées dans `index.html`, clair et sombre), progresse jusqu'à 90 % pendant la durée minimale (`transform: scaleX`), puis se complète en 250 ms en repartant de sa valeur affichée. **Sortie** : le calque passe en fondu (`opacity`) pendant que les deux bulles du logo s'écartent (`transform` sur un groupe intérieur, distinct de l'animation d'entrée : aucun saut), points et barre en fondu plus court. Calque de `100vw` : le logo ne bouge pas quand la barre de défilement apparaît. Le retrait attend qu'aucun écran d'attente de page (`BrandLoader` de `Suspense`) ne soit affiché : pas de double rendu. « Réduire les animations » : écran statique sans barre, 0,6 s, puis fondu simple de 0,4 s. Navigateur piloté : retrait immédiat. Retrait de secours en CSS à 10 s, y compris en mouvement réduit (`index.html`, `src/Loader.jsx`) |
 
 Les pages publiques (accueil, à propos, solutions, ressources) utilisent les durées lentes ; l'application (espaces bénéficiaire et coach) garde `MO.fast`, `MO.base` et `MO.enter` pour rester réactive.
 
@@ -572,7 +572,7 @@ Décrire, ne jamais noter. Formulation positive, appui avant exploration. Un bou
 | C3 | une opacité est concaténée à un jeton | `\$\{[^}]+\}[0-9a-fA-F]{2}(?![0-9a-zA-Z])` | aucune |
 | C4 | un nom de couleur CSS est utilisé | `:\s*"(white\|black\|red\|green\|blue\|gray\|grey)"` | `"transparent"`, `"currentColor"`, `"inherit"`, `"none"` |
 | T1 | une propriété typographique est écrite | `\b(font\|fontSize\|fontWeight\|fontFamily\|lineHeight\|letterSpacing)\s*:` dans un objet de style | `fontStyle`, `font: "inherit"` |
-| T2 | une famille est nommée | `Manrope\|Inter\|JetBrains\|Segoe\|sans-serif\|monospace` | textes de contenu de `src/content/` (mentions légales qui citent les polices) |
+| T2 | une famille est nommée | `Outfit\|Manrope\|Inter\|JetBrains\|Segoe\|sans-serif\|monospace` | textes de contenu de `src/content/` (mentions légales qui citent les polices) |
 | S1 | `padding*`, `margin*`, `gap`, `rowGap`, `columnGap` contient un nombre de px hors de l'échelle `SPACE` | tout nombre, isolé ou dans une chaîne `"12px 16px"` ; signe négatif admis | `auto`, `%`, `vh`, `svh`, `em`, `calc()` ; les valeurs `PAD.*`, `GAP.*`, `sp(n)` |
 | S2 | `sp(n)` est appelé avec un `n` tel que `4n` est hors échelle | `sp\(([\d.]+)\)` | aucune |
 | S3 | `<Card pad=` reçoit autre chose que `"none"`, `"sm"`, `"md"`, `"lg"` | `<Card[^>]*\bpad=\{` | aucune |
@@ -616,7 +616,7 @@ export const T = { /* jetons existants */
   overlay: "rgba(27,58,102,.45)", videoBg: "#000000",
 };                                  // supprimer T.ink
 export const ON = { text: "#FFFFFF", chip: "rgba(255,255,255,.2)", line: "rgba(255,255,255,.3)", glow: "rgba(255,255,255,.16)", scrim: "rgba(0,0,0,.5)" };
-export const FD = "'Manrope', 'Segoe UI', sans-serif", FB = "'Inter', 'Segoe UI', sans-serif", FM = "'JetBrains Mono', monospace";
+export const FD = "'Outfit', 'Segoe UI', sans-serif", FB = "'Inter', 'Segoe UI', sans-serif", FM = "'JetBrains Mono', monospace";
 export const SIZES = [11, 12, 13, 14, 16, 18, 20, 24, 26, 28, 32, 38, 54];
 export const WEIGHTS = { [FD]: [700, 800], [FB]: [400, 600, 700], [FM]: [500, 700] };
 export const TY = {
@@ -750,5 +750,11 @@ Dégradés : `GRAD` et `GRAD_AI` recomposés selon 1.3, `GRAD_NIGHT` ajouté, `G
 | 2026-11-21 | Bulle d'invitation de l'assistant à gauche du bouton flottant, 240 px au plus, jamais sur la relecture vidéo ; mots éteints de la phrase d'accueil en `lineStrong` (3:1 sur `bg`, texte de 32 px et plus) | Audit UI-07, A11Y-12 |
 
 | 2026-11-21 | Mise à jour des valeurs en vigueur (ARC-21) : écran de chargement 2,5 s minimum, fondu 0,7 s (section 7, `Loader.jsx`) ; `PACE.accroche` 11 500 ms ; points de rupture listés en section 6. Les lignes plus anciennes du journal gardent les valeurs de leur date | Audit ARC-21 |
+
+| 2026-11-21 | Titres en **Outfit** (police du logo) à la place de Manrope : `FONT_STACKS.display`, donc `FD` et tous les styles de titre de `TY` ; Outfit 700 et 800 auto-hébergées (`public/fonts/outfit-latin-{700,800}-normal.woff2`, sous-ensemble latin, Fontsource 5.3.0, licence OFL), Manrope retirée ; préchargement d'Outfit 800 dans `index.html` | Demande du propriétaire : titres dans la police du logo |
+| 2026-11-21 | Typographie française : espace fine insécable (U+202F) avant `;` `?` `!` et à l'intérieur des guillemets, espace insécable (U+00A0) avant `:` et `%` et entre un nombre et son unité ; contrôlée par `npm run test:content` (`tests/lib/typo-fr.mjs`) | Audit RED-11, demande du propriétaire |
+
+| 2026-11-21 | Fond de l'accueil inversé : le violet et le bleu s'écartent du pointeur au lieu de le suivre, zone claire au fond du thème sous la souris ; tactile inchangé (dérive), rien ne bouge en mouvement réduit ; contrôlé par `test:site` | Demande du propriétaire : la zone pointée devenait illisible |
+| 2026-11-21 | Écran de chargement (v3.4) : barre violette de 3 px sous le logo ; sortie en un seul mouvement de 0,8 s (fondu du calque et écart des deux bulles) ; calque de `100vw` (plus de décalage à l'apparition de la barre de défilement) ; retrait après l'écran d'attente de page éventuel ; fondu simple en mouvement réduit, retrait de secours rétabli en mouvement réduit ; durée minimale inchangée (2,5 s). Vérifié image par image (valeurs relevées à chaque image) | Demande du propriétaire : sursaut à la fin du chargement, barre de progression |
 
 Ajouter une ligne à chaque évolution d'une règle ou d'une échelle.

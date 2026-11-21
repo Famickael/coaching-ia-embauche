@@ -2,6 +2,8 @@ import { prefersReduced } from "../lib/a11y.js";
 import { PAGES } from "../content/legal.js";
 import { getState } from "../lib/store.js";
 
+const SECTION_ALIASES = { beneficiaires: "demandeurs-emploi", organismes: "commanditaires" };
+
 export function routeFromHash() {
   const h = location.hash;
   /* Espaces : la vue est dans l'ancre (BUG-07), pour que Précédent et Suivant suivent les écrans. */
@@ -12,6 +14,8 @@ export function routeFromHash() {
   if (c) return { role: "coach", sub: c[1] || "" };
   if (h === "#/fonctionnement") { history.replaceState(null, "", "#/solutions"); return { role: "solutions" }; }
   let r = h.match(/^#\/solutions(?:\/([a-z-]+))?$/);
+  /* Anciennes ancres (avant le repositionnement) : personnes accompagnées et organismes. */
+  if (r && SECTION_ALIASES[r[1]]) { history.replaceState(null, "", `#/solutions/${SECTION_ALIASES[r[1]]}`); return { role: "solutions", section: SECTION_ALIASES[r[1]] }; }
   if (r) return { role: "solutions", section: r[1] };
   r = h.match(/^#\/a-propos(?:\/([a-z-]+))?$/);
   if (r && r[1] === "ia-et-recherche") return { role: "research" };
@@ -32,7 +36,7 @@ export function routeFromHash() {
 }
 
 /* Titre du document à chaque route (RGAA 8.6). */
-export const TITLES = { notfound: "Page introuvable", research: "L'IA et la recherche", home: "S'entraîner à l'entretien d'embauche", about: "À propos", solutions: "Solutions", resources: "Ressources", demo: "Demander une prise en main", espace: "Mon espace", benef: "Mon espace", coach: "Espace coach" };
+export const TITLES = { notfound: "Page introuvable", research: "L'IA et la recherche", home: "S'entraîner à ses entretiens", about: "À propos", solutions: "Solutions", resources: "Ressources", demo: "Nous contacter", espace: "Mon espace", benef: "Mon espace", coach: "Espace coach" };
 
 export const titleOf = (route, counselor) => route.role === "legal" ? PAGES[route.page].title : route.role === "coach" && !counselor ? TITLES.espace : TITLES[route.role] || TITLES.home;
 

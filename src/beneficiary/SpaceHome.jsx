@@ -12,7 +12,7 @@ export function Home({ p, takes, go, counselor }) {
     <div style={{ ...wrap(W.read), ...stack(GAP.block) }}>
       <Card pad="none" level={2}>
         <GradHead tag={counselor ? `Accompagnement avec ${counselor}` : "Votre espace"} title={`Bonjour ${p.prenom}`}
-          sub="Indiquez le métier que vous visez. Puis choisissez : un échauffement ou un entraînement." />
+          sub="Indiquez le métier que vous visez. Puis choisissez : un échauffement ou un entraînement." />
         <div className="rp-pad-md" style={{ padding: PAD.md, ...stack(GAP.grid) }}>
           <JobField p={p} />
           <div className="rp-stack" style={{ gap: GAP.stack }}>
@@ -34,7 +34,7 @@ export function Home({ p, takes, go, counselor }) {
 
       {reports.length > 0 && (
         <Notice tone="success">
-          {counselor || "Votre coach"} vous a envoyé {reports.length > 1 ? `${reports.length} rapports` : "un rapport"}. Ouvrez la réponse marquée « Rapport reçu » pour le lire.
+          {counselor || "Votre coach"} vous a envoyé {reports.length > 1 ? `${reports.length} rapports` : "un rapport"}. Ouvrez la réponse marquée « Rapport reçu » pour le lire.
         </Notice>
       )}
 

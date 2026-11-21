@@ -42,7 +42,7 @@ function Hub({ go, openSpace }) {
   return (
     <main>
       <PageHero eyebrow="Ressources" title="Des conseils pour préparer votre entretien"
-        lead="Des conseils concrets pour l'entretien d'embauche. Des guides pour utiliser La Répét'. Des exemples d'usage pour les équipes.">
+        lead="Des conseils concrets pour préparer un entretien. Des guides pour utiliser La Répét'. Des exemples d'usage de notre accompagnement.">
         <SearchBox q={q} setQ={setQ} go={go} />
       </PageHero>
 
@@ -79,7 +79,7 @@ function Hub({ go, openSpace }) {
           </Section>
         )}
 
-        <Section id="toutes" eyebrow="Rechercher" title={q ? `Résultats pour « ${q} »` : "Toutes les ressources"}>
+        <Section id="toutes" eyebrow="Rechercher" title={q ? `Résultats pour « ${q} »` : "Toutes les ressources"}>
           <div className="rs-chips rs-scroll" role="group" aria-label="Filtrer par thème" style={{ marginBottom: 24 }}>
             <Chip pressed={!fcat} onClick={() => setFcat("")}>Tous les thèmes</Chip>
             {CATEGORIES.map(c => <Chip key={c.id} pressed={fcat === c.id} onClick={() => setFcat(fcat === c.id ? "" : c.id)}>{c.title}</Chip>)}
@@ -276,7 +276,7 @@ function Article({ a, go, openSpace }) {
                       </div>
                     ))}
                   </dl>
-                  <p style={{ ...TY.caption, color: T.muted, margin: 0 }}>Organisme fictif. Ce scénario décrit un usage possible. Aucun résultat n'a été mesuré.</p>
+                  <p style={{ ...TY.caption, color: T.muted, margin: 0 }}>Situation fictive. Ce scénario décrit un usage possible. Aucun résultat n'a été mesuré.</p>
                 </div>
               ) : toc.length > 1 && (
                 <nav className="rs-toc" aria-label="Sommaire de l'article">
@@ -297,8 +297,8 @@ function Article({ a, go, openSpace }) {
           </Section>
         )}
         {cas ? (
-          <FinalBand title="Et dans votre organisme ?" text="Direction, DSI, juridique : voyez comment l'outil s'installe chez vous.">
-            <Btn kind="white" size="lg" onClick={() => go("#/solutions/organismes")} iconRight={I.arrow}>Voir le déploiement</Btn>
+          <FinalBand title="Un projet d'accompagnement ?" text="Acteur public de l'emploi ou entreprise : parlons de vos besoins.">
+            <Btn kind="white" size="lg" onClick={() => go("#/demo")} iconRight={I.arrow}>Nous contacter</Btn>
           </FinalBand>
         ) : (
           <FinalBand title="Mettez ces conseils en pratique" text="Ouvrez votre espace et répétez à voix haute, à votre rythme." openSpace={openSpace} go={go}>
@@ -345,7 +345,7 @@ function SearchBox({ q, setQ, go }) {
       <span aria-hidden style={{ position: "absolute", left: 16, top: 14, color: T.muted, display: "flex" }}><Icon d={I.search} s={20} /></span>
       <Input id="rs-q" type="search" role="combobox" aria-autocomplete="list" aria-expanded={show} aria-controls="rs-q-list"
         aria-activedescendant={show && active >= 0 ? `rs-q-opt-${active}` : undefined} autoComplete="off"
-        placeholder="Rechercher : visio, salaire, trac…" value={q} style={{ paddingLeft: 48 }}
+        placeholder="Rechercher : visio, salaire, trac…" value={q} style={{ paddingLeft: 48 }}
         onChange={e => { setQ(e.target.value); setOpen(true); setActive(-1); }} onKeyDown={onKey}
         onFocus={() => { clearTimeout(blurT.current); setOpen(true); }} onBlur={() => { blurT.current = setTimeout(() => setOpen(false), 160); }} />
       {show && (
