@@ -151,7 +151,7 @@ function CategoryView({ c, go, openSpace }) {
 }
 
 const Crumbs = ({ items }) => (
-  <nav aria-label="Fil d'Ariane" style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+  <nav aria-label="Fil d'Ariane" className="rp-crumbs" style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
     {items.map(([h, l], i) => (
       <React.Fragment key={h}>
         {i > 0 && <Icon d={SI.chevronR} s={12} c={T.muted} />}

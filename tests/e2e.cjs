@@ -18,12 +18,15 @@ require("fs").mkdirSync(SC, { recursive: true });
     if (w > vw + 1) overflow.push(`${n} : ${w}px pour ${vw}px`);
     await p.screenshot({ path: `${SC}/${n}.png`, fullPage: true });
   };
-  const click = t => p.getByRole("button", { name: t }).first().click();
+  const click = async t => {
+    try { await p.getByRole("button", { name: t }).first().click({ timeout: 15000 }); }
+    catch (e) { await p.screenshot({ path: `${SC}/echec.png`, fullPage: true }).catch(() => {}); throw new Error(`bouton « ${t} » : ${e.message.split("\n")[0]}`); }
+  };
 
   await p.goto("http://localhost:5098/"); await shot("01-accueil");
   await p.evaluate(() => window.scrollTo(0, document.body.scrollHeight / 3)); await p.waitForTimeout(900); await shot("01b-accueil-defilement");
   await p.goto("http://localhost:5098/#/fonctionnement"); await p.waitForTimeout(400); await shot("01c-fonctionnement");
-  await p.goto("http://localhost:5098/#/"); await click("Mon espace"); await shot("01d-mon-espace");
+  await p.goto("http://localhost:5098/#/"); await click("Mon compte"); await shot("01d-mon-espace");
   await shot("01e-connexion-coach"); await click("Se connecter");
   await click("Créer un parcours");
   await p.getByPlaceholder("Prénom et initiale").fill("Alex D."); await p.getByPlaceholder(/agent d'accueil/).fill("agent d'accueil");
@@ -127,8 +130,8 @@ require("fs").mkdirSync(SC, { recursive: true });
   await p.locator("[title*='Exemples concrets']").first().click().catch(() => {});
   await click("Envoyer à mon coach");
   await p.locator("textarea").fill("Je parle peut-être trop vite ?"); await click("Envoyer à mon coach"); await shot("08-envoye");
-  await click("Mes paramètres"); await p.getByRole("menuitem", { name: "Se déconnecter" }).waitFor(); await shot("08b-mes-parametres");
-  await p.getByRole("menuitem", { name: "Se déconnecter" }).click(); await click("Mon espace"); await click("Se connecter"); await p.waitForTimeout(300); await shot("09-liste-conseiller");
+  await click("Mon compte"); await p.getByRole("dialog", { name: "Mon compte" }).getByRole("button", { name: "Se déconnecter" }).waitFor(); await shot("08b-mon-compte");
+  await p.getByRole("dialog", { name: "Mon compte" }).getByRole("button", { name: "Se déconnecter" }).click(); await click("Mon compte"); await click("Se connecter"); await p.waitForTimeout(300); await shot("09-liste-conseiller");
   await click("Relire"); await click("Relire et annoter"); await p.waitForTimeout(800);
   await p.getByPlaceholder(/Mettez la vidéo en pause/).fill("Belle entrée en matière."); await click("Ajouter");
   await p.locator("textarea").fill("Alex, ta présentation est claire. On en parle jeudi.");

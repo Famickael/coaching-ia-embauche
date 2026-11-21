@@ -52,6 +52,8 @@ export function applyA11y(s) {
   d.links = s.links ? "on" : "off";
   d.focusring = s.focusRing ? "on" : "off";
   h.style.setProperty("--fs", String(FONT_SCALES[s.size] || 1));
+  /* Texte agrandi (125 % et plus) ou espacé : l'en-tête bascule plus tôt sur le menu repliable (GStyle). */
+  d.textsize = (FONT_SCALES[s.size] || 1) >= 1.25 || s.spacing ? "lg" : "normal";
   h.style.colorScheme = effectiveTheme(s);
   window.dispatchEvent(new CustomEvent("rp-a11y", { detail: s }));
 }

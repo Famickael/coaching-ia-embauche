@@ -105,6 +105,7 @@ Les photos suivantes proviennent de Pexels et sont utilisées sous la [licence P
 | Repères cliquables sur la barre de lecture (repère ↔ moment) | `Player` (`Report.jsx`) |
 | Partage volontaire prise par prise, avec un mot au coach | `Share` |
 | Relecture coach : notes horodatées, commentaires par observation, mot d'introduction, brouillon automatique | `Review` (`Counselor.jsx`) |
+| « Mon compte » : vers « Mon espace » sans session ; panneau latéral du compte une fois connecté | `AccountMenu` (`App.jsx`) |
 | Rapport final IA + coach, renvoyable après modification | `take.report` |
 | Réentraînement illimité, y compris après le rapport | espace bénéficiaire |
 | Suppression d'une prise, d'un parcours, de toutes ses données | `deleteTake`, `deleteParcours`, `withdrawConsent` |
@@ -147,7 +148,7 @@ src/
   Counselor.jsx       espace coach : identification locale, liste et indicateurs, création de parcours, détail, relecture
   Recorder.jsx        enregistreur caméra/micro + déclenchement du suivi du regard
   WarmupStage.jsx     aperçu de l'échauffement (caméra ou voix seule, fond), sans enregistrement
-  Assistant.jsx       fil de conversation avec l'assistant (échauffement, questionnaire, retour)
+  Assistant.jsx       assistant de préparation (fil de conversation) et panneau latéral commun DockPanel
   Report.jsx          lecteur avec repères, cartes d'observation, corps du rapport (partagé par les deux espaces)
   lib/
     store.js          données : localStorage (« larepet.v1 ») pour les métadonnées, IndexedDB (« larepet ») pour les vidéos
@@ -164,7 +165,7 @@ docs/
   design-system.md    référentiel UI/UX
   briefs/             briefs pour ChatGPT : articles (chatgpt-ressources.md) et images (chatgpt-images.md)
 tests/
-  run-site-e2e.mjs, site.e2e.cjs   test des pages publiques à 1280 et 390 px, et avec mouvement réduit (npm run test:site)
+  run-site-e2e.mjs, site.e2e.cjs   balayage responsive (11 largeurs, 320 × 568, 844 × 390, menu ouvert, connecté), pages publiques à 1280 et 390 px, mouvement réduit (npm run test:site)
   analysis.test.mjs   test unitaire de l'analyse et du garde-fou (npm run test:analysis)
   run-e2e.mjs         test de bout en bout Playwright avec caméra et transcription simulées (npm run test:e2e)
   e2e.cjs, mock-stt.mjs
@@ -249,7 +250,7 @@ E2E_VIEWPORT=390x844 npm run test:e2e                 # même parcours en taille
 npm run test:site                                       # pages publiques : navigation, menu mobile, strate, FAQ, ressources, démo
 ```
 
-`test:site` construit le site dans `node_modules/.cache/site-dist`, visite toutes les pages publiques à 1280 et 390 px puis avec « réduire les animations », et échoue en cas d'erreur JavaScript, de débordement horizontal ou d'élément attendu absent. Captures dans `tests/screenshots/site/`.
+`test:site` construit le site dans `node_modules/.cache/site-dist`, balaie d'abord 11 largeurs (320 à 1280 px) plus 320 × 568 et 844 × 390 en paysage, déconnecté puis connecté, menu mobile ouvert (débordement, chevauchement dans l'en-tête, fermeture visible, page bloquée et inerte derrière le menu, panneau « Mon compte » dans l'écran), puis visite toutes les pages publiques à 1280 et 390 px et avec « réduire les animations », et échoue en cas d'erreur JavaScript, de débordement horizontal ou d'élément attendu absent. Captures dans `tests/screenshots/site/`.
 
 Le test de bout en bout construit l'application avec un service de transcription simulé (`tests/mock-stt.mjs`), utilise la caméra et le micro simulés de Chromium, rejoue la boucle complète (création du parcours, consentement, choix du métier, échauffement avec phrase aléatoire, assistant et questionnaire de fin, sélection de deux questions dont une personnelle, enregistrement des deux réponses à la suite, analyse, rapport vidéo, envoi, relecture et annotation, envoi du rapport, lecture du rapport final) et enregistre des captures dans `tests/screenshots/`.
 

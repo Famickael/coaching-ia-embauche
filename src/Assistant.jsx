@@ -15,6 +15,7 @@ import { PHRASES } from "./content/legal.js";
 const EV = "rp-assistant";
 export const openAssistant = context => window.dispatchEvent(new CustomEvent(EV, { detail: { action: "open", context } }));
 export const nudgeAssistant = reason => window.dispatchEvent(new CustomEvent(EV, { detail: { action: "nudge", reason } }));
+export const closeAssistant = () => window.dispatchEvent(new CustomEvent(EV, { detail: { action: "close" } }));
 export const setRecording = on => window.dispatchEvent(new CustomEvent(EV, { detail: { action: "recording", on } }));
 
 const NUDGE_KEY = "larepet.nudges";
@@ -29,7 +30,7 @@ export default function AssistantDock({ poste, context = "general" }) {
   const [bubble, setBubble] = useState(false);
   const [recording, setRec] = useState(false);
   const [ctxKey, setCtxKey] = useState(0); // change à chaque ouverture depuis un écran : les suggestions suivent l'écran
-  const fab = useRef(null), panel = useRef(null), openRef = useRef(false), recRef = useRef(false), pending = useRef(false);
+  const fab = useRef(null), openRef = useRef(false), recRef = useRef(false), pending = useRef(false);
   openRef.current = open; recRef.current = recording;
   useEffect(() => { setCtx(context); }, [context]);
 
@@ -45,6 +46,7 @@ export default function AssistantDock({ poste, context = "general" }) {
     const on = e => {
       const d = e.detail || {};
       if (d.action === "open") { if (d.context) setCtx(d.context); setCtxKey(k => k + 1); setBubble(false); setOpen(true); }
+      if (d.action === "close") { setOpen(false); setBubble(false); }
       if (d.action === "nudge") nudge(d.reason);
       if (d.action === "recording") { setRec(!!d.on); if (!d.on && pending.current) { pending.current = false; setBubble(true); } }
     };
@@ -54,30 +56,13 @@ export default function AssistantDock({ poste, context = "general" }) {
   }, []); // eslint-disable-line
   useEffect(() => { if (!bubble) return; const t = setTimeout(() => setBubble(false), 15000); return () => clearTimeout(t); }, [bubble]);
 
-  useEffect(() => {
-    document.documentElement.classList.toggle("rp-asst-open", open);
-    if (!open) return;
-    requestAnimationFrame(() => document.getElementById("asst-panel-input")?.focus());
-    return () => document.documentElement.classList.remove("rp-asst-open");
-  }, [open]);
-
-  const refocus = useRef(false);
-  const close = () => { refocus.current = true; setOpen(false); };
-  useEffect(() => { if (!open && refocus.current) { refocus.current = false; fab.current?.focus(); } }, [open]);
+  const close = () => setOpen(false);
   const dismissBubble = () => { setBubble(false); writeNudges({ ...readNudges(), off: true }); };
 
   return (<>
-    <div ref={panel} id="asst-panel" role="dialog" aria-modal="false" aria-labelledby="asst-panel-title" hidden={!open}
-      className={`rp-ai-panel noprint ${open ? "is-in" : ""}`} onKeyDown={e => { if (e.key === "Escape") { e.stopPropagation(); close(); } }}>
-      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8, padding: "16px 12px 12px 20px", borderBottom: `1px solid ${T.line}` }}>
-        <div style={{ display: "grid", gap: 2, minWidth: 0 }}>
-          <h2 id="asst-panel-title" style={{ ...TY.h3, color: T.navy, margin: 0 }}>Assistant de préparation d'entretien</h2>
-          <div style={{ ...TY.caption, color: T.violet }}>Assistant automatique · ce n'est pas une personne</div>
-        </div>
-        <IconBtn icon={I.close} label="Fermer l'assistant" tone="muted" onClick={close} />
-      </div>
+    <DockPanel id="asst-panel" title="Assistant de préparation d'entretien" open={open} onClose={close} focusId="asst-panel-input" returnFocus={fab}>
       <Conversation poste={poste} context={ctx} ctxKey={ctxKey} />
-    </div>
+    </DockPanel>
     {!open && !recording && bubble && (
       <div className="rp-ai-bubble noprint" role="status">
         <Link onClick={() => { setBubble(false); setOpen(true); }} style={{ ...TY.small, ...TY.link, color: T.navy, textDecoration: "none", textAlign: "left" }}>Une question pour préparer votre entretien ?</Link>
@@ -89,6 +74,34 @@ export default function AssistantDock({ poste, context = "general" }) {
         onClick={() => { setBubble(false); setOpen(true); }} />
     )}
   </>);
+}
+
+/* Panneau latéral commun aux deux assistants (préparation côté bénéficiaire, rédaction du rapport côté coach) :
+   non modal, bordure en dégradé, Échap ferme, focus envoyé dans le panneau à l'ouverture et rendu au bouton
+   flottant à la fermeture ; sur mobile, feuille en bas de l'écran et espace équivalent réservé sous la page. */
+export function DockPanel({ id, title, mention = "Assistant automatique · ce n'est pas une personne", open, onClose, focusId, returnFocus, children }) {
+  const refocus = useRef(false);
+  useEffect(() => {
+    document.documentElement.classList.toggle("rp-asst-open", open);
+    if (!open) return;
+    requestAnimationFrame(() => (focusId ? document.getElementById(focusId) : document.querySelector(`#${id} button`))?.focus());
+    return () => document.documentElement.classList.remove("rp-asst-open");
+  }, [open]); // eslint-disable-line
+  useEffect(() => { if (!open && refocus.current) { refocus.current = false; returnFocus?.current?.focus(); } }, [open]); // eslint-disable-line
+  const close = () => { refocus.current = true; onClose(); };
+  return (
+    <div id={id} role="dialog" aria-modal="false" aria-labelledby={`${id}-title`} hidden={!open}
+      className={`rp-ai-panel noprint ${open ? "is-in" : ""}`} onKeyDown={e => { if (e.key === "Escape") { e.stopPropagation(); close(); } }}>
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8, padding: "16px 12px 12px 20px", borderBottom: `1px solid ${T.line}` }}>
+        <div style={{ display: "grid", gap: 2, minWidth: 0 }}>
+          <h2 id={`${id}-title`} style={{ ...TY.h3, color: T.navy, margin: 0 }}>{title}</h2>
+          <div style={{ ...TY.caption, color: T.violet }}>{mention}</div>
+        </div>
+        <IconBtn icon={I.close} label="Fermer l'assistant" tone="muted" onClick={close} />
+      </div>
+      {children}
+    </div>
+  );
 }
 
 /* Fil de conversation : messages, suggestions cliquables, relances (« un exemple ? », « pourquoi ? »). */

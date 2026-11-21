@@ -80,6 +80,16 @@ function Halo({ style }) {
   return <div aria-hidden className="rp-deco" style={{ position: "absolute", borderRadius: "50%", pointerEvents: "none", background: `radial-gradient(closest-side, ${background}, transparent)`, ...rest }} />;
 }
 
+/* Blocage du défilement de la page (menu mobile, fenêtres) : html porte overflow-y:scroll, donc bloquer
+   seulement body ne suffit pas. Compteur pour les ouvertures imbriquées ; renvoie la fonction de déblocage. */
+let scrollLocks = 0;
+function lockScroll() {
+  scrollLocks += 1;
+  document.documentElement.classList.add("rp-lock");
+  let done = false;
+  return () => { if (done) return; done = true; scrollLocks = Math.max(0, scrollLocks - 1); if (!scrollLocks) document.documentElement.classList.remove("rp-lock"); };
+}
+
 /* Chemin d'une image du dossier public/ (le site est servi sous un sous-dossier). */
 const img = p => `${import.meta.env.BASE_URL}img/${p}`;
 
@@ -478,8 +488,7 @@ function Modal({ open = true, close, title, sub, icon, head = "none", width = "f
   useEffect(() => {
     if (!open) return;
     const prevFocus = document.activeElement;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    const unlock = lockScroll();
     const focusables = () => [...(panel.current?.querySelectorAll("a[href],button:not([disabled]),input,textarea,select,[tabindex]:not([tabindex='-1'])") || [])];
     const first = focusables().find(el => !el.classList.contains("rp-modal-close")) || focusables()[0];
     first?.focus();
@@ -493,7 +502,7 @@ function Modal({ open = true, close, title, sub, icon, head = "none", width = "f
       }
     };
     document.addEventListener("keydown", key);
-    return () => { document.removeEventListener("keydown", key); document.body.style.overflow = prev; prevFocus?.focus?.(); };
+    return () => { document.removeEventListener("keydown", key); unlock(); prevFocus?.focus?.(); };
   }, [open]); // eslint-disable-line
   if (!open) return null;
   const dark = head === "grad";
@@ -665,6 +674,13 @@ const GStyle = () => (
     html[data-font=lisible]{--ff-d:${FONT_STACKS.lisible};--ff-b:${FONT_STACKS.lisible}}
     *{box-sizing:border-box} body{margin:0;background:${T.bg};color:${T.navy}}
     html{overflow-y:scroll;scrollbar-gutter:stable}
+    html.rp-lock,html.rp-lock body{overflow:hidden!important;overscroll-behavior:none}
+    /* Menu mobile ouvert : boutons flottants retirés (rien de cliquable derrière le panneau) */
+    html.rp-menu-open .rp-totop,html.rp-menu-open .rp-ai-fab,html.rp-menu-open .rp-ai-bubble,html.rp-account-open .rp-totop,html.rp-account-open .rp-ai-fab,html.rp-account-open .rp-ai-bubble{display:none!important}
+    /* Panneau « Mon compte » : à droite sur grand écran, plein écran sur mobile */
+    .rp-account-ov{position:fixed;inset:0;z-index:${Z.modal};background:${T.overlay};display:flex;justify-content:flex-end;animation:rpFade ${MO.base} ${MO.ease} both}
+    @keyframes rpFade{from{opacity:0}to{opacity:1}}
+    .rp-account{width:min(400px,100vw);height:100%;background:${T.surface};box-shadow:${SH.lg};display:flex;flex-direction:column;animation:rpAiIn ${MO.enter} ${MO.ease} both}
     ::selection{background:${T.lavender};color:${T.surface}}
     img{max-width:100%}
     @keyframes up{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
@@ -700,6 +716,8 @@ const GStyle = () => (
     .rp-ai-fab:hover{box-shadow:${SH.btn.ai[1]};transform:translateY(-1px)}
     .rp-ai-bubble{position:fixed;right:16px;bottom:148px;z-index:${Z.nav};max-width:min(300px,calc(100vw - 32px));display:flex;align-items:center;gap:4px;padding:4px 4px 4px 16px;border:2px solid transparent;border-radius:${RAD.md}px;background:linear-gradient(${T.surface},${T.surface}) padding-box,${GRAD_AI_BORDER} border-box;box-shadow:${SH.lg};animation:rpAiIn ${MO.enter} ${MO.ease} both}
     .rp-has-fab{padding-bottom:96px!important}
+    /* Grand écran : le contenu se décale pour rester visible à côté du panneau ouvert (insertion en un clic) */
+    @media (min-width:1180px){html.rp-asst-open .rp-view{padding-right:432px}}
     /* Changement de page (référentiel 7) : seul le contenu change, l'en-tête reste en place */
     .rp-header{view-transition-name:rp-header}
     .rp-view{view-transition-name:rp-page}
@@ -778,6 +796,10 @@ const GStyle = () => (
     .rs-menu a.rs-mlink[aria-current=page]{color:${T.primary}}
     .rs-burger{display:none!important}
     @media (max-width:1023px){ .rs-links,.rs-demo{display:none!important} .rs-burger{display:inline-grid!important} }
+    /* Texte agrandi ou espacé : la navigation complète ne tient plus sous 1280 px, le menu repliable prend le relais */
+    @media (max-width:1279px){ html[data-textsize=lg] .rs-links,html[data-textsize=lg] .rs-demo{display:none!important} html[data-textsize=lg] .rs-burger{display:inline-grid!important} }
+    /* Titres et paragraphes : un mot long passe à la ligne plutôt que de faire déborder la page (texte agrandi, 320 px) */
+    h1,h2,h3,h4,p,li,dt,dd,label,blockquote{overflow-wrap:anywhere}
     /* Puces */
     .rs-chip{display:inline-flex;align-items:center;gap:8px;min-height:40px;padding:8px 16px;border-radius:${RAD.pill}px;border:1.5px solid ${T.line};background:${T.surface};color:${T.body};cursor:pointer;font:${F("btnSm")};text-align:left;transition:background-color ${MO.fast},border-color ${MO.fast},color ${MO.fast}}
     .rs-chip:hover{border-color:${T.primary};color:${T.primary}}
@@ -962,6 +984,8 @@ const GStyle = () => (
       .rp-hide-m,.rp-rail-other{display:none!important}
       .rp-show-m{display:inline}
       .rp-nav{padding:0 16px!important;height:${HEADER_H_M}px!important;gap:8px}
+      /* Boutons de l'en-tête : texte agrandi plafonné à 115 % pour que logo, « Mon espace », accessibilité et menu tiennent sur une ligne */
+      .rp-nav button{font-size:calc(13px * min(var(--fs, 1), 1.15))!important}
       .rp-nav nav{gap:8px!important}
       .rp-nav nav .navlink{font-size:calc(13px * var(--fs))}
       .ty-display{font-size:calc(${TY_MOBILE.display}px * var(--fs))!important} .ty-xl{font-size:calc(${TY_MOBILE.xl}px * var(--fs))!important} .ty-h1{font-size:calc(${TY_MOBILE.h1}px * var(--fs))!important} .ty-lead{font-size:calc(${TY_MOBILE.lead}px * var(--fs))!important}
@@ -983,6 +1007,7 @@ const GStyle = () => (
       .rp-flow{flex-direction:column;gap:20px!important;overflow:visible!important}
       .rp-flow-step{flex:none!important;min-width:0!important}
       .rs-menu{top:${HEADER_H_M}px;padding:16px 16px 40px}
+      .rp-account{width:100vw}
       .rs-hero{grid-template-columns:minmax(0,1fr);gap:40px}
       .rs-bubble{left:-8px}
       .rs-card-pos{right:8px!important;width:min(310px,calc(100% - 16px))!important}
@@ -1005,13 +1030,23 @@ const GStyle = () => (
     }
     @media (max-height:520px){ .rs-panel{position:static!important;height:auto!important} }
     @media (max-width:360px){ .rp-hide-xs{display:none!important} }
+    /* En-tête des petits écrans : logo réduit, puis option d'accessibilité déplacée dans le menu (elle y est déjà) */
+    @media (max-width:420px){ .rp-head-logo .rp-logo-sym{height:30px!important} .rp-head-logo .rp-logo-word{height:28px!important} }
+    @media (max-width:359px){ .rp-head-a11y{display:none!important} .rp-nav{padding:0 12px!important} }
+    /* Cibles tactiles de 44 px (référentiel 8) sur mobile et sur tout écran tactile */
+    @media (max-width:760px),(pointer:coarse){
+      .rs-chip,[role=tab]{min-height:44px}
+      .rs-toc a{min-height:44px;display:flex;align-items:center}
+      .rp-crumbs a,.rp-sources a{display:inline-flex;align-items:center;min-height:44px}
+      .rp-ai-bubble a,.rp-ai-bubble button{min-height:44px}
+    }
     @media print{header,footer,.noprint{display:none!important}body{background:${T.surface}}}
     ::-webkit-scrollbar{height:8px;width:8px}::-webkit-scrollbar-thumb{background:${T.line};border-radius:4px}
   `}</style>
 );
 
 export {
-  ORG_NAME, RepetMark, RepetWord, RepetLogo, OrgLogo, Halo, img, Icon, I, SI, Txt, Eyebrow, Bare, Btn, IconBtn, Fab, Link, Back,
+  ORG_NAME, lockScroll, RepetMark, RepetWord, RepetLogo, OrgLogo, Halo, img, Icon, I, SI, Txt, Eyebrow, Bare, Btn, IconBtn, Fab, Link, Back,
   Tag, Card, Notice, Quote, IconTile, Empty, Confirm, ConfirmMark, TimeChip, fmtTime, Field, Input, Textarea, Select, Checkbox, CheckTile,
   Chip, Toggle, Rail, GradHead, Modal, BrandLoader, Section, PageHero, Accordion, Tabs, ScrollProgress, GStyle,
 };

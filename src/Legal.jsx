@@ -51,8 +51,8 @@ function Blocks({ blocks }) {
 /* Lien de retour vers l'espace, si une personne arrive depuis son espace. */
 function BackToSpace() {
   const ls = getState().lastSpace;
-  if (ls?.role === "benef" && findParcours(ls.code)) return <Link href={`#/s/${ls.code}`}>Retour à mon espace</Link>;
-  if (ls?.role === "coach") return <Link href="#/coach">Retour à l'espace coach</Link>;
+  if (ls?.role === "benef" && findParcours(ls.code)) return <Link href={`#/s/${ls.code}`} style={{ minHeight: 44, display: "inline-flex", alignItems: "center" }}>Retour à mon espace</Link>;
+  if (ls?.role === "coach") return <Link href="#/coach" style={{ minHeight: 44, display: "inline-flex", alignItems: "center" }}>Retour à l'espace coach</Link>;
   return null;
 }
 
@@ -101,7 +101,7 @@ function Hub() {
       ))}
     </div>
     <Notice tone="info" icon={I.trash}>
-      Pour supprimer une réponse, ouvrez-la dans votre espace. Pour tout supprimer, ouvrez « Mes paramètres » dans votre espace, puis « Retirer mon consentement ».
+      Pour supprimer une réponse, ouvrez-la dans votre espace. Pour tout supprimer, ouvrez « Mon compte » dans votre espace, puis « Retirer mon consentement ».
     </Notice>
     <Notice tone="info" icon={I.shield}>{PHRASES.noTracking}</Notice>
   </>);

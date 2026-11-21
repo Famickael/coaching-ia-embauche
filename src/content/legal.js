@@ -52,7 +52,7 @@ export const PHRASES = {
   contactInfo: "Vos coordonnées sont transmises uniquement à l'équipe d'accompagnement, pour organiser ce rendez-vous.",
   contactMail: "Votre messagerie s'ouvre avec votre demande : il vous reste à l'envoyer.",
   refuse: "Vous pouvez refuser. Cela ne change rien à votre accompagnement : vous pouvez préparer votre entretien avec votre coach.",
-  changeMind: "Vous pouvez changer d'avis à tout moment, dans « Mes paramètres ».",
+  changeMind: "Vous pouvez changer d'avis à tout moment, dans « Mon compte ».",
   sharedDevice: "Sur un ordinateur partagé, supprimez vos entraînements avant de partir.",
 };
 
@@ -97,7 +97,7 @@ export const SUMMARY = {
   appareil: [
     ["lock", "Vos entraînements sont gardés **dans ce navigateur, sur cet appareil**."],
     ["ban", "**Pas de publicité. Pas de pistage. Pas de mesure d'audience.**"],
-    ["trash", "Vous effacez tout avec « Retirer mon consentement », dans « Mes paramètres »."],
+    ["trash", "Vous effacez tout avec « Retirer mon consentement », dans « Mon compte »."],
   ],
   conditions: [
     ["mic", "Vous vous entraînez **pour vous**, autant de fois que vous voulez."],
@@ -164,7 +164,7 @@ export const FULL = {
   droits: [
     { p: ["Vos données vous appartiennent. Voici ce que vous pouvez faire."] },
     { h: "Voir vos données.", p: ["Tout ce qui vous concerne est dans votre espace : vos réponses, vos retours, les rapports de votre coach."] },
-    { h: "Les supprimer.", p: ["Ouvrez une réponse, puis appuyez sur « Supprimer cette réponse ». Pour tout effacer : « Retirer mon consentement », dans « Mes paramètres »."] },
+    { h: "Les supprimer.", p: ["Ouvrez une réponse, puis appuyez sur « Supprimer cette réponse ». Pour tout effacer : « Retirer mon consentement », dans « Mon compte »."] },
     { h: "Les récupérer.", p: ["Vous pouvez télécharger votre vidéo et imprimer votre retour."] },
     { h: "Les corriger.", p: ["Vous pouvez changer votre métier dans votre espace. Demandez à votre coach de corriger votre prénom."] },
     { h: "Changer d'avis.", p: ["Vous pouvez retirer votre accord à tout moment. Vos entraînements sont alors effacés. Votre accompagnement continue normalement."] },
