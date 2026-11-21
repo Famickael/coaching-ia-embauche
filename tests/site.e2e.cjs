@@ -179,14 +179,19 @@ async function run(b, vw, vh, opts = {}) {
   await visit("#/demo"); await shot("13-demo");
   check(await p.getByRole("checkbox").count() === 0, `[${tag}] formulaire : aucune case de recontact ne doit être obligatoire`);
   check(await p.getByLabel(/Fonction/).count() === 0, `[${tag}] formulaire : le champ « Fonction » (organismes) doit être retiré`);
-  await p.getByRole("button", { name: "Envoyer ma demande" }).click();
+  await p.getByRole("button", { name: "Préparer ma demande" }).click();
   check(await p.locator("[role=alert]").count() >= 3, `[${tag}] formulaire : erreurs non signalées`);
   await shot("13b-demo-erreurs", false);
   await p.getByLabel("Prénom").fill("Alex");
   await p.getByLabel("Votre numéro de téléphone").fill("06 12 34 56 78");
   await p.getByLabel("Vos disponibilités").selectOption({ index: 1 });
-  await p.getByRole("button", { name: "Envoyer ma demande" }).click(); await p.waitForTimeout(300);
-  check(await p.getByRole("heading", { name: /votre demande est enregistrée/ }).count() === 1, `[${tag}] formulaire : écran de confirmation absent`);
+  await p.getByRole("button", { name: "Préparer ma demande" }).click(); await p.waitForTimeout(300);
+  /* Site construit sans VITE_CONTACT_EMAIL (BUG-01) : rien n'est envoyé, l'écran le dit et propose de copier la demande. */
+  check(await p.getByRole("heading", { name: /votre demande est prête/ }).count() === 1, `[${tag}] formulaire : écran de confirmation absent`);
+  const doneText = await p.locator("main").innerText();
+  check(!/recontact|enregistrée|est envoyée/i.test(doneText), `[${tag}] formulaire : la confirmation ne doit pas annoncer un envoi qui n'a pas eu lieu`);
+  check(/transmettez-le à votre coach/.test(doneText), `[${tag}] formulaire : consigne de copie absente`);
+  check(await p.getByRole("button", { name: "Copier ma demande" }).count() === 1, `[${tag}] formulaire : bouton « Copier ma demande » absent`);
   await shot("14-demo-confirmation");
 
   // Pied de page : liens vers les questions fréquentes et les pages « Vos données »

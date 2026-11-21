@@ -49,8 +49,11 @@ export const PHRASES = {
   logout: "Se déconnecter n'efface pas les données de cet appareil.",
   coachLogin: "Vous ne voyez que les réponses que l'on vous envoie.",
   noTracking: "Ce site n'utilise pas de cookies publicitaires et ne vous suit pas.",
-  contactInfo: "Vos coordonnées sont transmises uniquement à l'équipe d'accompagnement, pour organiser ce rendez-vous.",
+  contactInfo: "Vos coordonnées servent seulement à organiser ce rendez-vous. Elles sont destinées uniquement à l'équipe d'accompagnement.",
+  /* Écran de confirmation de la demande (BUG-01) : jamais « l'équipe vous recontacte » tant qu'aucun envoi réel n'a eu lieu. */
   contactMail: "Votre messagerie s'ouvre avec votre demande : il vous reste à l'envoyer.",
+  contactCopy: "Copiez ce récapitulatif et transmettez-le à votre coach, par message ou lors de votre prochain rendez-vous. Il organisera la prise en main avec vous.",
+  contactSent: "Votre demande est envoyée. L'équipe d'accompagnement vous recontacte pour fixer le rendez-vous.",
   refuse: "Vous pouvez refuser. Cela ne change rien à votre accompagnement : vous pouvez préparer votre entretien avec votre coach.",
   changeMind: "Vous pouvez changer d'avis à tout moment, dans « Mon compte ».",
   sharedDevice: "Sur un ordinateur partagé, supprimez vos entraînements avant de partir.",

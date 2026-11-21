@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { T, TY, RAD, PAD, GAP, W, Card, Tag, Btn, Back, Link, IconBtn, Icon, I, Txt, Notice, Empty, Confirm, ConfirmMark, Field, Input, Textarea, Toggle, Modal, TimeChip, Bare } from "./ui.jsx";
-import { useStore, createParcours, deleteParcours, takesOf, updateTake, parcoursStatus } from "./lib/store.js";
+import { useStore, createParcours, deleteParcours, takesOf, sendReport, saveDraft as storeDraft, parcoursStatus } from "./lib/store.js";
 import { Player, DimCard, markersOf, useVideoUrl } from "./Report.jsx";
 import { fmt } from "./lib/analysis.js";
 import CoachAssistantDock from "./CoachAssistant.jsx";
@@ -32,7 +32,9 @@ export default function Counselor() {
       <div key={view.name + (view.code || "") + (view.takeId || "")} className="up">
         {view.name === "list" && <List s={s} open={code => setView({ name: "parcours", code })} create={() => setModal({ step: "create" })} />}
         {view.name === "parcours" && s.parcours[view.code] && <Parcours s={s} p={s.parcours[view.code]} back={() => setView({ name: "list" })} review={takeId => setView({ name: "review", code: view.code, takeId })} />}
-        {view.name === "review" && s.takes[view.takeId] && <Review s={s} p={s.parcours[view.code]} take={s.takes[view.takeId]} back={() => setView({ name: "parcours", code: view.code })} />}
+        {view.name === "review" && s.takes[view.takeId] && (s.takes[view.takeId].shared
+          ? <Review s={s} p={s.parcours[view.code]} take={s.takes[view.takeId]} back={() => setView({ name: "parcours", code: view.code })} />
+          : <Withdrawn back={() => setView({ name: "parcours", code: view.code })} />)}
       </div>
       {modal?.step === "create" && (
         <Modal close={() => setModal(null)} title="Créer un parcours" sub="Vous obtenez un code d'accès à transmettre. La personne n'a pas de compte à créer.">
@@ -178,7 +180,7 @@ function Parcours({ s, p, back, review }) {
         <div style={stack(4)}>
           <div style={{ display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}><span style={{ ...TY.h2, color: T.navy }}>{p.prenom}</span><span style={{ ...TY.mono, color: T.muted }}>{p.code}</span></div>
           <div style={{ ...TY.small, color: T.body }}>
-            {p.poste || "Poste non précisé"} · {p.consent ? `accord donné le ${dateFr(p.consent.at)}${p.consent.ai ? "" : ", sans retour de l'assistant"}` : p.openedAt ? "espace ouvert, accord pas encore donné" : "espace pas encore ouvert"}
+            {p.poste || "Poste non précisé"} · {p.consent ? `accord donné le ${dateFr(p.consent.at)}${p.consent.ai ? "" : ", sans retour de l'assistant"}` : p.consentWithdrawnAt ? `accord retiré le ${dateFr(p.consentWithdrawnAt)}` : p.openedAt ? "espace ouvert, accord pas encore donné" : "espace pas encore ouvert"}
           </div>
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
@@ -216,6 +218,16 @@ function Parcours({ s, p, back, review }) {
 
 const nid = () => Math.random().toString(36).slice(2, 9);
 
+/* La personne a repris son envoi pendant la relecture (BUG-02) : la réponse n'est plus visible, aucun rapport ne part. */
+function Withdrawn({ back }) {
+  return (
+    <div style={stack(GAP.stack)}>
+      <Notice tone="info" role="status">La personne a repris cette réponse. Vous ne la voyez plus, et aucun rapport ne lui est envoyé.</Notice>
+      <div><Back onClick={back}>Retour au parcours</Back></div>
+    </div>
+  );
+}
+
 function Review({ s, p, take, back }) {
   const url = useVideoUrl(take);
   const playerRef = useRef(null);
@@ -226,10 +238,13 @@ function Review({ s, p, take, back }) {
   const [noteText, setNoteText] = useState("");
   const [active, setActive] = useState(null);
   const [sent, setSent] = useState(false);
+  const [refused, setRefused] = useState(false);
   const A = take.analysis || { synthese: "", dimensions: [] };
   const virtualTake = useMemo(() => ({ ...take, report: { notes } }), [take, notes]);
 
-  const saveDraft = (patch = {}) => updateTake(take.id, { draft: { intro, comments, notes, ...patch } });
+  const saveDraft = (patch = {}) => storeDraft(take.id, { intro, comments, notes, ...patch });
+  /* Un rapport vide ne part pas (BUG-18) : au moins un mot d'introduction, une remarque ou un commentaire. */
+  const empty = !intro.trim() && !notes.length && !Object.values(comments).some(c => (c || "").trim());
   const addNote = () => {
     const t = playerRef.current ? playerRef.current.currentTime : 0;
     if (!noteText.trim()) return;
@@ -256,9 +271,11 @@ function Review({ s, p, take, back }) {
     return "";
   };
   const send = () => {
-    updateTake(take.id, { report: { intro: intro.trim(), comments, notes, sentAt: new Date().toISOString(), by: s.counselor.name }, draft: null });
-    setSent(true);
+    if (empty) return;
+    const ok = sendReport(take.id, { intro: intro.trim(), comments, notes, sentAt: new Date().toISOString(), by: s.counselor.name });
+    if (ok) setSent(true); else setRefused(true);
   };
+  if (refused) return <Withdrawn back={back} />;
 
   if (sent) return (
     <Confirm as="h2" title={`Rapport envoyé à ${p.prenom}`} actions={<Btn kind="primary" onClick={back}>Retour au parcours</Btn>}>
@@ -331,8 +348,8 @@ function Review({ s, p, take, back }) {
               <Input value={comments[d.id] || ""} onChange={e => setComments(c => ({ ...c, [d.id]: e.target.value }))} onBlur={() => saveDraft()} placeholder="Votre remarque sur ce repère (facultatif)" aria-label={`Votre remarque sur le repère : ${d.titre}`} />
             </div>
           ))}
-          <Btn kind="objective" full onClick={send} icon={I.send}>{take.report ? "Renvoyer le rapport" : "Envoyer le rapport"}</Btn>
-          <Txt v="caption" color={T.muted} style={{ textAlign: "center" }}>Rien n'est transmis tant que vous n'avez pas envoyé le rapport. Vos saisies sont enregistrées en brouillon.</Txt>
+          <Btn kind="objective" full onClick={send} disabled={empty} icon={I.send} aria-describedby="review-send-h">{take.report ? "Renvoyer le rapport" : "Envoyer le rapport"}</Btn>
+          <Txt v="caption" color={T.muted} style={{ textAlign: "center" }} id="review-send-h">{empty ? "Écrivez au moins un mot pour la personne : une introduction, une remarque ou un commentaire. " : ""}Rien n'est transmis tant que vous n'avez pas envoyé le rapport. Vos saisies sont enregistrées en brouillon.</Txt>
         </div>
       </div>
       <div><Back onClick={back} /></div>

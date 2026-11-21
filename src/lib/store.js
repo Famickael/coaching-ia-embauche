@@ -156,6 +156,23 @@ export function unshareTake(id) {
   write({ ...state, takes: { ...state.takes, [id]: { ...t, shared: false, sharedAt: null, draft: null } } });
 }
 
+/* Rapport du coach (BUG-02) : refusé si la personne a repris son envoi entre-temps (deux onglets, deux appareils).
+   Renvoie true si le rapport est enregistré. Production : rpc('envoyer_rapport'), qui refuse de la même façon. */
+export function sendReport(id, report) {
+  const t = state.takes[id];
+  if (!t || !t.shared) return false;
+  write({ ...state, takes: { ...state.takes, [id]: { ...t, report, draft: null } } });
+  return true;
+}
+
+/* Brouillon du coach : ignoré si la réponse n'est plus partagée (le brouillon a été effacé par la reprise). */
+export function saveDraft(id, draft) {
+  const t = state.takes[id];
+  if (!t || !t.shared) return false;
+  write({ ...state, takes: { ...state.takes, [id]: { ...t, draft } } });
+  return true;
+}
+
 export function updateTake(id, patch) {
   const t = state.takes[id];
   if (!t) return;
