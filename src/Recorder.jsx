@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { T, FIX, ON, TY, RAD, W, GAP, GRAD_NIGHT, Btn, Back, Icon, I } from "./ui.jsx";
+import { T, FIX, ON, TY, RAD, W, GAP, GRAD_NIGHT, Btn, Back, Icon, I, BrandLoader } from "./ui.jsx";
 import { startGaze } from "./lib/gaze.js";
 import { PHRASES } from "./content/legal.js";
 import { setRecording, nudgeAssistant } from "./Assistant.jsx";
@@ -71,7 +71,7 @@ export default function Recorder({ question, onDone, onCancel, trackGaze = true,
     setRecording(true);
   }
 
-  function stop() { if (recRef.current?.state === "recording") recRef.current.stop(); }
+  function stop() { if (recRef.current?.state === "recording") { setPhase("stopping"); recRef.current.stop(); } }
 
   useEffect(() => {
     if (phase !== "recording") return;
@@ -100,6 +100,11 @@ export default function Recorder({ question, onDone, onCancel, trackGaze = true,
       <div style={{ position: "relative", borderRadius: RAD.lg, overflow: "hidden", aspectRatio: "16/9", background: GRAD_NIGHT }}>
         <video ref={liveRef} muted playsInline style={{ width: "100%", height: "100%", objectFit: "cover", transform: "scaleX(-1)", display: (phase === "live" || phase === "recording") && !audioOnly ? "block" : "none" }} />
 
+        {phase === "stopping" && (
+          <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", background: T.surface }}>
+            <BrandLoader label="Préparation de votre enregistrement…" size={64} />
+          </div>
+        )}
         {phase === "done" && result && (audioOnly
           ? <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center" }}><audio src={result.url} controls style={{ width: "80%" }} /></div>
           : <video src={result.url} controls playsInline style={{ width: "100%", height: "100%", objectFit: "cover", background: T.videoBg }} />)}

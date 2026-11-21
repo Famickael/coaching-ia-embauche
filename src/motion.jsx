@@ -58,10 +58,24 @@ export function useCount(target, start, delay, reduced) {
 }
 
 /* Défile jusqu'à une section de la page (routes du type #/solutions/coachs). */
+/* Lien vers une autre partie de la même page : défilement doux (direct en mouvement réduit), sous l'en-tête collant,
+   puis focus sur la cible pour le clavier et les lecteurs d'écran. */
+export function scrollToTarget(target, { focus = true } = {}) {
+  const el = typeof target === "string" ? document.getElementById(target) : target;
+  if (!el) return;
+  const header = document.querySelector("header");
+  const off = (header ? header.getBoundingClientRect().height : 64) + 16;
+  const top = Math.max(0, el.getBoundingClientRect().top + window.scrollY - off);
+  window.scrollTo({ top, behavior: reducedNow() ? "auto" : "smooth" });
+  if (focus) {
+    if (!el.hasAttribute("tabindex")) el.setAttribute("tabindex", "-1");
+    el.focus({ preventScroll: true });
+  }
+}
 export function useSectionScroll(section) {
   useEffect(() => {
     if (!section) return;
-    const t = setTimeout(() => document.getElementById(section)?.scrollIntoView({ block: "start" }), 60);
+    const t = setTimeout(() => scrollToTarget(section), 80);
     return () => clearTimeout(t);
   }, [section]);
 }

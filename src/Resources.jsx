@@ -1,6 +1,6 @@
 import React, { useMemo, useRef, useState } from "react";
 import { T, GAP, GRAD_PAGE, RAD, SH, Btn, Tag, Icon, I, TY, W, SI, img, Eyebrow, Section, PageHero, Chip, IconTile, Input } from "./ui.jsx";
-import { Reveal } from "./motion.jsx";
+import { Reveal, scrollToTarget } from "./motion.jsx";
 import { FinalBand } from "./Home.jsx";
 import { ARTICLES, CATEGORIES, TYPES, findArticle, findCategory, search, norm } from "./content/resources.js";
 
@@ -275,7 +275,7 @@ function Article({ a, go, openSpace }) {
               ) : toc.length > 1 && (
                 <nav className="rs-toc" aria-label="Sommaire de l'article">
                   <div style={{ ...TY.overline, color: T.muted, marginBottom: 8 }}>Sommaire</div>
-                  {toc.map(h => <a key={h.id} href={`#/ressources/${a.slug}`} onClick={e => { e.preventDefault(); document.getElementById(h.id)?.scrollIntoView({ behavior: "smooth", block: "start" }); }}>{h.text}</a>)}
+                  {toc.map(h => <a key={h.id} href={`#/ressources/${a.slug}`} onClick={e => { e.preventDefault(); scrollToTarget(h.id); }}>{h.text}</a>)}
                 </nav>
               )}
             </aside>
@@ -334,7 +334,7 @@ function SearchBox({ q, setQ, go }) {
     else if (e.key === "Escape") { if (show) { e.preventDefault(); setOpen(false); setActive(-1); } }
   };
   return (
-    <form role="search" onSubmit={e => { e.preventDefault(); setOpen(false); document.getElementById("toutes")?.scrollIntoView({ block: "start" }); }} style={{ position: "relative", maxWidth: 520, marginTop: 8 }}>
+    <form role="search" onSubmit={e => { e.preventDefault(); setOpen(false); scrollToTarget("toutes"); }} style={{ position: "relative", maxWidth: 520, marginTop: 8 }}>
       <label htmlFor="rs-q" className="rs-sr">Rechercher une ressource</label>
       <span aria-hidden style={{ position: "absolute", left: 16, top: 14, color: T.muted, display: "flex" }}><Icon d={I.search} s={20} /></span>
       <Input id="rs-q" type="search" role="combobox" aria-autocomplete="list" aria-expanded={show} aria-controls="rs-q-list"
