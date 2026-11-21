@@ -13,6 +13,7 @@
    (AI Act, art. 5(1)(f)) ; aucune donnée personnelle demandée ; renvoi vers le coach au-delà. */
 
 import { textCompliant } from "./compliance.js";
+import { fillPoste } from "./text.js";
 
 /* Garde-fou de l'assistant : il peut parler du trac quand la personne en parle, jamais qualifier la personne ni noter. */
 export const assistantCompliant = t => textCompliant(t, "assistant") && !/\u2014/.test(t);
@@ -146,8 +147,8 @@ export const KB = [
   },
   {
     id: "supprimer", q: "Comment supprimer mes données ?",
-    keys: ["supprimer", "effacer", "suppression", "retirer mon consentement", "consentement", "enlever", "detruire"],
-    answer: "Ouvrez une réponse et appuyez sur « Supprimer » pour l'effacer. Pour tout effacer, utilisez « Retirer mon consentement et supprimer mes données » en bas de votre espace. Aucune justification n'est demandée.",
+    keys: ["supprimer", "effacer", "suppression", "retirer mon consentement", "retirer mon accord", "consentement", "enlever", "detruire"],
+    answer: "Ouvrez une réponse et appuyez sur « Supprimer » pour l'effacer. Pour tout effacer, ouvrez « Mon compte », puis « Retirer mon accord ». Aucune justification n'est demandée.",
     more: "La suppression efface la vidéo et le retour de cet appareil. Si une réponse a déjà été envoyée à votre coach, vous pouvez lui demander de la supprimer de son côté.",
     example: "Par exemple, vous pouvez garder uniquement vos meilleures réponses et supprimer les essais.",
     related: ["confidentialite", "video-devenir"],
@@ -504,7 +505,7 @@ function scoreAll(toks, lastId) {
   return res.sort((a, b) => b[0] - a[0]);
 }
 
-const fillText = (t, poste) => t.replace(/\{poste\}/g, poste || "le poste visé");
+const fillText = (t, poste) => fillPoste(t, poste, "le poste visé");
 
 /* ─── Suggestions par contexte ─── */
 /* Suggestions : uniquement la préparation d'entretien (les questions sur le site renvoient vers la FAQ). */

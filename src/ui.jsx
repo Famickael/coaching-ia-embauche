@@ -5,6 +5,7 @@ import {
   TONE, HEADER_H, HEADER_H_M, TY_MOBILE, GRAD_AI_BORDER, FONT_STACKS, MASK, GRAD_LOGO, FADE_FOOT,
 } from "./tokens.js";
 import { Reveal } from "./motion.jsx";
+import { clock } from "./lib/format.js";
 
 /* Composants de base de La Répét' (référentiel UI/UX v3, docs/design-system.md).
    Les jetons viennent de src/tokens.js et sont réexportés ici : les écrans n'importent que depuis ui.jsx.
@@ -345,7 +346,7 @@ function Confirm({ title, as = "h1", children, actions, width = W.form, level = 
 
 /* Pastille horaire (référentiel 5.10) : hauteur 24, TY.time, fond de la couleur du rôle, texte blanc.
    Cliquable : zone tactile 44 par un padding transparent. */
-const fmtTime = s => `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, "0")}`;
+const fmtTime = clock; // src/lib/format.js
 const TIME_BG = { appui: T.accent, ai: T.violet, primary: T.primary };
 function TimeChip({ t, tone = "primary", onClick, label }) {
   const chip = (

@@ -10,6 +10,7 @@ import { ORG, orgName, OrgName, dpoLine, contactLine, hostLine, THIRD_PARTIES, S
 
 const REMOTE_LLM = !!import.meta.env?.VITE_LLM_ENDPOINT;
 const REMOTE_STT = !!import.meta.env?.VITE_STT_ENDPOINT;
+const BACKEND = !!import.meta.env?.VITE_BACKEND_URL;
 export const LEGAL_DATE = "20 novembre 2026";
 export const LEGAL_VERSION = ORG.textsVersion;
 
@@ -46,6 +47,8 @@ export const PHRASES = {
     : "La première fois, votre appareil télécharge un outil d'analyse (environ 85 Mo). Préférez le Wi-Fi. Votre vidéo n'est pas envoyée.",
   share: "Seul votre coach verra cette réponse.",
   sent: "Vous pouvez reprendre votre envoi quand vous voulez, depuis votre espace.",
+  /* Sans serveur, l'envoi reste dans ce navigateur (RED-07) : dit là où la personne envoie. */
+  sameDevice: BACKEND ? "" : "Votre coach lit votre réponse sur cet appareil, dans ce navigateur. Son rapport arrive au même endroit : revenez-y avec le même code.",
   logout: "Se déconnecter n'efface pas les données de cet appareil.",
   coachLogin: "Vous ne voyez que les réponses que l'on vous envoie.",
   noTracking: "Ce site n'utilise pas de cookies publicitaires et ne vous suit pas.",
@@ -100,7 +103,7 @@ export const SUMMARY = {
   appareil: [
     ["lock", "Vos entraînements sont gardés **dans ce navigateur, sur cet appareil**."],
     ["ban", "**Pas de publicité. Pas de pistage. Pas de mesure d'audience.**"],
-    ["trash", "Vous effacez tout avec « Retirer mon consentement », dans « Mon compte »."],
+    ["trash", "Vous effacez tout avec « Retirer mon accord », dans « Mon compte »."],
   ],
   conditions: [
     ["mic", "Vous vous entraînez **pour vous**, autant de fois que vous voulez."],
@@ -167,7 +170,7 @@ export const FULL = {
   droits: [
     { p: ["Vos données vous appartiennent. Voici ce que vous pouvez faire."] },
     { h: "Voir vos données.", p: ["Tout ce qui vous concerne est dans votre espace : vos réponses, vos retours, les rapports de votre coach."] },
-    { h: "Les supprimer.", p: ["Ouvrez une réponse, puis appuyez sur « Supprimer cette réponse ». Pour tout effacer : « Retirer mon consentement », dans « Mon compte »."] },
+    { h: "Les supprimer.", p: ["Ouvrez une réponse, puis appuyez sur « Supprimer cette réponse ». Pour tout effacer : « Retirer mon accord », dans « Mon compte »."] },
     { h: "Les récupérer.", p: ["Vous pouvez télécharger votre vidéo et imprimer votre retour."] },
     { h: "Les corriger.", p: ["Vous pouvez changer votre métier dans votre espace. Demandez à votre coach de corriger votre prénom."] },
     { h: "Changer d'avis.", p: ["Vous pouvez retirer votre accord à tout moment. Vos entraînements sont alors effacés. Votre accompagnement continue normalement."] },

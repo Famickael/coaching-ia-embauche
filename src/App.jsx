@@ -249,7 +249,7 @@ function AccountMenu({ route, s }) {
   const p = !coach && code ? s.parcours[code] : null;
   const items = coach
     ? [["space", "Retour à mon espace", I.user], ["data", "Vos données", I.shield], ["a11y", "Options d'accessibilité", I.a11y], ["logout", "Se déconnecter", I.logout]]
-    : [["space", "Retour à mon espace", I.user], ["data", "Vos données", I.shield], ["a11y", "Options d'accessibilité", I.a11y], ["code", "Changer de code", I.redo], ["withdraw", "Retirer mon consentement", I.trash], ["logout", "Se déconnecter", I.logout]];
+    : [["space", "Retour à mon espace", I.user], ["data", "Vos données", I.shield], ["a11y", "Options d'accessibilité", I.a11y], ["code", "Changer de code", I.redo], ["withdraw", "Retirer mon accord", I.trash], ["logout", "Se déconnecter", I.logout]];
   const refocus = useRef(true);
   useEffect(() => {
     if (!open) return;
@@ -318,7 +318,7 @@ function AccountMenu({ route, s }) {
           </div>
         </div>, document.body)}
       {confirm && (
-        <Modal close={() => { setConfirm(false); btn.current?.focus(); }} title="Tout supprimer ?" footer={
+        <Modal close={() => { setConfirm(false); btn.current?.focus(); }} title="Retirer mon accord et tout supprimer ?" footer={
           <div className="rp-actions" style={{ display: "flex", justifyContent: "flex-end", gap: GAP.actions, flexWrap: "wrap" }}>
             <Btn kind="secondary" onClick={() => { setConfirm(false); btn.current?.focus(); }}>Annuler</Btn>
             <Btn kind="danger" style={{ background: T.errorDk, color: T.surface }} icon={I.trash} onClick={async () => { clearWarmupDebrief(code); await withdrawConsent(code); setConfirm(false); }}>Tout supprimer</Btn>
@@ -365,7 +365,7 @@ function Espace() {
         <div className="rp-stack rp-equal" style={{ alignItems: "stretch", maxWidth: W.wide }}>
           <Card pad="lg" level={2} topbar style={card}>
             <div style={{ display: "grid", gap: 12 }}>
-              <div><Tag tone="appui">Bénéficiaire</Tag></div>
+              <div><Tag tone="primary">Je m'entraîne</Tag></div>
               <Txt v="h2" as="h2" color={T.navy}>J'ai un code d'accès</Txt>
             </div>
             <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: GAP.field, flex: 1 }}>
@@ -398,7 +398,7 @@ function Espace() {
                 {forgot && <Notice tone="info" role="status">Contactez votre référent pour réinitialiser votre mot de passe.</Notice>}
               </div>
               <div style={{ marginTop: "auto", display: "grid", gap: 12 }}>
-                <Btn kind="secondary" full disabled={!ok}>Se connecter</Btn>
+                <Btn kind="objective" full disabled={!ok}>Se connecter</Btn>
                 <Txt v="caption" color={T.muted}>{PHRASES.coachLogin} <Link href="#/vos-donnees/coachs">Coachs : vos données</Link></Txt>
               </div>
             </form>

@@ -13,6 +13,7 @@
    ce qui ne passe pas est écarté. Les textes s'adressent à la personne, au vouvoiement. */
 
 import { textCompliant } from "./compliance.js";
+import { dePoste } from "./text.js";
 
 /* ─── Garde-fou ─── */
 /* Jugement sur la personne ou appréciation chiffrée ou globale : refusé, en plus des règles d'isCompliant. */
@@ -57,7 +58,7 @@ export function jobFamily(poste) {
   const hit = JOB_FAMILIES.find(([, keys]) => keys.some(k => n.includes(norm(k))));
   return hit ? hit[0] : "generique";
 }
-const jobHook = poste => { const f = JOB_FAMILIES.find(([id]) => id === jobFamily(poste)); return f ? f[2] : poste ? `Pour un poste de ${poste}, des exemples tirés de situations proches du métier rendent la réponse facile à retenir.` : ""; };
+const jobHook = poste => { const f = JOB_FAMILIES.find(([id]) => id === jobFamily(poste)); return f ? f[2] : poste ? `Pour un poste ${dePoste(poste)}, des exemples tirés de situations proches du métier rendent la réponse facile à retenir.` : ""; };
 
 /* Phrases de liaison selon la question posée : pourquoi l'astuce compte pour cette question-là (3 par catégorie). */
 const KIND_HOOKS = {
@@ -319,7 +320,7 @@ export function introIdeas({ prenom, question, poste, dims = [] }) {
   const ap = dims.find(d => d.type === "appui");
   const ex = dims.find(d => d.type === "explorer");
   const q = question ? `« ${question} »` : "cette question";
-  const job = poste ? ` pour le poste de ${poste}` : "";
+  const job = poste ? ` pour le poste ${dePoste(poste)}` : "";
   return keep([
     `${hi}merci de m'avoir envoyé votre réponse à ${q}. Je l'ai regardée avec attention et je vous propose quelques repères pour la suite.`,
     `${hi}j'ai relu votre réponse à ${q}. ${ap ? `Je retiens d'abord un point d'appui : ${ap.titre.toLowerCase()}. ` : ""}Vous trouverez mes remarques à côté de chaque repère.`,
@@ -345,7 +346,7 @@ export function debriefIdeas({ question, poste, dims = [] }) {
     "Faire un jeu de rôle court : un participant joue le recruteur et pose la question, un autre observe un seul repère.",
     "Comparer deux versions de la même réponse (avant et après l'atelier) en réécoutant seulement la première phrase.",
     "Terminer l'atelier en demandant à chacun la piste qu'il travaillera avant le prochain entraînement.",
-    `Préparer en binôme les deux questions que la personne pourrait poser au recruteur${poste ? ` pour un poste de ${poste}` : ""}.`,
+    `Préparer en binôme les deux questions que la personne pourrait poser au recruteur${poste ? ` pour un poste ${dePoste(poste)}` : ""}.`,
     "Afficher les repères de l'assistant et demander au groupe de les formuler avec ses propres mots.",
   ];
   if (ex.length) out.unshift(`Choisir avec la personne une seule piste parmi celles repérées (${ex.slice(0, 3).join(", ")}) et la travailler pendant l'atelier.`);

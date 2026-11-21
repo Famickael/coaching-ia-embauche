@@ -65,7 +65,6 @@ export default function Demo({ go }) {
           <Card pad="lg" level={2} topbar>
           <form ref={form} noValidate onSubmit={submit} aria-labelledby="demo-title" style={{ display: "grid", gap: GAP.field }}>
             <div style={{ display: "grid", gap: 12 }}>
-              <div><Tag tone="appui">Bénéficiaire</Tag></div>
               <h2 id="demo-title" style={{ ...TY.h2, color: T.navy, margin: 0 }}>Votre demande</h2>
               <p style={{ ...TY.small, color: T.muted, margin: 0 }}>Le prénom, le moyen de contact et les disponibilités sont obligatoires.</p>
             </div>

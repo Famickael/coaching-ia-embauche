@@ -2,6 +2,7 @@ import React, { useMemo, useRef, useState } from "react";
 import { T, GAP, GRAD_PAGE, RAD, SH, Btn, Tag, Icon, I, TY, W, SI, img, Eyebrow, Section, PageHero, Chip, IconTile, Input } from "./ui.jsx";
 import { Reveal, scrollToTarget } from "./motion.jsx";
 import { FinalBand } from "./Home.jsx";
+import { dateLong } from "./lib/format.js";
 import { ARTICLES, CATEGORIES, TYPES, findArticle, findCategory, search, norm } from "./content/resources.js";
 
 const TYPES_PL = { guide: "Guides", cas: "Scénarios d'usage" };
@@ -26,7 +27,7 @@ export default function Resources({ go, openSpace, slug, cat }) {
 
 const iconOf = k => SI[k] || I[k] || SI.book;
 const catTitle = id => findCategory(id)?.title || id;
-const fmtDate = d => { const x = new Date(d); return isNaN(x) ? "" : x.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" }); };
+const fmtDate = dateLong; // src/lib/format.js
 const wrap = { maxWidth: W.page, margin: "0 auto", padding: "0 24px" };
 
 /* ─── Niveau 1 : le hub ─── */

@@ -65,6 +65,8 @@ Un mot par chose, partout. Quand un mot du lexique apparaît pour la première f
 | **ressource** | article (dans l'interface) | Tout contenu du centre de ressources : guide ou scénario d'usage. |
 | **démo** (bouton), **démonstration** (phrase) |  | « Demander une démo » sur les boutons, « démonstration » dans les phrases. |
 
+> **Décision du propriétaire (21 novembre 2026).** Côté coach, on dit « entretiens » pour les réponses reçues (« Entretiens à relire », « Entretiens reçus ») ; « Entretien du 12 mars » (accueil) et « Lancer ma première répétition » sont conservés. Le constat RED-01 de `docs/audit-complet.md` n'est donc pas appliqué.
+
 ### 1.3 Règles de style
 
 **Phrases.**
@@ -73,7 +75,7 @@ Un mot par chose, partout. Quand un mot du lexique apparaît pour la première f
 - 15 mots en moyenne, 20 au maximum côté personne accompagnée. 25 au maximum sur les pages pour professionnels.
 - Sujet, verbe, complément. Présent et voix active. Pas de double négation.
 - Pas d'énumération de plus de quatre éléments dans une phrase. Au-delà, c'est une liste.
-- Pas de parenthèse côté personne accompagnée.
+- Pas de parenthèse côté personne accompagnée. Exception tranchée (RED-05) : les mentions d'interface « (facultatif) » dans un libellé de champ et « (nouvel onglet) » dans un lien qui ouvre un onglet restent entre parenthèses, comme le demande le référentiel (section 5.3) ; elles disent une propriété du champ ou du lien, pas une précision du texte.
 
 **Ton non évaluatif.**
 

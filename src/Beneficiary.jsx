@@ -12,21 +12,21 @@ import { PHRASES, SUMMARY, PAGES, LEGAL_VERSION } from "./content/legal.js";
 import { Summary } from "./Legal.jsx";
 import { transcribe } from "./lib/transcribe.js";
 import { analyze } from "./lib/analysis.js";
-import { QUESTIONS, fill, WARMUP_PHRASES, WARMUP_PROMPTS, fillPhrase, randomPhraseIndex, WORK_TOPICS, questionsForTopics, fullInterview, FULL_INTRO, FULL_OUTRO, posteLabel } from "./lib/questions.js";
+import { QUESTIONS, fill, WARMUP_PHRASES, WARMUP_PROMPTS, fillPhrase, randomPhraseIndex, WORK_TOPICS, questionsForTopics, fullInterview, FULL_INTRO, FULL_OUTRO, posteLabel, dePoste } from "./lib/questions.js";
 import RecruiterVoice from "./RecruiterVoice.jsx";
 import { searchJobs, norm } from "./lib/jobs.js";
 import { FEELINGS, feelingAck } from "./lib/assistant.js";
 import { useLeaveGuard } from "./lib/hooks.js";
 import { hasMedia, isAudio, noFeedback } from "./lib/takes.js";
+import { dateTime, duration } from "./lib/format.js";
 
 const CODE_ERR = "Ce code ne fonctionne pas. Vérifiez les 6 caractères, ou demandez-le à votre coach.";
 /* Ouvrir une réponse : choix du mode de lecture seulement s'il y a un retour de l'assistant et un enregistrement. */
 const openView = t => (!hasMedia(t) ? ["report", "simple"] : noFeedback(t) ? ["report", "video"] : ["choose", "simple"]);
 const wrap = w => ({ maxWidth: w, margin: "0 auto", width: "100%" });
-const dateFr = iso => new Date(iso).toLocaleString("fr-FR", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" });
+
 const stack = (gap = GAP.stack) => ({ display: "grid", gap });
-/* Durée : « 45 s » ou « 1 min 32 ». */
-const dur = sec => { const n = Math.round(sec || 0); return n < 60 ? `${n} s` : `${Math.floor(n / 60)} min ${String(n % 60).padStart(2, "0")}`; };
+const dateFr = dateTime, dur = duration; // formats uniques (src/lib/format.js)
 const actions = { display: "flex", justifyContent: "space-between", alignItems: "center", gap: GAP.actions, flexWrap: "wrap" };
 const PAGE = { padding: PAD.page };
 
@@ -551,7 +551,7 @@ function Pick({ p, ctx, go }) {
           <h2 style={{ ...TY.h3, color: T.navy, margin: 0, flex: 1 }}>Faire un entraînement complet</h2>
         </div>
         <p style={{ ...TY.body, color: T.body, margin: 0 }}>
-          Une simulation d'entretien, dans l'ordre réel : accueil, présentation, motivation, expériences, qualités, mise en situation, vos questions. 7 questions liées au métier {posteLabel(p.poste) ? `de ${posteLabel(p.poste)}` : "que vous visez"}. Le recruteur lit chaque question à voix haute.
+          Une simulation d'entretien, dans l'ordre réel : accueil, présentation, motivation, expériences, qualités, mise en situation, vos questions. 7 questions liées au métier {posteLabel(p.poste) ? dePoste(posteLabel(p.poste)) : "que vous visez"}. Le recruteur lit chaque question à voix haute.
         </p>
         <div className="rp-wide-m"><Btn kind="secondary" icon={I.play} onClick={startFull}>Faire un entraînement complet</Btn></div>
       </Card>
@@ -751,7 +751,7 @@ function Share({ p, take, go, setModal }) {
       <div style={stack(12)}>
         <div><Tag tone="primary">Envoi · vous décidez</Tag></div>
         <Txt v="h1" as="h1" color={T.navy}>Envoyer cette réponse à {p.counselor || "votre coach"}</Txt>
-        <Txt v="body" color={T.body}>{PHRASES.share}</Txt>
+        <Txt v="body" color={T.body}>{PHRASES.share} {PHRASES.sameDevice}</Txt>
       </div>
       <Summary items={SUMMARY.envoi} style={{ gap: 8 }} />
       <div><Link onClick={() => setModal("video")}>Que devient ma vidéo ?</Link></div>
@@ -776,7 +776,7 @@ function Sent({ p, go, series, nextQuestion }) {
         ? <Btn kind="objective" onClick={nextQuestion} iconRight={I.arrow}>Question suivante ({series.i + 2} sur {series.n})</Btn>
         : <Btn kind="objective" onClick={() => go("pick", { queue: null, selection: null, preselect: null })} icon={I.redo}>M'entraîner encore</Btn>}
     </>}>
-      {p.counselor || "Votre coach"} va regarder votre réponse et ajouter ses remarques. Son rapport arrivera dans votre espace. Vous y revenez avec le même code. {PHRASES.sent}
+      {p.counselor || "Votre coach"} va regarder votre réponse et ajouter ses remarques. Son rapport arrivera dans votre espace. {PHRASES.sameDevice || "Vous y revenez avec le même code."} {PHRASES.sent}
     </Confirm>
   );
 }

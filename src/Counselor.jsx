@@ -5,8 +5,9 @@ import { Player, DimCard, markersOf, useVideoUrl } from "./Report.jsx";
 import { fmt } from "./lib/analysis.js";
 import CoachAssistantDock from "./CoachAssistant.jsx";
 import { isAudio, noFeedback } from "./lib/takes.js";
+import { dateTime, duration } from "./lib/format.js";
 
-const dateFr = iso => (iso ? new Date(iso).toLocaleString("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "");
+const dateFr = dateTime; // même format que côté personne (src/lib/format.js)
 export const linkFor = code => `${location.origin}${location.pathname}#/s/${code}`;
 
 const stack = (gap = GAP.stack) => ({ display: "grid", gap });
@@ -215,7 +216,7 @@ function Parcours({ s, p, back, review }) {
               <Card key={t.id} pad="sm" hover style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
                 <div style={{ flex: 1, minWidth: 220, ...stack(4) }}>
                   <div style={{ ...TY.h4, color: T.navy }}>{t.question}</div>
-                  <div style={{ ...TY.caption, color: T.muted }}>Envoyée le {dateFr(t.sharedAt)} · {Math.round(t.duration)} s{t.report ? ` · rapport envoyé le ${dateFr(t.report.sentAt)}` : ""}</div>
+                  <div style={{ ...TY.caption, color: T.muted }}>Envoyée le {dateFr(t.sharedAt)} · {duration(t.duration)}{t.report ? ` · rapport envoyé le ${dateFr(t.report.sentAt)}` : ""}</div>
                 </div>
                 <Tag tone={t.report ? "success" : "warning"}>{t.report ? "Rapport envoyé" : "À relire"}</Tag>
                 <Btn kind={t.report ? "secondary" : "objective"} size="sm" onClick={() => review(t.id)}>{t.report ? "Modifier le rapport" : "Relire et annoter"}</Btn>

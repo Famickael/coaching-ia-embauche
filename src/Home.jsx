@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { T, FIX, Bare, HL, GRAD_NIGHT, GRAD, GRAD_ACCROCHE, GRAD_HERO, GRAD_SECTION, GLOW, PACE, RAD, SH, RepetMark, Halo, Tag, Btn, Card, Icon, I, ON, TY, W, MO, SI, img, Eyebrow, Section, IconTile, Link, HEADER_H, HEADER_H_M } from "./ui.jsx";
+import { clock } from "./lib/format.js";
 import { useReducedMotion, useCount, useInView, Reveal } from "./motion.jsx";
 
 /* Page d'accueil : héros (accroche qui change, scènes en boucle), strate épinglée en quatre étapes,
@@ -161,7 +162,7 @@ function LiveTime({ from, on, reduced }) {
     const id = setInterval(() => setT(x => x + 1), 1000);
     return () => clearInterval(id);
   }, [on, from, reduced]);
-  return <>{`${Math.floor(t / 60)}:${String(t % 60).padStart(2, "0")}`}</>;
+  return <>{clock(t)}</>;
 }
 
 function HeroStage({ reduced, i, setI, stopped, setStopped, setHover }) {
@@ -619,7 +620,7 @@ const miniCard = { background: T.surface, borderRadius: RAD.sm, padding: "12px 1
 
 function Features() {
   return (
-    <Section eyebrow="Au fil de l'entraînement" title="Tout ce qu'il faut pour répéter sereinement" sub="Des outils simples, pensés pour s'entraîner seul et garder la main sur ce que l'on partage.">
+    <Section eyebrow="Au fil de l'entraînement" title="Tout ce qu'il faut pour répéter à votre rythme" sub="Des outils simples, pensés pour s'entraîner seul et garder la main sur ce que l'on partage.">
       <div className="rs-fcards">
         <FCard title="Un échauffement sans enregistrement" text="Des phrases à lire à voix haute pour se mettre en route. Rien n'est enregistré ni analysé.">
           <div style={{ ...TY.overline, color: T.muted, marginBottom: 8 }}>Échauffement · lisez à voix haute</div>

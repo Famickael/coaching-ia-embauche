@@ -14,12 +14,13 @@
 
 /* Garde-fou : src/lib/compliance.js (frontières Unicode, accents, notes, émotions, appréciations). */
 import { feedbackCompliant, textCompliant } from "./compliance.js";
+import { clock } from "./format.js";
 
 const FILLERS = ["euh", "heu", "hum", "ben", "bah", "en fait", "du coup", "genre", "voilà", "quoi", "tu vois", "vous voyez", "bon"];
 const CONCRETE = /\b(\d+|un|deux|trois|quatre|cinq|six|dix)\s+(ans?|années?|mois|semaines?|clients?|personnes?|projets?|équipes?)\b|\bpar exemple\b|\bquand j'(ai|étais)\b|\blors de\b|\bchez\b/i;
 const CLOSING = /\b(c'est pour(quoi| ça)|en résumé|pour conclure|voilà pourquoi|c'est la raison|donc je)\b/i;
 
-const fmt = s => `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, "0")}`;
+const fmt = clock; // horloge « m:ss » unique (src/lib/format.js)
 
 function words(text) {
   return (text.toLowerCase().match(/[a-zàâäçéèêëîïôöûùüÿœ'’-]+/gi) || []);
