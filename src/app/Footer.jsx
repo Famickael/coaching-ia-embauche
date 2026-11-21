@@ -1,0 +1,45 @@
+import React from "react";
+import { T, GAP, W, TY, RepetLogo, Link, Icon, I } from "../ui.jsx";
+
+/* ─── Pied de page (non collant) ─── */
+
+export function Footer() {
+  /* Exception documentée (référentiel 1.5) : chaque engagement garde sa couleur d'icône. */
+  const trust = [
+    [I.lock, "Votre vidéo reste sur votre appareil", T.successDk, "#/vos-donnees/video"],
+    [I.send, "Votre coach voit seulement ce que vous lui envoyez", T.blue, "#/vos-donnees/video"],
+    [I.ban, "Ni note ni classement", T.violet, "#/vos-donnees/assistant"],
+    [I.shield, "Aucune émotion devinée", T.accent, "#/vos-donnees/assistant"],
+  ];
+  const groups = [
+    ["Vos données", [["#/vos-donnees", "Vos données"], ["#/vos-donnees/video", "Que devient ma vidéo ?"], ["#/vos-donnees/assistant", "L'assistant et l'IA"], ["#/vos-donnees/droits", "Vos droits"]]],
+    ["Le site", [["#/a-propos", "À propos"], ["#/solutions", "Solutions"], ["#/ressources", "Ressources"], ["#/a-propos/faq", "Questions fréquentes"], ["#/demo", "Demander une prise en main"]]],
+    ["Informations légales", [["#/conditions", "Conditions d'utilisation"], ["#/mentions-legales", "Mentions légales"], ["#/accessibilite", "Accessibilité : non conforme"]]],
+  ];
+  const lk = { ...TY.caption, ...TY.link, minHeight: 44, display: "inline-flex", alignItems: "center" };
+  return (
+    <footer className="noprint" style={{ position: "relative", zIndex: 1, borderTop: `1px solid ${T.line}`, background: T.surface, marginTop: GAP.section / 2 }}>
+      <div className="rp-pad" style={{ maxWidth: W.page, margin: "0 auto", padding: "24px 24px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 20 }}>
+        <div style={{ display: "grid", gap: 12, maxWidth: 360 }}>
+          <RepetLogo s={14} tagline={false} />
+          <p style={{ ...TY.caption, color: T.body, margin: 0 }}>La Répét' aide à préparer l'entretien d'embauche. On répète à voix haute, l'assistant décrit sans noter, votre coach vous accompagne.</p>
+        </div>
+        <ul className="rp-trust" style={{ display: "flex", gap: 20, ...TY.caption, color: T.body, flexWrap: "wrap", listStyle: "none", margin: 0, padding: 0 }}>
+          {trust.map(([ic, l, c, h]) => <li key={l}><a href={h} className="rp-trustlink" style={{ display: "inline-flex", alignItems: "center", gap: 8, color: T.body, textDecoration: "none", minHeight: 44 }}><Icon d={ic} s={16} c={c} /> {l}</a></li>)}
+        </ul>
+      </div>
+      <div style={{ borderTop: `1px solid ${T.lineLt}` }}>
+        <div className="rp-pad rp-fgroups" style={{ maxWidth: W.page, margin: "0 auto", padding: "16px 24px 24px", display: "grid", gridTemplateColumns: "repeat(3,minmax(0,1fr))", gap: 24 }}>
+          {groups.map(([t, links]) => (
+            <nav key={t} aria-label={t}>
+              <h2 style={{ ...TY.overline, color: T.muted, margin: "0 0 4px" }}>{t}</h2>
+              <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
+                {links.map(([h, l]) => <li key={h}><Link href={h} style={lk}>{l}</Link></li>)}
+              </ul>
+            </nav>
+          ))}
+        </div>
+      </div>
+    </footer>
+  );
+}

@@ -122,7 +122,9 @@ Les photos suivantes proviennent de Pexels et sont utilisées sous la [licence P
 index.html
 src/
   main.jsx            point d'entrée React
-  App.jsx             routage par ancre, en-tête (menu repliable sous 1024 px, barre de progression de lecture), page « Mon espace », pied de page
+  App.jsx             coquille : route courante, transitions, titre, focus, pages chargées à la demande (React.lazy)
+  app/                router.js (routes par ancre, titres), Nav.jsx (en-tête, sous-menus, menu mobile), AccountMenu.jsx, Espace.jsx
+                      (« Mon espace », page introuvable), Footer.jsx, ToTop.jsx
                       routes : #/, #/a-propos(/faq), #/solutions(/beneficiaires|coachs|organismes), #/ressources, #/ressources/c/CATEGORIE,
                       #/ressources/SLUG, #/demo, #/espace, #/s/CODE, #/coach, #/vos-donnees(/video|assistant|droits|appareil|notice|coachs),
                       #/conditions, #/mentions-legales, #/accessibilite, #/a-propos/ia-et-recherche ; #/fonctionnement redirige vers #/solutions
@@ -137,7 +139,8 @@ src/
   RecruiterVoice.jsx  recruteur oral sans visage (synthèse vocale de l'appareil, sous-titre mot à mot)
   Loader.jsx          retrait de l'écran de chargement (balisage et styles en ligne dans index.html)
   content/
-    resources.js      catégories, chargement des articles Markdown (import.meta.glob), lecture de l'en-tête, découpage en blocs
+    categories.js     catégories et types des ressources (lus par l'en-tête sans charger les articles)
+    resources.js      chargement des articles Markdown (import.meta.glob), lecture de l'en-tête, découpage en blocs
     resources/*.md    articles du centre de ressources (un fichier par article)
   motion.jsx          apparition au défilement (IntersectionObserver), compteur, respect de « réduire les animations »
   tokens.js           jetons du référentiel v3 (couleurs, typographie, espacements, rayons, ombres, mouvement, contrastes)
@@ -145,8 +148,9 @@ src/
   Legal.jsx           pages « Vos données » (#/vos-donnees/...), conditions, mentions légales, accessibilité ; fenêtre de résumé (niveau 2)
   content/legal.js    fonds unique des textes d'information : phrases, résumés, textes complets (variantes prototype et production)
   content/organisme.js  SEUL fichier à compléter par l'organisme : responsable, DPO, hébergeur, durées, base légale (valeurs d'exemple affichées, domaines exemple.fr et example.org ; null = formulation neutre)
-  Beneficiary.jsx     espace bénéficiaire : code, consentement, espace, échauffement, question, enregistrement, traitement, rapport, partage
-  Counselor.jsx       espace coach : identification locale, liste et indicateurs, création de parcours, détail, relecture
+  beneficiary/        espace de la personne accompagnée, un fichier par écran : index.jsx (état et choix de l'écran), CodeEntry, Consent,
+                      SpaceHome, JobField, Warmup, WarmupDebrief, Pick, Processing, Choose, TakeReport, Share (et Sent), Recap, shared.jsx
+  coach/              espace coach : index.jsx, List (indicateurs agrégés), Create (et Created), Parcours, Review, shared.jsx
   Recorder.jsx        enregistreur caméra/micro + déclenchement du suivi du regard
   WarmupStage.jsx     aperçu de l'échauffement (caméra ou voix seule, fond), sans enregistrement
   Assistant.jsx       assistant de préparation (fil de conversation) et panneau latéral commun DockPanel
@@ -154,7 +158,11 @@ src/
   Report.jsx          lecteur avec repères, cartes d'observation, corps du rapport (partagé par les deux espaces)
   lib/
     store.js          données : localStorage (« larepet.v1 ») pour les métadonnées, IndexedDB (« larepet ») pour les vidéos
-    analysis.js       analyse descriptive locale, garde-fou de conformité, reformulation LLM facultative
+    analysis.js       analyse descriptive locale, rapprochement et reformulation LLM facultative
+    compliance.js     garde-fou de conformité sans dépendance (notes, émotions, appréciations ; niveaux strict et assistant)
+    format.js         horloge, durées, dates (formats uniques) ; text.js : métier, élision ; takes.js : lecture d'une réponse
+    media.js          ouverture de la caméra et du micro, messages d'erreur par cause ; hooks.js : useTitle, useFocusOnChange, useLeaveGuard
+    bus.js            commandes de l'assistant depuis n'importe quel écran ; gazeKeys.js : coefficients lus par le suivi du regard
     transcribe.js     décodage audio 16 kHz + transcription locale (worker) ou serveur
     whisper.worker.js Whisper dans un Web Worker
     gaze.js           MediaPipe Face Landmarker (présence, orientation de la tête, direction des yeux)
@@ -170,6 +178,9 @@ docs/
 tests/
   run-site-e2e.mjs, site.e2e.cjs   balayage responsive (11 largeurs, 320 × 568, 844 × 390, menu ouvert, connecté), pages publiques à 1280 et 390 px, mouvement réduit (npm run test:site)
   analysis.test.mjs   test unitaire de l'analyse et du garde-fou (npm run test:analysis)
+  store.test.mjs, content.test.mjs   données locales (npm run test:store), élision, formats, textes de la démo (npm run test:content)
+  e2e-cas-limites.cjs cas limites de bout en bout : deux onglets, retrait de l'accord, sans assistant, voix seule, caméra refusée… (npm run test:cas)
+  whisper-real.cjs    essai réel de Whisper dans Chromium, réseau requis, hors suite automatique
   run-e2e.mjs         test de bout en bout Playwright avec caméra et transcription simulées (npm run test:e2e)
   e2e.cjs, mock-stt.mjs
 ```

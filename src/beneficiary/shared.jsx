@@ -1,0 +1,41 @@
+import React from "react";
+import { PAD, GAP, Link, I, Notice } from "../ui.jsx";
+import { loadVideoUrl } from "../lib/store.js";
+import { hasMedia, isAudio, noFeedback } from "../lib/takes.js";
+import { dateTime, duration } from "../lib/format.js";
+
+export const CODE_ERR = "Ce code ne fonctionne pas. Vérifiez les 6 caractères, ou demandez-le à votre coach.";
+
+/* Ouvrir une réponse : choix du mode de lecture seulement s'il y a un retour de l'assistant et un enregistrement. */
+export const openView = t => (!hasMedia(t) ? ["report", "simple"] : noFeedback(t) ? ["report", "video"] : ["choose", "simple"]);
+
+export const wrap = w => ({ maxWidth: w, margin: "0 auto", width: "100%" });
+
+export const stack = (gap = GAP.stack) => ({ display: "grid", gap });
+
+export const dateFr = dateTime; // formats uniques (src/lib/format.js)
+
+export const dur = duration;
+
+export const actions = { display: "flex", justifyContent: "space-between", alignItems: "center", gap: GAP.actions, flexWrap: "wrap" };
+
+export const PAGE = { padding: PAD.page };
+
+export function EmotionNote({ setModal }) {
+  return (
+    <Notice tone="ai" icon={I.shield}>
+      <strong>L'assistant ne cherche pas à deviner vos émotions.</strong> Il décrit seulement ce qui se voit et ce qui s'entend.{" "}
+      <Link onClick={() => setModal("assistant")}>En savoir plus sur ce choix</Link>
+    </Notice>
+  );
+}
+
+/* Portabilité : télécharger sa réponse (fichier local, rien n'est envoyé). */
+export async function downloadTake(take) {
+  const url = await loadVideoUrl(take.id);
+  if (!url) return;
+  const a = document.createElement("a");
+  a.href = url; a.download = `la-repet-reponse-${take.createdAt.slice(0, 10)}.${take.mime?.includes("mp4") ? (isAudio(take) ? "m4a" : "mp4") : "webm"}`; // BUG-28
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
+}
