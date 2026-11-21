@@ -442,8 +442,8 @@ Remplace 1000, 920, 820, 720, 680, 640, 580, 560, 460.
 | `MO.fade` (v3.1) | 1,1 s | Fondu entre deux scènes du héros |
 | `MO.soft` (v3.1) | `cubic-bezier(.45,0,.55,1)` | Courbe douce (ease-in-out) des transitions lentes ci-dessus |
 | `PACE.scene` (v3.2) | 11 500 ms | Durée d'une scène du héros (laisse le temps de lire la scène à côté du titre). Pause au survol, au focus et par le bouton pause |
-| `PACE.accroche` (v3.2) | 5 000 ms | Durée de chaque fin d'accroche |
-| Écran de chargement (v3.1) | 1,9 s minimum, fondu de sortie 0,6 s | Durée comptée depuis le début de la navigation, pour jouer une fois l'animation complète (bulles qui se rejoignent, puis trois points). « Réduire les animations » : écran statique, 0,6 s. Navigateur piloté : retrait immédiat. Retrait de secours en CSS à 10 s (`index.html`, `src/Loader.jsx`) |
+| `PACE.accroche` (v3.2) | 11 500 ms | Fin d'accroche synchronisée avec sa scène : même cadence, même fondu (`MO.fade`) |
+| Écran de chargement (v3.2) | 2,5 s minimum (rapprochement des bulles 1,3 s, puis les points), fondu de sortie 0,7 s sur `opacity` seule, calque retiré à `transitionend` | Durée comptée depuis le début de la navigation, pour jouer une fois l'animation complète (bulles qui se rejoignent, puis trois points). « Réduire les animations » : écran statique, 0,6 s. Navigateur piloté : retrait immédiat. Retrait de secours en CSS à 10 s (`index.html`, `src/Loader.jsx`) |
 
 Les pages publiques (accueil, à propos, solutions, ressources) utilisent les durées lentes ; l'application (espaces bénéficiaire et coach) garde `MO.fast`, `MO.base` et `MO.enter` pour rester réactive.
 
@@ -687,5 +687,14 @@ Dégradés : `GRAD` et `GRAD_AI` recomposés selon 1.3, `GRAD_NIGHT` ajouté, `G
 | 2026-11-20 | Entraînement complet (7 questions dans l'ordre réel, mise en situation selon le métier) et écran récapitulatif sans score ; recruteur oral sans visage (`RecruiterVoice` : synthèse vocale de l'appareil, sous-titre mot à mot, « Réécouter », « Couper le son », enregistrement possible seulement quand la voix a fini) | Demandes du propriétaire |
 
 | 2026-11-20 | Couleurs en variables CSS (`T` → `var(--c-*)`), palettes `LIGHT`, `DARK`, `HC_LIGHT`, `HC_DARK`, `FIX` ; tailles de texte multipliées par `--fs` ; familles en variables (`--ff-d`, `--ff-b`) ; règle A1 étendue aux quatre thèmes ; options d'accessibilité (8 bis) | Demande du propriétaire : thème sombre, contraste, police lisible, taille du texte |
+
+| 2026-11-20 | Changement de page en fondu (`MO.pageOut` 300 ms, `MO.pageIn` 450 ms, View Transitions avec repli), en-tête immobile ; lien interne : défilement doux sous l'en-tête puis focus sur la cible (`scrollToTarget`) ; mouvement réduit : saut direct | Demande du propriétaire |
+| 2026-11-20 | Navigation à deux niveaux (sous-menus au survol avec délai de fermeture, au clic et au clavier ; accordéons sur mobile) ; page « L'IA et la recherche » | Demande du propriétaire |
+| 2026-11-20 | Bordure haute des cartes : pseudo-élément masqué qui épouse l'arrondi. Convention : bleu vers violet (`GRAD_MAIN`) côté personne accompagnée, vert (`GRAD_COACH`, sarcelle vers vert) côté coach, `GRAD_AI` pour l'assistant | Demande du propriétaire |
+| 2026-11-20 | Un seul en-tête de page (`PageHero`, surtitre obligatoire) : titre au même endroit sur toutes les pages, vérifié par `test:site` | Demande du propriétaire |
+| 2026-11-20 | Modales rendues dans `<body>` (portail) : toujours centrées | Demande du propriétaire |
+| 2026-11-20 | « Revenir en haut » (44 px, empilé au-dessus du bouton de l'assistant), boutons de l'en-tête sans déplacement au survol | Demande du propriétaire |
+| 2026-11-20 | Logo animé d'attente réutilisable (`BrandLoader`) : connexion à un espace, analyse d'une réponse, fin d'enregistrement ; plein écran ou dans le bloc, `role="status"`, statique en mouvement réduit | Demande du propriétaire |
+| 2026-11-20 | Accueil : fins d'accroche et scènes synchronisées (4 scènes), minuteurs en direct, lignes d'encart du bas vers le haut, fond en dégradé qui suit la souris sur toute la page, strate en pile de cartes | Demande du propriétaire |
 
 Ajouter une ligne à chaque évolution d'une règle ou d'une échelle.

@@ -1,5 +1,5 @@
 import React, { useRef, useState } from "react";
-import { T, RAD, SH, Btn, Icon, I, TY, W, PageHero, IconTile, Field, Input, Textarea, Select, Link, Toggle } from "./ui.jsx";
+import { T, RAD, SH, GAP, Btn, Icon, I, TY, W, PageHero, IconTile, Field, Input, Textarea, Select, Link, Toggle, Card, Tag, Txt } from "./ui.jsx";
 import { PHRASES } from "./content/legal.js";
 
 /* Page « Demander une prise en main » : une personne demande une présentation et une première
@@ -56,13 +56,13 @@ export default function Demo({ go }) {
   const contactLabel = f.moyen === "tel" ? "Votre numéro de téléphone" : "Votre adresse électronique";
   return (
     <main>
-      <PageHero eyebrow="Prise en main" title="Découvrir La Répét' avec un coach"
-        lead="Un coach vous montre l'outil et fait avec vous un premier entraînement. Vous repartez en sachant vous en servir seul." />
+      <PageHero eyebrow="Prise en main" title="Demander une prise en main" lead="Un coach vous montre l'outil et fait avec vous un premier entraînement." />
       <div className="rs-pad" style={{ maxWidth: W.page, margin: "0 auto", padding: "48px 24px 0" }}>
-        <div className="rs-split" style={{ alignItems: "start" }}>
-          <form ref={form} noValidate onSubmit={submit} aria-labelledby="demo-title"
-            style={{ background: T.surface, border: `1px solid ${T.line}`, borderRadius: RAD.lg, boxShadow: SH.sm, padding: 32, display: "grid", gap: 20 }} className="rs-form">
-            <div style={{ display: "grid", gap: 8 }}>
+        <div className="rp-stack" style={{ alignItems: "stretch", maxWidth: W.wide }}>
+          <Card pad="lg" level={2} topbar>
+          <form ref={form} noValidate onSubmit={submit} aria-labelledby="demo-title" style={{ display: "grid", gap: GAP.field }}>
+            <div style={{ display: "grid", gap: 12 }}>
+              <div><Tag tone="appui">Bénéficiaire</Tag></div>
               <h2 id="demo-title" style={{ ...TY.h2, color: T.navy, margin: 0 }}>Votre demande</h2>
               <p style={{ ...TY.small, color: T.muted, margin: 0 }}>Le prénom, le moyen de contact et les disponibilités sont obligatoires.</p>
             </div>
@@ -98,9 +98,13 @@ export default function Demo({ go }) {
               </span>
             </div>
           </form>
+          </Card>
 
-          <aside style={{ display: "grid", gap: 24 }} aria-label="Déroulé de la prise en main">
-            <h2 style={{ ...TY.h2, color: T.navy, margin: 0 }}>Comment se passe le rendez-vous</h2>
+          <Card pad="lg" topbar="coach" as="aside" style={{ display: "grid", gap: 24, alignContent: "start" }}>
+            <div style={{ display: "grid", gap: 12 }}>
+              <div><Tag tone="primary">Avec votre coach</Tag></div>
+              <h2 style={{ ...TY.h2, color: T.navy, margin: 0 }}>Comment se passe le rendez-vous</h2>
+            </div>
             {[[I.user, "Un coach à vos côtés", "Il vous montre comment ouvrir votre espace avec votre code d'accès."],
               [I.video, "Un premier entraînement", "Vous répondez à une question, avec la caméra ou en voix seule."],
               [I.sparkle, "Le retour de l'assistant", "Vous découvrez ensemble ce que l'assistant décrit, sans note."],
@@ -114,7 +118,7 @@ export default function Demo({ go }) {
               </div>
             ))}
             <p style={{ ...TY.small, color: T.muted, margin: 0 }}>Vous représentez un organisme ? <Link href="#/solutions/organismes">Voir le déploiement</Link></p>
-          </aside>
+          </Card>
         </div>
       </div>
     </main>

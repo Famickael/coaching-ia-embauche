@@ -20,8 +20,8 @@ export default function Counselor() {
     <main className="rp-page" style={{ maxWidth: W.wide, margin: "0 auto", padding: PAD.page, ...stack(GAP.grid) }}>
       <div style={{ ...actions, alignItems: "flex-end" }} className="noprint">
         <div style={stack(4)}>
-          <Txt v="h1" as="h1" color={T.navy}>Espace coach · {s.counselor.name}</Txt>
-          <Txt v="body" color={T.body}>Vos parcours et les réponses que l'on vous a envoyées</Txt>
+          <Txt v="h1" as="h1" color={T.navy}>Bienvenue {(s.counselor.name || "").split(" ")[0]}</Txt>
+          <Txt v="body" color={T.body}>Vos parcours et les entretiens que l'on vous a envoyés</Txt>
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <Btn kind={view.name === "list" ? "primary" : "secondary"} size="sm" onClick={() => setView({ name: "list" })} aria-current={view.name === "list" ? "page" : undefined}>Mes parcours</Btn>
@@ -71,7 +71,7 @@ function List({ s, open, create }) {
     <div style={stack(GAP.grid)}>
       <div style={stack(12)}>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(200px,1fr))", gap: GAP.stack }}>
-          <Stat n={rows.filter(r => r.st.key === "toreview").length} l="Réponses à relire" c={T.accent} />
+          <Stat n={rows.filter(r => r.st.key === "toreview").length} l="Entretiens à relire" c={T.accent} />
           <Stat n={rows.length} l="Parcours en cours" />
           <Stat n={reviewed.length} l="Rapports envoyés" c={T.successDk} />
           <Stat n={benefWithTakes ? `${Math.round((retrain / benefWithTakes) * 100)} %` : <span style={{ ...TY.h4, color: T.muted }}>Aucune donnée</span>} l="Personnes qui se réentraînent" />
@@ -90,7 +90,7 @@ function List({ s, open, create }) {
               <div aria-hidden style={{ width: 40, height: 40, borderRadius: "50%", background: T.primaryBg, display: "grid", placeItems: "center", ...TY.h4, color: T.primary, flexShrink: 0 }}>{p.prenom[0]?.toUpperCase()}</div>
               <div style={{ flex: 1, minWidth: 200, ...stack(4) }}>
                 <div style={{ display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}><span style={{ ...TY.h4, color: T.navy }}>{p.prenom}</span><span style={{ ...TY.mono, color: T.muted }}>{p.code}</span></div>
-                <div style={{ ...TY.small, color: T.body }}>{p.poste || "Poste non précisé"} · {takes.length} réponse{takes.length > 1 ? "s" : ""} · créé le {dateFr(p.createdAt)}</div>
+                <div style={{ ...TY.small, color: T.body }}>{p.poste || "Poste non précisé"} · {takes.length} entretien{takes.length > 1 ? "s" : ""} · créé le {dateFr(p.createdAt)}</div>
               </div>
               <Tag tone={st.tone}>{st.label}</Tag>
               <Btn kind={st.key === "toreview" ? "objective" : "secondary"} size="sm" onClick={() => open(p.code)}>{st.key === "toreview" ? "Relire" : "Ouvrir"}</Btn>
@@ -98,6 +98,12 @@ function List({ s, open, create }) {
           ))}
         </Card>
       )}
+      {/* Emplacements vides : structure de la liste, place pour les prochains parcours */}
+      <div aria-hidden style={{ display: "grid", gap: GAP.stack }}>
+        {Array.from({ length: Math.max(2, 5 - Math.min(rows.length, 3)) }, (_, k) => (
+          <div key={k} style={{ height: 72, borderRadius: RAD.lg, border: `1.5px dashed ${T.faint}`, background: T.lineLt }} />
+        ))}
+      </div>
     </div>
   );
 }
@@ -140,7 +146,7 @@ function Created({ p, back, openAsBenef }) {
       <ConfirmMark />
       <div style={stack(8)}>
         <h2 style={{ ...TY.h2, color: T.navy, margin: 0 }}>Le parcours de {p.prenom} est prêt</h2>
-        <Txt v="body" color={T.body}>{`Transmettez le code d'accès ou le lien à ${p.prenom}. Il lui sert à s'entraîner, à vous envoyer une réponse et à lire votre rapport.`}</Txt>
+        <Txt v="body" color={T.body}>{`Transmettez le code d'accès ou le lien à ${p.prenom}. Il lui sert à s'entraîner, à vous envoyer un entretien et à lire votre rapport.`}</Txt>
       </div>
       <div style={{ background: T.primaryBg, borderRadius: RAD.md, padding: PAD.sm, width: "100%", ...stack(8) }}>
         <div style={{ ...TY.overline, color: T.body }}>Code d'accès</div>
@@ -163,7 +169,7 @@ function Created({ p, back, openAsBenef }) {
 function Parcours({ s, p, back, review }) {
   const takes = takesOf(p.code, s);
   const shared = takes.filter(t => t.shared);
-  const del = async () => { if (window.confirm(`Supprimer le parcours de ${p.prenom}, ses réponses et ses rapports ? C'est définitif.`)) { await deleteParcours(p.code); back(); } };
+  const del = async () => { if (window.confirm(`Supprimer le parcours de ${p.prenom}, ses entretiens et ses rapports ? C'est définitif.`)) { await deleteParcours(p.code); back(); } };
   const priv = takes.length - shared.length;
   return (
     <div style={stack(GAP.block)}>
@@ -181,12 +187,12 @@ function Parcours({ s, p, back, review }) {
       </Card>
       <section style={stack(16)}>
         <div style={stack(4)}>
-          <Txt v="h2" as="h2" color={T.navy}>Réponses reçues</Txt>
+          <Txt v="h2" as="h2" color={T.navy}>Entretiens reçus</Txt>
           <Txt v="small" color={T.muted}>
-            {priv > 0 ? (priv > 1 ? `${priv} autres réponses n'ont pas été envoyées : vous ne les voyez pas.` : "1 autre réponse n'a pas été envoyée : vous ne la voyez pas.") : "Vous voyez ici seulement les réponses que la personne vous a envoyées."}
+            {priv > 0 ? (priv > 1 ? `${priv} autres entretiens n'ont pas été envoyés : vous ne les voyez pas.` : "1 autre entretien n'a pas été envoyé : vous ne le voyez pas.") : "Vous voyez ici seulement les entretiens que la personne vous a envoyés."}
           </Txt>
         </div>
-        {shared.length === 0 && <Empty icon={I.send} text="Aucune réponse reçue pour le moment." />}
+        {shared.length === 0 && <Empty icon={I.send} text="Aucun entretien reçu pour le moment." />}
         {shared.length > 0 && (
           <div style={stack(GAP.stack)}>
             {shared.map(t => (
@@ -293,13 +299,13 @@ function Review({ s, p, take, back }) {
           <Card style={stack(8)}>
             <label htmlFor="review-intro" style={{ ...TY.h3, color: T.navy }}>Votre mot d'introduction</label>
             <Txt v="caption" color={T.muted} id="review-intro-h">La première chose que {p.prenom} lira. Adressez-vous directement à la personne.</Txt>
-            <Textarea id="review-intro" aria-describedby="review-intro-h" value={intro} onChange={e => setIntro(e.target.value)} onBlur={() => saveDraft()} placeholder={`${p.prenom}, j'ai regardé votre réponse…`} />
+            <Textarea id="review-intro" aria-describedby="review-intro-h" value={intro} onChange={e => setIntro(e.target.value)} onBlur={() => saveDraft()} placeholder={`${p.prenom}, j'ai regardé votre entretien…`} />
           </Card>
           <div style={{ ...stack(4), marginTop: 8 }}>
             <h3 style={{ ...TY.h4, color: T.navy, margin: 0 }}>Repères de l'assistant</h3>
             <Txt v="caption" color={T.muted}>Nuancez, contextualisez ou contredisez : votre lecture prime sur celle de l'assistant.</Txt>
           </div>
-          {A.dimensions.length === 0 && <Card><Txt v="small" color={T.body}>{A.synthese || "L'assistant n'a pas de repère pour cette réponse."}</Txt></Card>}
+          {A.dimensions.length === 0 && <Card><Txt v="small" color={T.body}>{A.synthese || "L'assistant n'a pas de repère pour cet entretien."}</Txt></Card>}
           {A.dimensions.map(d => (
             <div key={d.id} style={stack(8)}>
               <DimCard d={d} active={active === d.id} onClick={() => seek(d.t, d.id)} />

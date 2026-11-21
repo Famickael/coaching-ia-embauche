@@ -13,6 +13,7 @@ require("fs").mkdirSync(SC, { recursive: true });
   p.on("dialog", d => d.accept());
   const overflow = [];
   const shot = async n => {
+    await p.waitForTimeout(600); // fin d'un éventuel fondu de changement de page
     const w = await p.evaluate(() => document.documentElement.scrollWidth);
     if (w > vw + 1) overflow.push(`${n} : ${w}px pour ${vw}px`);
     await p.screenshot({ path: `${SC}/${n}.png`, fullPage: true });

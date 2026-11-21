@@ -59,6 +59,15 @@ Chemin : `public/img/ressources/<slug>.webp`, **1200 × 630** (format de partage
 
 Pour un nouvel article, suivre la même règle : `public/img/ressources/<slug>.webp`, 1200 × 630, et un `imageAlt` qui décrit l'image.
 
+## Scènes du héros de l'accueil (à fournir)
+
+Chaque scène est liée à une fin d'accroche (`SCENES` dans `src/Home.jsx`). Deux scènes utilisent pour l'instant une photo d'article comme visuel provisoire : déposer le fichier ci-dessous, puis remplacer `src` dans `SCENES`.
+
+| Fichier attendu | Fin d'accroche | Contenu souhaité | Format | Visuel provisoire |
+|---|---|---|---|---|
+| `heros-echauffement.webp` | « sans jugement. » | Une personne chez elle, détendue, qui parle à voix haute face à son ordinateur ou son téléphone (échauffement). Visage dans le tiers supérieur, sans texte ni logo. | 900 × 1125 (4:5), 150 Ko max | `ressources/se-presenter-en-deux-minutes.webp` |
+| `heros-transcription.webp` | « avec vos mots. » | Une personne qui explique quelque chose avec ses mots, gestes naturels, cadrage serré. Visage dans le tiers supérieur. | 900 × 1125 (4:5), 150 Ko max | `ressources/parler-de-ses-experiences-methode-sar.webp` |
+
 ## Vérification
 
 1. Déposer les fichiers aux chemins exacts (même nom, même extension `.webp`).

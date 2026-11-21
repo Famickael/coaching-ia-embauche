@@ -101,7 +101,7 @@ function Hub() {
       ))}
     </div>
     <Notice tone="info" icon={I.trash}>
-      Pour supprimer une réponse, ouvrez-la dans votre espace. Pour tout supprimer, ouvrez « Mes paramètres » dans votre espace, puis « Retirer mon consentement ». {PHRASES.logout}
+      Pour supprimer une réponse, ouvrez-la dans votre espace. Pour tout supprimer, ouvrez « Mes paramètres » dans votre espace, puis « Retirer mon consentement ».
     </Notice>
     <Notice tone="info" icon={I.shield}>{PHRASES.noTracking}</Notice>
   </>);

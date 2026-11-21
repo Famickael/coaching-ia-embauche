@@ -123,13 +123,16 @@ src/
   App.jsx             routage par ancre, en-tête (menu repliable sous 1024 px, barre de progression de lecture), page « Mon espace », pied de page
                       routes : #/, #/a-propos(/faq), #/solutions(/beneficiaires|coachs|organismes), #/ressources, #/ressources/c/CATEGORIE,
                       #/ressources/SLUG, #/demo, #/espace, #/s/CODE, #/coach, #/vos-donnees(/video|assistant|droits|appareil|notice|coachs),
-                      #/conditions, #/mentions-legales, #/accessibilite ; #/fonctionnement redirige vers #/solutions
+                      #/conditions, #/mentions-legales, #/accessibilite, #/a-propos/ia-et-recherche ; #/fonctionnement redirige vers #/solutions
   Home.jsx            accueil : héros (accroche qui change, scènes photo + interface en boucle), phrase qui se colore au défilement,
                       strate épinglée « un seul dispositif » en quatre temps, cartes animées, parti pris, portes d'entrée, bandeau final
   About.jsx           « À propos » : mission, pourquoi, parti pris, cadre réglementaire, pour qui, construction, FAQ en accordéons
   Solutions.jsx       « Solutions » (ancienne page Fonctionnement) : déroulé, par public, ce que l'assistant observe ou non, onglets organisme, garanties
   Resources.jsx       centre de ressources : hub (catégories, à la une, recherche, filtre, glossaire), liste par catégorie, article (gabarits guide et cas)
-  Demo.jsx            « Demander une démo » : formulaire sans serveur, confirmation, mailto: si VITE_CONTACT_EMAIL est défini
+  Demo.jsx            « Demander une prise en main » (personnes accompagnées) : formulaire, confirmation, mailto: si VITE_CONTACT_EMAIL est défini
+  Research.jsx        « L'IA et la recherche » : ce que fait l'IA, ce qu'elle ne fait pas, études citées avec leurs liens
+  A11y.jsx            options d'accessibilité (fenêtre de réglages, règle de lecture) ; lib/a11y.js : lecture, enregistrement, application
+  RecruiterVoice.jsx  recruteur oral sans visage (synthèse vocale de l'appareil, sous-titre mot à mot)
   Loader.jsx          retrait de l'écran de chargement (balisage et styles en ligne dans index.html)
   content/
     resources.js      catégories, chargement des articles Markdown (import.meta.glob), lecture de l'en-tête, découpage en blocs

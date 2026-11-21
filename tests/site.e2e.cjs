@@ -55,7 +55,7 @@ async function run(b, vw, vh, opts = {}) {
   check(await p.getByRole("heading", { level: 1 }).first().textContent().then(t => t.includes("Répétez votre entretien d'embauche")), `[${tag}] titre du héros absent`);
   await p.getByRole("button", { name: "Lancer ma première répétition" }).waitFor();
   await shot("01-accueil", false);
-  const dot = p.getByRole("button", { name: /Scène 2 sur 3/ });
+  const dot = p.getByRole("button", { name: /Scène 2 sur 4/ });
   await dot.click(); await p.waitForTimeout(700);
   check(await dot.getAttribute("aria-current") === "true", `[${tag}] le point de navigation des scènes ne change pas la scène`);
   await shot("01a-heros-scene2", false);
@@ -129,7 +129,7 @@ async function run(b, vw, vh, opts = {}) {
 
   // À propos et FAQ
   await visit("#/a-propos"); await shot("07-a-propos");
-  await p.goto(BASE + "#/a-propos/faq"); await p.waitForTimeout(700);
+  await p.goto(BASE + "#/a-propos/faq"); await p.waitForTimeout(1600);
   const faqTop = await p.locator("#faq").evaluate(el => Math.round(el.getBoundingClientRect().top));
   check(faqTop < 200, `[${tag}] #/a-propos/faq ne défile pas jusqu'à la FAQ (${faqTop})`);
   const q = p.getByRole("button", { name: "Faut-il créer un compte ?" });
@@ -217,6 +217,62 @@ async function run(b, vw, vh, opts = {}) {
   check(await p.getByText(/non conforme/).count() > 0, `[${tag}] déclaration d'accessibilité : mention « non conforme » absente`);
   await shot("17-accessibilite");
 
+  // Un seul en-tête de page : le titre est au même endroit sur À propos, Solutions, Ressources, Démo et Vos données
+  const pos = [];
+  for (const h of ["#/a-propos", "#/solutions", "#/ressources", "#/demo", "#/vos-donnees"]) {
+    await visit(h); await p.waitForTimeout(500);
+    const b = await p.getByRole("heading", { level: 1 }).first().boundingBox();
+    pos.push([h, Math.round(b.x), Math.round(b.y)]);
+  }
+  check(pos.every(([, x, y]) => Math.abs(x - pos[0][1]) <= 1 && Math.abs(y - pos[0][2]) <= 1), `[${tag}] titres de page à des positions différentes : ${JSON.stringify(pos)}`);
+
+  // Navigation à deux niveaux : sous-menu au clic et au clavier, accordéons sur mobile
+  if (!mobile) {
+    await visit("#/");
+    const sub = p.getByRole("button", { name: "Sous-menu À propos" });
+    await sub.click();
+    check(await sub.getAttribute("aria-expanded") === "true", `[${tag}] sous-menu : aria-expanded non mis à jour`);
+    await shot("22-sous-menu", false);
+    await p.keyboard.press("Escape");
+    check(await sub.getAttribute("aria-expanded") === "false", `[${tag}] sous-menu : Échap ne ferme pas`);
+    await sub.focus(); await p.keyboard.press("ArrowDown"); await p.waitForTimeout(100); await p.keyboard.press("ArrowDown");
+    await p.keyboard.press("Enter"); await p.waitForTimeout(900);
+    check(p.url().endsWith("#/a-propos/ia-et-recherche"), `[${tag}] sous-menu au clavier : « L'IA et la recherche » non ouverte (${p.url()})`);
+    check(((await p.getByRole("heading", { level: 1 }).first().textContent()) || "").includes("L'IA et la recherche"), `[${tag}] page « L'IA et la recherche » absente`);
+    await shot("23-ia-et-recherche");
+  } else {
+    await visit("#/");
+    await p.getByRole("button", { name: "Ouvrir le menu" }).click();
+    const dlg = p.getByRole("dialog", { name: "Menu" });
+    await dlg.getByRole("button", { name: "Sous-menu Solutions" }).click();
+    check(await dlg.getByRole("link", { name: "Coachs" }).isVisible(), `[${tag}] menu mobile : l'accordéon Solutions ne s'ouvre pas`);
+    await shot("22-menu-accordeon", false);
+    await p.keyboard.press("Escape");
+  }
+
+  // Lien interne à la page : défilement doux sous l'en-tête, puis focus sur la cible
+  await visit("#/ressources/se-presenter-en-deux-minutes");
+  const toc = p.getByRole("navigation", { name: "Sommaire de l'article" }).getByRole("link");
+  if (await toc.count() > 1) {
+    const target = await toc.nth(1).textContent();
+    await toc.nth(1).click(); await p.waitForTimeout(1200);
+    const r = await p.evaluate(() => { const el = document.activeElement; const b = el.getBoundingClientRect(); return { top: Math.round(b.top), tag: el.tagName, text: el.textContent }; });
+    check(r.top >= 40 && r.top < 200 && r.text.trim() === target.trim(), `[${tag}] sommaire : cible non atteinte ou sans focus (${JSON.stringify(r)})`);
+  }
+
+  // Changement de page en fondu : plusieurs navigations et retour arrière sans erreur, haut de page atteint
+  for (const h of ["#/solutions", "#/a-propos", "#/ressources"]) { await p.evaluate(x => { location.hash = x; }, h); await p.waitForTimeout(900); }
+  await p.goBack(); await p.waitForTimeout(900);
+  check(p.url().endsWith("#/a-propos") && await p.evaluate(() => scrollY) === 0, `[${tag}] retour arrière : page ou position inattendue (${p.url()})`);
+
+  // « Revenir en haut »
+  await visit("#/a-propos");
+  await p.evaluate(() => scrollTo(0, 2000)); await p.waitForTimeout(400);
+  const top = p.getByRole("button", { name: "Revenir en haut" });
+  check(await top.isVisible(), `[${tag}] « Revenir en haut » absent après défilement`);
+  await top.click(); await p.waitForTimeout(1500);
+  check(await p.evaluate(() => scrollY) < 5, `[${tag}] « Revenir en haut » ne remonte pas`);
+
   // Options d'accessibilité : thème sombre et grande taille de texte, sans débordement, mémorisées sans flash
   if (!opts.reduced) {
     await visit("#/");
@@ -245,6 +301,25 @@ async function run(b, vw, vh, opts = {}) {
     check(await p.evaluate(() => document.documentElement.dataset.theme) === "auto", `[${tag}] accessibilité : « Réinitialiser » ne remet pas le thème automatique`);
     await p.keyboard.press("Escape");
   }
+
+  // Rester connecté : après connexion, les pages publiques gardent « Mes paramètres » et l'accès à l'espace
+  await visit("#/espace");
+  await p.getByRole("button", { name: "Se connecter" }).click();
+  await p.waitForFunction(() => location.hash === "#/coach", null, { timeout: 5000 }).catch(() => {}); await p.waitForTimeout(1000);
+  check(((await p.getByRole("heading", { level: 1 }).first().textContent()) || "").startsWith("Bienvenue"), `[${tag}] connexion coach : « Bienvenue » attendu`);
+  await shot("24-espace-coach");
+  await visit("#/ressources");
+  const settings = p.getByRole("button", { name: "Mes paramètres" });
+  check(await settings.count() === 1, `[${tag}] session : « Mes paramètres » absent sur une page publique`);
+  check(await p.getByRole("button", { name: "Mon espace", exact: true }).count() === 0, `[${tag}] session : « Mon espace » ne doit pas remplacer « Mes paramètres »`);
+  await settings.click();
+  await p.getByRole("menuitem", { name: "Retour à mon espace" }).click(); await p.waitForTimeout(900);
+  check(p.url().endsWith("#/coach"), `[${tag}] session : « Retour à mon espace » ne mène pas à l'espace (${p.url()})`);
+  await visit("#/vos-donnees/coachs");
+  check(await p.getByRole("button", { name: "Mes paramètres" }).count() === 1, `[${tag}] « Vos données » depuis l'espace : en-tête d'espace perdu`);
+  await p.getByRole("button", { name: "Mes paramètres" }).click();
+  await p.getByRole("menuitem", { name: "Se déconnecter" }).click(); await p.waitForTimeout(900);
+  check(await p.getByRole("button", { name: "Mes paramètres" }).count() === 0, `[${tag}] « Se déconnecter » ne met pas fin à la session`);
 
   errors.forEach(e => problems.push(`[${tag}] ${e}`));
   await ctx.close();

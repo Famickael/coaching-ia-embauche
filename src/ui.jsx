@@ -1,7 +1,8 @@
 import React, { useEffect, useId, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import {
-  T, ON, GRAD, GRAD_MAIN, GRAD_COACH, GRAD_AI, GRAD_SOFT, GRAD_PAGE, FD, FB, FM, TY, PAD, PAD_MOBILE, GAP, W, RAD, SH, MO, Z,
-  TONE, HEADER_H, HEADER_H_M, TY_MOBILE, GRAD_AI_BORDER, FONT_STACKS,
+  T, ON, GLOW, GRAD, GRAD_MAIN, GRAD_COACH, GRAD_AI, GRAD_SOFT, GRAD_PAGE, FD, FB, FM, TY, PAD, PAD_MOBILE, GAP, W, RAD, SH, MO, Z,
+  TONE, HEADER_H, HEADER_H_M, TY_MOBILE, GRAD_AI_BORDER, FONT_STACKS, MASK, LOGO_GRAD,
 } from "./tokens.js";
 import { Reveal } from "./motion.jsx";
 
@@ -27,7 +28,7 @@ function RepetLogo({ s = 22, dark = false, tagline = true }) {
     <div style={{ display: "flex", alignItems: "center", gap: s * 0.5 }}>
       <img src={LOGO_SYM} alt="" aria-hidden style={{ height: s * 2.1, width: "auto", display: "block", filter: dark ? "brightness(0) invert(1)" : "none" }} />
       <div style={{ display: "flex", flexDirection: "column", gap: tagline ? 2 : 0 }}>
-        <img src={LOGO_WORD} alt="La Répét'" style={{ height: wordH, width: "auto", display: "block", filter: dark ? "brightness(0) invert(1)" : "none" }} />
+        <img src={LOGO_WORD} alt="La Répét'" className={dark ? undefined : "rp-logo-word"} style={{ height: wordH, width: "auto", display: "block", ...(dark ? { filter: "brightness(0) invert(1)" } : {}) }} />
         {tagline && <div style={{ font: `400 ${s * 0.44}px ${FB}`, color: dark ? ON.text : T.muted }}>S'entraîner à l'entretien</div>}
       </div>
     </div>
@@ -77,6 +78,7 @@ const I = {
   rec: <circle cx="12" cy="12" r="6" />,
   check: <polyline points="20 6 9 17 4 12" />,
   arrow: <><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></>,
+  arrowUp: <><line x1="12" y1="19" x2="12" y2="5" /><polyline points="5 12 12 5 19 12" /></>,
   arrowL: <><line x1="19" y1="12" x2="5" y2="12" /><polyline points="12 19 5 12 12 5" /></>,
   redo: <><polyline points="1 4 1 10 7 10" /><path d="M3.5 15a9 9 0 1 0 2.1-9.4L1 10" /></>,
   user: <><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></>,
@@ -233,10 +235,12 @@ function Card({ children, style, pad = "md", level = 1, hover, onClick, topbar, 
     background: T.surface, border: `1px solid ${T.line}`, borderRadius: pad === "sm" ? RAD.md : RAD.lg, padding: PAD[pad] ?? 0,
     boxShadow: lift ? SH.lg : level === 2 ? SH.sm : SH.xs, transition: `box-shadow ${MO.base} ${MO.ease}, transform ${MO.base} ${MO.ease}, border-color ${MO.fast}`,
     transform: lift ? "translateY(-2px)" : "none", cursor: onClick ? "pointer" : undefined,
-    overflow: topbar || pad === "none" ? "hidden" : undefined, color: "inherit", ...TY.inherit, ...style,
+    overflow: pad === "none" ? "hidden" : undefined, color: "inherit", ...TY.inherit, ...style,
   };
-  const cls = [pad !== "none" && `rp-pad-${pad}`, className].filter(Boolean).join(" ");
-  const bar = topbar && <div aria-hidden style={{ position: "absolute", top: 0, left: 0, right: 0, height: 4, background: topbar === "coach" ? GRAD_COACH : topbar === "ai" ? GRAD_AI : GRAD_MAIN }} />;
+  /* Bordure haute en dégradé : pseudo-élément qui épouse l'arrondi (référentiel 5.5). */
+  const tb = topbar && `rp-tb rp-tb-${topbar === "coach" ? "coach" : topbar === "ai" ? "ai" : "main"}`;
+  const cls = [pad !== "none" && `rp-pad-${pad}`, tb, className].filter(Boolean).join(" ");
+  const bar = null;
   const hv = { onMouseEnter: () => setH(true), onMouseLeave: () => setH(false) };
   if (onClick) return <button type="button" onClick={onClick} aria-label={label} className={cls} style={st} {...hv}>{bar}{children}</button>;
   const As = as || "div";
@@ -468,7 +472,8 @@ function Modal({ open = true, close, title, sub, icon, head = "none", width = "f
   }, [open]); // eslint-disable-line
   if (!open) return null;
   const dark = head === "grad";
-  return (
+  /* Rendue dans <body> : jamais prise dans un parent qui crée un contexte (en-tête collant avec flou), donc toujours centrée. */
+  return createPortal(
     <div className="rp-modal" onClick={e => { if (e.target === e.currentTarget) close(); }}
       style={{ position: "fixed", inset: 0, zIndex: Z.modal, background: T.overlay, backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
       <div ref={panel} role="dialog" aria-modal="true" aria-labelledby={title ? tid : undefined} aria-label={title ? undefined : label} className="up"
@@ -491,8 +496,31 @@ function Modal({ open = true, close, title, sub, icon, head = "none", width = "f
         <div className="rp-pad-lg" style={{ padding: PAD.lg, overflowY: "auto" }}>{children}</div>
         {footer && <div className="rp-pad-lg" style={{ padding: `${PAD.sm}px ${PAD.lg}px`, borderTop: `1px solid ${T.line}`, flexShrink: 0 }}>{footer}</div>}
       </div>
+    </div>,
+    document.body
+  );
+}
+
+/* Logo animé d'attente (bulles qui se rapprochent, points qui « tapent ») avec un libellé d'état.
+   full : plein écran (connexion à un espace) ; sinon dans le bloc. role="status", aria-live ; statique en mouvement réduit. */
+function BrandLoader({ label, full = false, size = 72 }) {
+  const gid = useId().replace(/:/g, "");
+  const box = (
+    <div role="status" aria-live="polite" style={{ display: "grid", justifyItems: "center", gap: 16, textAlign: "center" }}>
+      <svg viewBox="0 0 204 172" width={size} aria-hidden="true" focusable="false" style={{ overflow: "visible" }}>
+        <defs>
+          <linearGradient id={`${gid}l`} x1="0" y1="1" x2="1" y2="0"><stop offset="0" stopColor={LOGO_GRAD.l[0]} /><stop offset="1" stopColor={LOGO_GRAD.l[1]} /></linearGradient>
+          <linearGradient id={`${gid}r`} x1="0" y1="1" x2="1" y2="0"><stop offset="0" stopColor={LOGO_GRAD.r[0]} /><stop offset="1" stopColor={LOGO_GRAD.r[1]} /></linearGradient>
+        </defs>
+        <g className="rp-bl-r"><path fill={`url(#${gid}r)`} d="M88 16H150A50 50 0 0 1 200 66V86A50 50 0 0 1 150 136H122V122H134A30 30 0 0 0 134 62H88Z" /></g>
+        <g className="rp-bl-l"><path fill={`url(#${gid}l)`} d="M88 44H54A50 50 0 0 0 38 141.4L40 166L67 144H112A6 6 0 0 0 118 138V122H82A30 30 0 0 1 82 62H88Z" /></g>
+        {[88, 108, 128].map((cx, k) => <circle key={cx} className={`rp-bl-d rp-bl-d${k + 1}`} cx={cx} cy="92" r="6.5" fill={T.navy} />)}
+      </svg>
+      {label && <div style={{ ...TY.h3, color: T.navy }}>{label}</div>}
     </div>
   );
+  if (!full) return box;
+  return createPortal(<div className="rp-bl-full">{box}</div>, document.body);
 }
 
 /* ─── PAGES PUBLIQUES ─── */
@@ -515,7 +543,7 @@ function PageHero({ eyebrow, title, lead, children, aside }) {
   return (
     <section style={{ background: GRAD_PAGE, borderBottom: `1px solid ${T.line}` }}>
       <div className="rs-pad" style={{ maxWidth: W.page, margin: "0 auto", padding: "64px 24px" }}>
-        <div className={aside ? "rs-split" : undefined}>
+        <div className={aside ? "rs-split" : undefined} style={aside ? { alignItems: "start" } : undefined}>
           <div className="up" style={{ display: "grid", gap: 16, maxWidth: W.read }}>
             {eyebrow && <Eyebrow>{eyebrow}</Eyebrow>}
             <h1 className="ty-xl" style={{ ...TY.pageTitle, color: T.navy, margin: 0 }}>{title}</h1>
@@ -646,8 +674,46 @@ const GStyle = () => (
     @keyframes rpAiBorder{from{background-position:0 0,100% 50%}to{background-position:0 0,0 50%}}
     .rp-ai-fab{position:fixed;right:16px;bottom:16px;z-index:${Z.nav};width:56px;height:56px;border-radius:50%;border:none;cursor:pointer;display:grid;place-items:center;color:${T.surface};background:${GRAD_AI};box-shadow:${SH.btn.ai[0]};transition:box-shadow ${MO.base} ${MO.ease},transform ${MO.base} ${MO.ease}}
     .rp-ai-fab:hover{box-shadow:${SH.btn.ai[1]};transform:translateY(-1px)}
-    .rp-ai-bubble{position:fixed;right:16px;bottom:88px;z-index:${Z.nav};max-width:min(300px,calc(100vw - 32px));display:flex;align-items:center;gap:4px;padding:4px 4px 4px 16px;border:2px solid transparent;border-radius:${RAD.md}px;background:linear-gradient(${T.surface},${T.surface}) padding-box,${GRAD_AI_BORDER} border-box;box-shadow:${SH.lg};animation:rpAiIn ${MO.enter} ${MO.ease} both}
+    .rp-ai-bubble{position:fixed;right:16px;bottom:148px;z-index:${Z.nav};max-width:min(300px,calc(100vw - 32px));display:flex;align-items:center;gap:4px;padding:4px 4px 4px 16px;border:2px solid transparent;border-radius:${RAD.md}px;background:linear-gradient(${T.surface},${T.surface}) padding-box,${GRAD_AI_BORDER} border-box;box-shadow:${SH.lg};animation:rpAiIn ${MO.enter} ${MO.ease} both}
     .rp-has-fab{padding-bottom:96px!important}
+    /* Changement de page (référentiel 7) : seul le contenu change, l'en-tête reste en place */
+    .rp-header{view-transition-name:rp-header}
+    .rp-view{view-transition-name:rp-page}
+    ::view-transition-old(root),::view-transition-new(root){animation:none}
+    ::view-transition-old(rp-page){animation:rpPageOut ${MO.pageOut} ${MO.soft} both}
+    ::view-transition-new(rp-page){animation:rpPageIn ${MO.pageIn} ${MO.soft} ${MO.pageOut} both}
+    @keyframes rpPageOut{to{opacity:0}}
+    @keyframes rpPageIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+    .rp-leave{opacity:0;transition:opacity ${MO.pageOut} ${MO.soft}}
+    .rp-enter{animation:rpPageIn ${MO.pageIn} ${MO.soft} both}
+    @media (prefers-reduced-motion: reduce){::view-transition-old(rp-page),::view-transition-new(rp-page){animation:none}}
+    html[data-motion=reduce]::view-transition-old(rp-page),html[data-motion=reduce]::view-transition-new(rp-page){animation:none}
+    /* Navigation à deux niveaux */
+    .rp-navitem{position:relative;display:flex;align-items:center}
+    .rp-subbtn{width:28px;height:44px;display:inline-grid;place-items:center;color:${T.body}}
+    .rp-subbtn:hover,.rp-subbtn[aria-expanded=true]{color:${T.primary}}
+    .rp-subbtn svg{transition:transform ${MO.base} ${MO.ease}}
+    .rp-subbtn[aria-expanded=true] svg,.rp-rot svg{transform:rotate(180deg)}
+    .rp-submenu{position:absolute;left:-12px;top:100%;min-width:240px;padding:8px;background:${T.surface};border:1px solid ${T.line};border-radius:${RAD.md}px;box-shadow:${SH.lg};z-index:${Z.nav + 1};animation:rsMenu ${MO.base} ${MO.ease} both}
+    .rp-submenu[hidden]{display:none}
+    .rp-subitem{display:flex;align-items:center;min-height:44px;padding:0 12px;border-radius:${RAD.sm}px;color:${T.navy};text-decoration:none;font:${F("body")}}
+    .rp-subitem:hover,.rp-subitem:focus-visible{background:${T.primaryBg};color:${T.primary}}
+    /* Logo : le mot-symbole (image foncée) passe en clair en thème sombre */
+    html[data-theme=dark] .rp-logo-word{filter:brightness(0) invert(.92)}
+    @media (prefers-color-scheme: dark){html:not([data-theme=light]):not([data-theme=dark]) .rp-logo-word{filter:brightness(0) invert(.92)}}
+    /* Logo animé d'attente */
+    .rp-bl-l{animation:rpBlL 1.3s ${MO.soft} both}
+    .rp-bl-r{animation:rpBlR 1.3s ${MO.soft} both}
+    .rp-bl-d{animation:rpBlD 1s ease-in-out 1.2s infinite both}
+    .rp-bl-d2{animation-delay:1.35s}.rp-bl-d3{animation-delay:1.5s}
+    @keyframes rpBlL{from{opacity:0;transform:translate(-22px,10px)}to{opacity:1;transform:none}}
+    @keyframes rpBlR{from{opacity:0;transform:translate(22px,-10px)}to{opacity:1;transform:none}}
+    @keyframes rpBlD{0%,60%,100%{opacity:.35;transform:none}30%{opacity:1;transform:translateY(-5px)}}
+    .rp-bl-full{position:fixed;inset:0;z-index:${Z.modal + 2};display:grid;place-items:center;background:${T.bg};animation:up ${MO.base} ${MO.ease} both}
+    .rp-totop{position:fixed;right:22px;z-index:${Z.nav};box-shadow:${SH.sm}}
+    /* Bordure haute en dégradé des cartes : bleu vers violet (personne accompagnée), vert (coach), IA */
+    .rp-tb::before{content:"";position:absolute;inset:-1px;border-radius:inherit;padding-top:5px;background:var(--tb);-webkit-mask:${MASK} content-box,${MASK};-webkit-mask-composite:xor;mask:${MASK} content-box,${MASK};mask-composite:exclude;pointer-events:none;z-index:1}
+    .rp-tb-main{--tb:${GRAD_MAIN}} .rp-tb-coach{--tb:${GRAD_COACH}} .rp-tb-ai{--tb:${GRAD_AI}}
     /* Recruteur oral : indicateur discret (barres qui pulsent pendant la lecture, immobiles sinon) */
     .rp-voice{display:inline-flex;align-items:center;gap:2px;height:16px}
     .rp-voice i{display:block;width:3px;height:6px;border-radius:2px;background:${T.primary};opacity:.5}
@@ -678,7 +744,7 @@ const GStyle = () => (
     .strike::after{content:"";position:absolute;left:-2px;right:-2px;top:50%;height:2px;background:${T.error};transform:scaleX(0);transform-origin:left;transition:transform .4s ease .2s}
     .is-in .strike::after{transform:scaleX(1)}
     .is-in .strike{opacity:.7;transition:opacity .3s ease .6s}
-    .navlink{font:${F("bodyStrong")};color:${T.body};background:none;border:none;cursor:pointer;padding:8px 4px;text-decoration:none;text-underline-offset:6px;text-decoration-thickness:2px}
+    .navlink{white-space:nowrap;font:${F("bodyStrong")};color:${T.body};background:none;border:none;cursor:pointer;padding:8px 4px;text-decoration:none;text-underline-offset:6px;text-decoration-thickness:2px}
     .navlink:hover{color:${T.primary}}
     .navlink.on{color:${T.primary};text-decoration:underline}
     /* En-tête */
@@ -721,7 +787,7 @@ const GStyle = () => (
     /* Héros */
     .rs-hero{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);gap:64px;align-items:center}
     .rs-rot{display:grid}
-    .rs-rot>span{grid-area:1/1;opacity:0;transform:translateY(.2em);transition:opacity ${MO.slow} ${MO.soft},transform ${MO.slow} ${MO.soft};padding-bottom:.08em}
+    .rs-rot>span{grid-area:1/1;opacity:0;transform:translateY(.2em);transition:opacity ${MO.fade} ${MO.soft},transform ${MO.fade} ${MO.soft};padding-bottom:.08em}
     .rs-rot>span.on{opacity:1;transform:none}
     .rs-stage{position:relative;width:100%;max-width:${W.narrow}px;margin:0 auto}
     .rs-scene{position:absolute;inset:0;opacity:0;visibility:hidden;transition:opacity ${MO.fade} ${MO.soft},visibility 0s linear ${MO.fade}}
@@ -746,6 +812,16 @@ const GStyle = () => (
     .rs-vis{position:absolute;inset:0;opacity:0;transform:translateY(12px);transition:opacity ${MO.slow} ${MO.soft},transform ${MO.slow} ${MO.soft};pointer-events:none}
     .rs-vis.on{opacity:1;transform:none}
     .rs-tabs-m{display:none}
+    .rs-vcard{position:absolute;inset:0;background:${T.surface};border-radius:${RAD.xl}px;border:1px solid ${T.line};box-shadow:${SH.glow};overflow:hidden;transform-origin:50% 0;transition:transform ${MO.slow} ${MO.soft},opacity ${MO.slow} ${MO.soft},box-shadow ${MO.slow} ${MO.soft}}
+    .rs-vcard.on{transform:none;opacity:1}
+    .rs-vcard.past{transform:translateY(-20px) scale(.92);opacity:.6;box-shadow:${SH.sm}}
+    .rs-vcard.next{transform:translateY(110%) rotate(2deg);opacity:0;pointer-events:none}
+    /* Lignes d'encart du héros : du bas vers le haut, en fondu, à chaque arrivée de la scène */
+    .rs-hl{background:${T.accentBg};border-radius:4px;padding:0 4px}
+    .rs-line{opacity:0}
+    .on .rs-line{animation:rsUp .45s ${MO.soft} both}
+    /* Fond de l'accueil qui suit la souris */
+    .rs-glow{position:fixed;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(48vmax circle at var(--mx,72%) var(--my,18%),${GLOW.violet},transparent 70%),radial-gradient(56vmax circle at calc(100% - var(--mx,72%)) calc(100% - var(--my,18%)),${GLOW.blue},transparent 70%)}
     .rs-in{opacity:0;transform:translateY(12px);transition:opacity ${MO.reveal} ${MO.soft},transform ${MO.reveal} ${MO.soft}}
     .on .rs-in{opacity:1;transform:none}
     .rs-knob{left:4px;transition:left .25s ease .6s}
@@ -912,5 +988,5 @@ const GStyle = () => (
 export {
   ORG_NAME, LOGO_SYM, LOGO_WORD, RepetMark, RepetLogo, OrgLogo, Halo, img, Icon, I, SI, Txt, Eyebrow, Bare, Btn, IconBtn, Fab, Link, Back,
   Tag, Card, Notice, Quote, IconTile, Empty, Confirm, ConfirmMark, TimeChip, fmtTime, Field, Input, Textarea, Select, Checkbox, CheckTile,
-  Chip, Toggle, Rail, GradHead, Modal, Section, PageHero, Accordion, Tabs, ScrollProgress, GStyle,
+  Chip, Toggle, Rail, GradHead, Modal, BrandLoader, Section, PageHero, Accordion, Tabs, ScrollProgress, GStyle,
 };

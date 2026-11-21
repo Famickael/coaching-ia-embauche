@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import {
   T, TY, RAD, SH, PAD, GAP, W, Card, Tag, Btn, Back, Link, IconBtn, IconTile, Icon, I, Rail, GradHead, RepetMark, Txt, Notice, Empty, Confirm,
-  Field, Input, Textarea, CheckTile, Chip, Modal,
+  Field, Input, Textarea, CheckTile, Chip, Modal, BrandLoader,
 } from "./ui.jsx";
 import Recorder from "./Recorder.jsx";
 import WarmupStage from "./WarmupStage.jsx";
@@ -92,10 +92,14 @@ function CodeEntry({ initial, onOk }) {
   const submit = e => {
     e?.preventDefault();
     const p = findParcours(code);
-    if (p) onOk(p.code); else setErr(CODE_ERR);
+    if (!p) return setErr(CODE_ERR);
+    setBusy(true);
+    setTimeout(() => onOk(p.code), 700); // logo d'attente, durée minimale courte
   };
+  const [busy, setBusy] = useState(false);
   return (
     <div style={{ ...wrap(W.narrow), textAlign: "center", display: "grid", gap: GAP.grid, justifyItems: "center" }}>
+      {busy && <BrandLoader full label="Ouverture de votre espace…" />}
       <RepetMark s={56} />
       <div style={stack(12)}>
         <Txt v="h1" as="h1" color={T.navy}>Bienvenue sur La Répét'</Txt>
@@ -568,7 +572,7 @@ function Pick({ p, ctx, go }) {
 
 /* ─── Transcription + analyse, puis enregistrement de la prise ─── */
 function Processing({ p, ctx, go }) {
-  const [stage, setStage] = useState("Préparation…");
+  const [stage, setStage] = useState("Analyse de votre réponse…");
   const [err, setErr] = useState(null);
   const [attempt, setAttempt] = useState(0);
   const rec = ctx.recording;
@@ -587,7 +591,7 @@ function Processing({ p, ctx, go }) {
             else setStage("Votre appareil met votre réponse par écrit…");
           });
           segments = tr.segments; transcript = tr.text;
-          setStage("Préparation de votre retour…");
+          setStage("Préparation des repères de votre retour…");
           analysis = await analyze({ segments, duration: rec.duration, gaze: rec.gaze, poste: p.poste, question: ctx.question });
         } else {
           analysis = { synthese: "Vous avez choisi de ne pas recevoir le retour de l'assistant. Vous pouvez revoir votre réponse et l'envoyer à votre coach.", dimensions: [], source: "none" };
@@ -606,11 +610,8 @@ function Processing({ p, ctx, go }) {
   return (
     <Card pad="lg" level={2} topbar="ai" style={{ ...wrap(W.form), textAlign: "center", display: "grid", justifyItems: "center", gap: 12 }}>
       {!err ? (<>
-        <div style={{ position: "relative", width: 72, height: 72, marginBottom: 12 }}>
-          <div style={{ position: "absolute", inset: 0, borderRadius: "50%", background: T.violetBg }} />
-          <div style={{ position: "absolute", inset: 8, border: `4px solid ${T.lineLt}`, borderTopColor: T.violet, borderRadius: "50%", animation: "spin .9s linear infinite" }} />
-        </div>
-        <Txt v="h2" as="h1" color={T.navy} role="status">{stage}</Txt>
+        <h1 className="rp-sr">Analyse de votre réponse</h1>
+        <BrandLoader label={stage} size={88} />
         <Txt v="body" color={T.body}>Tout se passe sur votre appareil. Cela peut prendre un moment.</Txt>
         <Txt v="caption" color={T.muted}>{PHRASES.download}</Txt>
       </>) : (<>

@@ -86,11 +86,15 @@ export const ON = {
 export const GRAD_PREMIUM = `linear-gradient(135deg, ${FIX.primary} 0%, ${FIX.blueDk} 50%, ${FIX.violet} 100%)`;
 export const GRAD = GRAD_PREMIUM;
 export const GRAD_MAIN = `linear-gradient(135deg, ${FIX.blue} 0%, ${FIX.violet} 100%)`;
-export const GRAD_COACH = `linear-gradient(135deg, ${FIX.blue} 0%, ${FIX.accent} 100%)`;
+export const GRAD_COACH = `linear-gradient(135deg, ${FIX.accent} 0%, ${FIX.success} 100%)`;   // vert : côté coach
 export const GRAD_AI = `linear-gradient(135deg, ${FIX.blueDk} 0%, ${FIX.violet} 100%)`;
 export const GRAD_SOFT = `linear-gradient(135deg, rgba(56,96,151,.08), rgba(92,75,185,.07))`;
 /* Bordure animée du panneau de l'assistant (bleu vers violet, rôle IA). */
 export const GRAD_AI_BORDER = `linear-gradient(120deg, ${FIX.blueDk} 0%, ${FIX.violet} 50%, ${FIX.blueDk} 100%)`;
+/* Masque opaque (découpe des bordures en dégradé) : la couleur n'est jamais visible. */
+export const MASK = "linear-gradient(#000 0 0)";
+/* Couleurs du symbole animé (bulles du logo), identiques à l'écran de chargement d'index.html. */
+export const LOGO_GRAD = { l: ["#4A7BFB", "#3B48E9"], r: ["#4549E8", "#A064FB"] };
 export const GRAD_NIGHT = `linear-gradient(160deg, ${FIX.navy} 0%, ${FIX.primaryDk} 60%, ${FIX.violet} 100%)`;
 /* Profondeur et marque (v3.1, demande du propriétaire) : titre d'accroche et fonds des sections clés. */
 export const GRAD_TITLE = `linear-gradient(120deg, ${T.navy} 0%, ${T.primary} 100%)`;        // début du titre d'accroche (texte, AA)
@@ -179,9 +183,10 @@ export const ringOf = bg => `0 0 0 4px ${bg}`;
 export const MO = {
   fast: ".12s", base: ".2s", enter: ".45s", ease: "cubic-bezier(.2,.7,.3,1)",   // interface : survol, sélection, apparition d'écran
   reveal: ".7s", slow: ".9s", fade: "1.1s", soft: "cubic-bezier(.45,0,.55,1)",   // pages publiques (v3.1) : apparitions, étapes, fondus de scène
+  pageOut: ".3s", pageIn: ".45s",                                                // changement de page : sortie puis entrée en fondu (v3.2)
 };
 /* Cadence des éléments qui tournent seuls (ms) : scènes du héros, fin d'accroche. */
-export const PACE = { scene: 11500, accroche: 5000 };
+export const PACE = { scene: 11500, accroche: 11500 };   // fin d'accroche synchronisée avec sa scène (même cadence)
 export const Z = { nav: 50, modal: 100 };
 
 /* Champ de saisie (section 5.3). */
