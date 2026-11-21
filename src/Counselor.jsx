@@ -3,6 +3,7 @@ import { T, TY, RAD, PAD, GAP, W, Card, Tag, Btn, Back, Link, IconBtn, Icon, I, 
 import { useStore, createParcours, deleteParcours, takesOf, updateTake, parcoursStatus } from "./lib/store.js";
 import { Player, DimCard, markersOf, useVideoUrl } from "./Report.jsx";
 import { fmt } from "./lib/analysis.js";
+import CoachAssistantDock from "./CoachAssistant.jsx";
 
 const dateFr = iso => (iso ? new Date(iso).toLocaleString("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "");
 export const linkFor = code => `${location.origin}${location.pathname}#/s/${code}`;
@@ -236,6 +237,24 @@ function Review({ s, p, take, back }) {
     setNotes(next); setNoteText(""); saveDraft({ notes: next });
   };
   const seek = (t, id) => { setActive(id); const v = playerRef.current; if (v) { v.currentTime = t; v.play().catch(() => {}); } };
+  /* Insertion d'une proposition de l'assistant de rédaction : le coach choisit l'endroit, relit avant envoi. */
+  const insertFromAssistant = (target, text, dimId) => {
+    if (target === "intro") {
+      const next = intro.trim() ? `${intro.trimEnd()}\n\n${text}` : text;
+      setIntro(next); saveDraft({ intro: next }); return "dans le mot d'introduction";
+    }
+    if (target === "comment" && dimId) {
+      const next = { ...comments, [dimId]: (comments[dimId] || "").trim() ? `${comments[dimId].trim()} ${text}` : text };
+      setComments(next); saveDraft({ comments: next });
+      return `en remarque sur « ${(A.dimensions.find(d => d.id === dimId) || {}).titre || "l'observation"} »`;
+    }
+    if (target === "note") {
+      const t = playerRef.current ? playerRef.current.currentTime : 0;
+      const next = [...notes, { id: nid(), t, text }];
+      setNotes(next); saveDraft({ notes: next }); return `en note à ${fmt(t)} de la vidéo`;
+    }
+    return "";
+  };
   const send = () => {
     updateTake(take.id, { report: { intro: intro.trim(), comments, notes, sentAt: new Date().toISOString(), by: s.counselor.name }, draft: null });
     setSent(true);
@@ -317,6 +336,8 @@ function Review({ s, p, take, back }) {
         </div>
       </div>
       <div><Back onClick={back} /></div>
+      <CoachAssistantDock prenom={p.prenom} question={take.question} poste={p.poste} dims={A.dimensions} intro={intro} comments={comments}
+        getTime={() => (playerRef.current ? playerRef.current.currentTime : 0)} onInsert={insertFromAssistant} />
     </div>
   );
 }

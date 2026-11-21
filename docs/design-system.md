@@ -418,6 +418,10 @@ Panneau latéral non modal (`role="dialog"`, `aria-modal="false"`), ouvert depui
 
 Bouton « Mon compte » dans l'en-tête, sur toutes les pages. Déconnecté : il mène à la page « Mon espace » (code d'accès ou connexion coach). Connecté (coach ou personne accompagnée) : il ouvre un panneau latéral modal (`role="dialog"`, `aria-modal="true"`), à droite, 400 px au plus, plein écran sous 760 px, rendu dans `<body>`, sur le voile `T.overlay`. Contenu : en-tête du compte (pastille à initiale, « Mon compte », prénom ou nom et rôle : « Espace coach » ou « Espace d'entraînement »), puis Retour à mon espace, Vos données, Options d'accessibilité, Changer de code et Retirer mon consentement (personne accompagnée), Se déconnecter. Rangées de 48 px. Focus envoyé sur la première action et retenu, Échap et clic sur le voile ferment, focus rendu au bouton, défilement de la page bloqué (`lockScroll`), page inerte. Jamais ouvert en même temps que l'assistant : l'ouvrir ferme l'assistant (`closeAssistant`), et les boutons flottants sont masqués tant qu'il est ouvert.
 
+### 5.9 quater Assistant de rédaction du rapport (`CoachAssistantDock`, `src/CoachAssistant.jsx`)
+
+Même panneau que 5.9 bis (`DockPanel`, bouton flottant `Fab`, bordure `GRAD_AI_BORDER`), dans la relecture coach. Titre « Assistant de rédaction du rapport ». Cinq choix (puces `role="radio"`) : Astuces, Remarques positives, Reformuler, Introduction, Débriefing ; puces `tone="ai"` pour l'observation concernée. Chaque proposition (fond `violetBg`, `RAD.sm`) porte ses insertions en boutons `secondary` taille `sm` : « Dans l'introduction », « Sur l'observation », « Note à 0:12 » (moment courant de la vidéo). Confirmation dans un `Notice tone="success"` (`role="status"`) qui rappelle de relire avant d'envoyer. Grand écran (1180 px et plus) : le contenu se décale de 432 px pour rester visible à côté du panneau.
+
 ### 5.10 Autres éléments normalisés
 
 | Élément | Règle |
@@ -725,5 +729,6 @@ Dégradés : `GRAD` et `GRAD_AI` recomposés selon 1.3, `GRAD_NIGHT` ajouté, `G
 
 | 2026-11-21 | « Mes paramètres » devient « Mon compte » : bouton présent sur toutes les pages (déconnecté : vers « Mon espace » ; connecté : panneau latéral modal, plein écran sur mobile, 5.9 ter), jamais ouvert avec l'assistant | Demande du propriétaire |
 | 2026-11-21 | Responsive : défilement réellement bloqué sous le menu et les fenêtres (`html.rp-lock`, `html` portant `overflow-y:scroll`), fond inerte et boutons flottants masqués sous le menu, en-tête resserré sous 420 et 360 px, texte des boutons d'en-tête plafonné à 115 % sur mobile, menu repliable jusqu'à 1279 px quand le texte est agrandi ou espacé (`data-textsize`), mots longs coupés dans les titres, cibles de 44 px sur mobile et écrans tactiles (puces, onglets, sommaire, fil d'Ariane, sources, bulle de l'assistant, logo) | Demande du propriétaire, audit à 11 largeurs |
+| 2026-11-21 | Assistant de rédaction du rapport côté coach (5.9 quater), panneau commun `DockPanel` | Demande du propriétaire |
 
 Ajouter une ligne à chaque évolution d'une règle ou d'une échelle.

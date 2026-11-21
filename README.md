@@ -105,6 +105,7 @@ Les photos suivantes proviennent de Pexels et sont utilisées sous la [licence P
 | Repères cliquables sur la barre de lecture (repère ↔ moment) | `Player` (`Report.jsx`) |
 | Partage volontaire prise par prise, avec un mot au coach | `Share` |
 | Relecture coach : notes horodatées, commentaires par observation, mot d'introduction, brouillon automatique | `Review` (`Counselor.jsx`) |
+| Assistant de rédaction du rapport (côté coach, même panneau latéral) : astuces liées aux observations, à la question et au métier, remarques positives non évaluatives, reformulation dans le ton de la charte, idées de mot d'introduction et de débriefing en atelier ; insertion en un clic (introduction, remarque sur une observation, note au moment courant de la vidéo) | `src/CoachAssistant.jsx`, `src/lib/coachAssistant.js` : base locale (au moins 40 entrées par observation et par situation) ou modèle de langage via `VITE_LLM_ENDPOINT` (prompt système propre au coach), sortie filtrée par `coachCompliant()` |
 | « Mon compte » : vers « Mon espace » sans session ; panneau latéral du compte une fois connecté | `AccountMenu` (`App.jsx`) |
 | Rapport final IA + coach, renvoyable après modification | `take.report` |
 | Réentraînement illimité, y compris après le rapport | espace bénéficiaire |
@@ -149,6 +150,7 @@ src/
   Recorder.jsx        enregistreur caméra/micro + déclenchement du suivi du regard
   WarmupStage.jsx     aperçu de l'échauffement (caméra ou voix seule, fond), sans enregistrement
   Assistant.jsx       assistant de préparation (fil de conversation) et panneau latéral commun DockPanel
+  CoachAssistant.jsx  assistant de rédaction du rapport (côté coach)
   Report.jsx          lecteur avec repères, cartes d'observation, corps du rapport (partagé par les deux espaces)
   lib/
     store.js          données : localStorage (« larepet.v1 ») pour les métadonnées, IndexedDB (« larepet ») pour les vidéos
@@ -159,6 +161,7 @@ src/
     questions.js      banque de questions, phrases et relances d'échauffement, sujets du questionnaire de fin
     jobs.js           liste des métiers et recherche pour l'autocomplétion
     assistant.js      assistant : base de connaissances locale, relances, appel facultatif au modèle de langage
+    coachAssistant.js assistant de rédaction du rapport : base locale, reformulation, garde-fou coachCompliant, modèle facultatif
     background.js     fond flou ou uni pendant l'échauffement (MediaPipe Image Segmenter)
 public/img/            photos et visuels (voir « Crédits photos » et docs/briefs/chatgpt-images.md)
 docs/
