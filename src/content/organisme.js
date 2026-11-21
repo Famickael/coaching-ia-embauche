@@ -18,7 +18,7 @@ export const ORG = {
   email: "contact@exemple.fr",           // courriel de contact
   phone: "01 00 00 00 00 (numéro d'exemple)",           // téléphone de contact
   /* Délégué à la protection des données (RGPD, art. 13(1)(b)) */
-  dpo: "Délégué à la protection des données de l'organisme (nom à remplacer)",             // nom ou service
+  dpo: "service protection des données (nom à remplacer)",             // nom ou service
   dpoEmail: "dpo@exemple.fr",        // courriel du DPO
   dpoAddress: "12 rue de l'Exemple, 75000 Paris (adresse d'exemple)",      // adresse postale pour exercer ses droits
   /* Mentions légales (LCEN, art. 1-1) */
