@@ -183,22 +183,24 @@ async function run(b, vw, vh, opts = {}) {
 
   // Nous contacter (formulaire destiné aux commanditaires : acteurs publics, entreprises)
   await visit("#/demo"); await shot("13-demo");
+  const status = p.getByTestId("demo-status");
+  const DEMO_MSG = "Aucune demande envoyée, version de démonstration";
   check(await p.getByRole("checkbox").count() === 0, `[${tag}] formulaire : aucune case de recontact ne doit être obligatoire`);
   check(await p.getByRole("radio", { name: "Acteur public" }).count() === 1 && await p.getByRole("radio", { name: "Entreprise" }).count() === 1, `[${tag}] formulaire : type de structure absent`);
+  check((await p.locator("main").innerText()).indexOf(DEMO_MSG) < 0, `[${tag}] formulaire : le message de démonstration ne doit pas s'afficher avant l'envoi`);
   await p.getByRole("button", { name: "Envoyer ma demande" }).click();
   check(await p.locator("[role=alert]").count() >= 3, `[${tag}] formulaire : erreurs non signalées`);
+  check((await status.textContent()) === "", `[${tag}] formulaire : message de démonstration affiché alors que des champs manquent`);
   await shot("13b-demo-erreurs", false);
   await p.getByLabel("Votre nom", { exact: true }).fill("Alex Martin");
   await p.getByLabel("Nom de votre structure").fill("Structure d'exemple");
   await p.getByLabel("Adresse électronique").fill("alex.martin@exemple.fr");
   await p.getByLabel("Public accompagné").selectOption({ index: 1 });
   await p.getByRole("button", { name: "Envoyer ma demande" }).click(); await p.waitForTimeout(300);
-  /* Site construit sans VITE_CONTACT_EMAIL (BUG-01) : rien n'est envoyé, l'écran le dit et propose de copier la demande. */
-  check(await p.getByRole("heading", { name: /votre demande est prête/ }).count() === 1, `[${tag}] formulaire : écran de confirmation absent`);
-  const doneText = await p.locator("main").innerText();
-  check(!/recontact|enregistrée|est envoyée/i.test(doneText), `[${tag}] formulaire : la confirmation ne doit pas annoncer un envoi qui n'a pas eu lieu`);
-  check(/envoyez-le-nous/.test(doneText), `[${tag}] formulaire : consigne de copie absente`);
-  check(await p.getByRole("button", { name: "Copier ma demande" }).count() === 1, `[${tag}] formulaire : bouton « Copier ma demande » absent`);
+  /* Le formulaire n'envoie rien : au clic, après validation, le message de statut le dit, mot pour mot. */
+  check(await status.getAttribute("role") === "status" && (await status.textContent()) === DEMO_MSG, `[${tag}] formulaire : message « ${DEMO_MSG} » absent après l'envoi`);
+  check(p.url().endsWith("#/demo"), `[${tag}] formulaire : la page ne doit pas changer`);
+  check(!/recontact|enregistrée|est envoyée|Copier ma demande/i.test(await p.locator("main").innerText()), `[${tag}] formulaire : aucun envoi ni copie ne doit être annoncé`);
   await shot("14-demo-confirmation");
 
   // Pied de page : liens vers les questions fréquentes et les pages « Vos données »

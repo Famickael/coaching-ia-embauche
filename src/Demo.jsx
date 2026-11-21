@@ -1,16 +1,13 @@
 import React, { useState } from "react";
-import { T, RAD, SH, GAP, Btn, Icon, I, TY, W, PageHero, IconTile, Field, Input, Textarea, Select, Link, Toggle, Card, Tag, RadioGroup } from "./ui.jsx";
+import { T, RAD, GAP, Btn, Icon, I, TY, W, PageHero, IconTile, Field, Input, Textarea, Select, Link, Toggle, Card, Tag, RadioGroup } from "./ui.jsx";
 import { PHRASES } from "./content/legal.js";
 
 /* Page « Nous contacter » : un commanditaire (acteur public de l'emploi ou entreprise) décrit son projet
    d'accompagnement. La Répét' est l'outil de l'organisme : on ne vend pas un logiciel, on propose un accompagnement
-   mené par nos coachs. Le site n'envoie rien lui-même (BUG-01) :
-   - avec VITE_CONTACT_EMAIL, la demande s'ouvre dans la messagerie de la personne (mailto:), qui l'envoie ;
-   - sans adresse, la demande est préparée et la personne la copie pour nous l'envoyer.
-   « Nous vous recontactons » (PHRASES.contactSent) est réservé à un envoi réel, par la fonction serveur
-   « demande » de la production (docs/plan-production.md, 1.5) : mode "sent", branché ici le moment venu. */
-
-const CONTACT = import.meta.env.VITE_CONTACT_EMAIL || "";
+   mené par nos coachs. Le formulaire n'envoie rien (décision du propriétaire : aucun frais pour l'instant) :
+   rien n'est annoncé avant l'envoi ; au clic, après validation des champs, un message de statut dit
+   exactement PHRASES.contactDemo. « Nous vous recontactons » (PHRASES.contactSent) reste réservé à un envoi réel,
+   à brancher dans submit le moment venu. */
 const KINDS = [["public", "Acteur public"], ["entreprise", "Entreprise"]];
 const PUBLICS = {
   public: ["Demandeurs d'emploi", "Personnes en parcours d'insertion", "Jeunes en recherche d'emploi", "Autre public"],
@@ -31,18 +28,11 @@ function validate(f) {
   return e;
 }
 
-const kindLabel = k => KINDS.find(m => m[0] === k)?.[1] || "";
-const summary = f => [
-  `Nom : ${f.nom}`, `Structure : ${f.structure} (${kindLabel(f.type)})`, f.fonction && `Fonction : ${f.fonction}`,
-  `Courriel : ${f.email}`, f.tel && `Téléphone : ${f.tel}`, `Public accompagné : ${f.public}`,
-  f.volume && `Volume approximatif : ${f.volume}`, f.echeance && `Échéance : ${f.echeance}`, f.message && `Message : ${f.message}`,
-].filter(Boolean).join("\n");
-
 export default function Demo({ go }) {
   const [f, setF] = useState(EMPTY);
   const [err, setErr] = useState({});
-  const [sent, setSent] = useState(null);
-  const set = k => v => { setF(x => ({ ...x, [k]: v })); if (err[k]) setErr(x => ({ ...x, [k]: undefined })); };
+  const [status, setStatus] = useState("");
+  const set = k => v => { setF(x => ({ ...x, [k]: v })); setStatus(""); if (err[k]) setErr(x => ({ ...x, [k]: undefined })); };
   const ev = k => e => set(k)(e.target.value);
 
   const submit = e => {
@@ -50,17 +40,9 @@ export default function Demo({ go }) {
     const v = validate(f);
     setErr(v);
     const first = [...ORDER, "tel"].find(k => v[k]);
-    if (first) { document.getElementById(`demo-${first}`)?.focus(); return; }
-    let mailto = "";
-    if (CONTACT) {
-      mailto = `mailto:${CONTACT}?subject=${encodeURIComponent(`Projet d'accompagnement · ${f.structure}`)}&body=${encodeURIComponent(summary(f))}`;
-      window.location.href = mailto;
-    }
-    setSent({ ...f, mailto, mode: mailto ? "mail" : "copy" });
-    window.scrollTo({ top: 0 });
+    if (first) { setStatus(""); document.getElementById(`demo-${first}`)?.focus(); return; }
+    setStatus(PHRASES.contactDemo); // aucun envoi : voir l'en-tête du fichier
   };
-
-  if (sent) return <Done f={sent} go={go} reset={() => { setF(EMPTY); setSent(null); }} />;
 
   return (
     <main>
@@ -104,6 +86,7 @@ export default function Demo({ go }) {
             </Field>
             <div style={{ display: "grid", gap: 8, marginTop: 4 }}>
               <div className="rp-wide-m"><Btn kind="objective" size="md" icon={I.send}>Envoyer ma demande</Btn></div>
+              <p role="status" data-testid="demo-status" style={{ ...TY.bodyStrong, color: T.navy, margin: 0 }}>{status}</p>
               <span style={{ ...TY.caption, color: T.muted, display: "flex", gap: 8, alignItems: "flex-start" }}>
                 <Icon d={I.lock} s={16} />
                 <span>{PHRASES.contactInfo} <Link href="#/vos-donnees/notice">Vos données</Link></span>
@@ -132,33 +115,6 @@ export default function Demo({ go }) {
             <p style={{ ...TY.small, color: T.muted, margin: 0 }}>Vous vous entraînez avec un coach ? <Link href="#/espace">Ouvrir mon espace</Link></p>
           </Card>
         </div>
-      </div>
-    </main>
-  );
-}
-
-function Done({ f, go, reset }) {
-  const [copied, setCopied] = useState("");
-  const text = summary(f);
-  const copy = async () => {
-    try { await navigator.clipboard.writeText(text); setCopied("Récapitulatif copié."); }
-    catch { setCopied("La copie automatique n'a pas fonctionné : sélectionnez le texte puis copiez-le."); }
-  };
-  const lead = f.mode === "sent" ? PHRASES.contactSent : f.mode === "mail" ? PHRASES.contactMail : PHRASES.contactCopy;
-  return (
-    <main className="rs-pad" style={{ maxWidth: W.form, margin: "0 auto", padding: "64px 24px 0" }}>
-      <div role="status" className="up" style={{ background: T.surface, border: `1px solid ${T.line}`, borderRadius: RAD.lg, boxShadow: SH.sm, padding: 32, display: "grid", gap: 16, justifyItems: "center", textAlign: "center" }}>
-        <div style={{ width: 56, height: 56, borderRadius: "50%", background: T.successBg, display: "grid", placeItems: "center" }}><Icon d={I.check} s={28} c={T.successDk} /></div>
-        <h1 className="ty-h1" style={{ ...TY.h1, color: T.navy, margin: 0 }}>{f.mode === "sent" ? "Merci, votre demande est envoyée" : "Merci, votre demande est prête"}</h1>
-        <p style={{ ...TY.bodyLg, color: T.body, margin: 0 }}>{lead} {PHRASES.contactInfo}</p>
-        <pre data-testid="demo-recap" style={{ ...TY.mono, color: T.navy, background: T.bg, borderRadius: RAD.sm, padding: 16, margin: 0, textAlign: "left", whiteSpace: "pre-wrap", wordBreak: "break-word", width: "100%", userSelect: "all" }}>{text}</pre>
-        <div className="rp-wide-m" style={{ display: "flex", gap: 12, flexWrap: "wrap", justifyContent: "center" }}>
-          {f.mode === "mail" && <a href={f.mailto} className="rs-link" style={{ ...TY.bodyStrong, padding: "12px 0" }}>Rouvrir ma messagerie</a>}
-          {f.mode === "copy" && <Btn kind="primary" icon={I.copy} onClick={copy}>Copier ma demande</Btn>}
-          <Btn kind={f.mode === "copy" ? "secondary" : "primary"} onClick={() => go("#/")}>Revenir à l'accueil</Btn>
-        </div>
-        <span role="status" style={{ ...TY.small, color: T.body }}>{copied}</span>
-        <Link onClick={reset}>Faire une autre demande</Link>
       </div>
     </main>
   );

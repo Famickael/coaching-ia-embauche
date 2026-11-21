@@ -53,9 +53,9 @@ export const PHRASES = {
   coachLogin: "Vous ne voyez que les réponses que l'on vous envoie.",
   noTracking: "Ce site n'utilise pas de cookies publicitaires et ne vous suit pas.",
   contactInfo: "Vos coordonnées servent seulement à répondre à votre demande. Elles sont destinées uniquement à notre équipe.",
-  /* Écran de confirmation de la demande (BUG-01) : jamais « l'équipe vous recontacte » tant qu'aucun envoi réel n'a eu lieu. */
-  contactMail: "Votre messagerie s'ouvre avec votre demande : il vous reste à l'envoyer.",
-  contactCopy: "Copiez ce récapitulatif et envoyez-le-nous par courriel.",
+  /* Formulaire « Nous contacter » (BUG-01) : rien n'est envoyé ; ce message s'affiche au clic, après validation.
+     Jamais « l'équipe vous recontacte » tant qu'aucun envoi réel n'a eu lieu (contactSent). */
+  contactDemo: "Aucune demande envoyée, version de démonstration",
   contactSent: "Votre demande est envoyée. Notre équipe vous recontacte pour en parler.",
   refuse: "Vous pouvez refuser. Cela ne change rien à votre accompagnement : vous pouvez préparer votre entretien avec votre coach.",
   changeMind: "Vous pouvez changer d'avis à tout moment, dans « Mon compte ».",

@@ -35,7 +35,9 @@ console.log("content.test : OK");
 
 /* BUG-01 : la confirmation de la demande ne promet un rappel que si un envoi réel a eu lieu. */
 const { PHRASES } = await import("../src/content/legal.js");
-for (const k of ["contactCopy", "contactMail", "contactInfo"]) assert.ok(!/recontact|enregistrée/i.test(PHRASES[k]), `${k} promet un envoi : ${PHRASES[k]}`);
+for (const k of ["contactDemo", "contactInfo"]) assert.ok(!/recontact|enregistrée/i.test(PHRASES[k]), `${k} promet un envoi : ${PHRASES[k]}`);
+/* Formulaire de contact : aucun envoi, message exact demandé par le propriétaire. */
+assert.equal(PHRASES.contactDemo, "Aucune demande envoyée, version de démonstration");
 assert.match(PHRASES.contactSent, /recontacte/);
 /* RED-07 : sans serveur, l'envoi est décrit comme local. */
 assert.match(PHRASES.sameDevice, /cet appareil/);
@@ -82,3 +84,4 @@ for (const f of walk(new URL("../src", import.meta.url).pathname).filter(f => /\
   assert.ok(!/\bClaude\b|Anthropic/.test(readFileSync(f, "utf8")), `${f} nomme le fournisseur du modèle d'IA`);
 }
 console.log("content.test : types d'entretien et fournisseur d'IA OK");
+
