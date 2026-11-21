@@ -1,6 +1,6 @@
 # Référentiel UI/UX de La Répét'
 
-Source unique de vérité pour l'interface. Version 3.0 (20 novembre 2026). Remplace le paragraphe « Couleurs (design system v2) » du README, qui doit désormais renvoyer ici.
+Source unique de vérité pour l'interface. Version 3.1 (20 novembre 2026). Remplace le paragraphe « Couleurs (design system v2) » du README, qui doit désormais renvoyer ici.
 
 ## 0. Mode d'emploi (à lire en premier)
 
@@ -49,6 +49,8 @@ Statut des jetons cités : **existant** (déjà dans `ui.jsx`), **modifié**, **
 | Surface | `T.surface` | `#FFFFFF` | Cartes, champs, modales, pied de page, texte sur fond plein | |
 | Voile de modale | `T.overlay` **nouveau** | `rgba(27,58,102,.45)` | Fond assombri des modales | |
 | Fond vidéo | `T.videoBg` **nouveau** | `#000000` | Derrière un lecteur vidéo | Ailleurs |
+| En-tête translucide | `T.glass` **nouveau** | `rgba(248,250,252,.9)` | Fond de l'en-tête collant (avec flou d'arrière-plan) | Ailleurs |
+| Fond uni de la caméra | `T.studio` **nouveau** | `#DCE6F2` | Couleur de remplacement du fond de l'aperçu caméra (échauffement) | Interface |
 
 **Pourquoi** : une couleur qui a deux rôles n'en signale plus aucun. Aujourd'hui « Se connecter » est bleu, « Accéder à mon espace » sarcelle, « Démarrer l'enregistrement » bleu clair : la personne ne peut pas apprendre où est la suite.
 
@@ -78,9 +80,43 @@ Statut des jetons cités : **existant** (déjà dans `ui.jsx`), **modifié**, **
 | `GRAD_SOFT` | `primary` 8 % vers `violet` 7 % | `GradHead soft` et en-tête de modale `soft` uniquement |
 | `GRAD_NIGHT` **nouveau** | `navy`, `primaryDk` 60 %, `violet` | Fond de scène vidéo simulée (accueil) et fond d'attente de l'enregistreur |
 
+#### Profondeur et marque (v3.1, pages publiques)
+
+Demande du propriétaire : plus de profondeur et de présence de la marque sur l'accueil, sans surcharger.
+
+| Jeton | Composition | Emploi unique |
+|---|---|---|
+| `GRAD_ACCROCHE` | `blueDk` vers `violet` | Fin d'accroche qui change et mots-clés de la phrase qui se colore (texte de 32 px et plus, seuil 3:1 vérifié par `PAIRS`) |
+| `GRAD_HERO` | `surface` vers `primaryBg` | Fond du héros de l'accueil |
+| `GRAD_SECTION` | `bg`, `primaryBg` au milieu, `bg` | Fond de la strate épinglée (section clé) |
+| `GRAD_PAGE` | `primaryBg` vers `bg` | Fond de `PageHero` (pages secondaires) |
+| `GLOW.blue`, `GLOW.violet` | bleu clair 22 %, violet 20 % | Halos (`Halo`) derrière les photos et le héros : décor, jamais sous du texte |
+| `FADE_FOOT` | masque opaque puis transparent sur 160 px avant le pied de page | Fond de l'accueil qui suit la souris : il s'efface avant le pied de page |
+| `HL.appui`, `HL.ai`, `HL.primary` | teintes de fond des rôles | Surlignage progressif d'un passage (cartes animées, strate) |
+
+Début du titre d'accroche (« Répétez votre entretien d'embauche, ») : couleur pleine `navy` dans les deux thèmes (presque blanc en sombre), sans dégradé ; seule la fin d'accroche qui change garde `GRAD_ACCROCHE`.
+
+**Fond de l'accueil.** Un seul calque fixe (`.rs-glow`) derrière toutes les sections de l'accueil, qui n'ont aucun fond propre (ni halo de section, ni `GRAD_HERO`, ni `GRAD_SECTION`) : aucune rupture entre le héros, la phrase et la strate. Il suit la souris ; sur tactile, il dérive lentement seul (`rsDrift`, 26 s, aller-retour, `transform` seulement) et glisse un peu au défilement et au doigt (`touchmove`), avec lissage, sans capteur d'orientation. Il s'efface avant le pied de page (`FADE_FOOT`, variable `--fy`), et le pied de page garde son fond opaque au-dessus. Fixe en mouvement réduit, masqué en mode concentration.
+
+Le bleu et le violet de ces dégradés et halos relèvent de l'exception « dégradé de la marque » ci-dessous : ils ne signalent ni l'assistant ni une action.
+
 Interdits : dégradé au survol d'un bouton non IA (le bouton `primary` devient `primaryDk` uni), `GRAD_AI` sur un élément sans rapport avec l'assistant (ex. vignette d'une prise), `GRAD_AI_SOFT` (supprimé).
 
 Le violet présent dans `GRAD` et `GRAD_MAIN` est la seule exception à « violet = IA » : c'est le dégradé de la marque (logo).
+
+#### Logo (v3.3)
+
+Le logo s'adapte aux couleurs du site, et non l'inverse. Il est rendu en couches masquées (canal alpha des images officielles : tracé, anticrénelage et barre du « t » redressée conservés), dont la couleur vient des jetons :
+
+| Partie | Jeton | Clair | Sombre |
+|---|---|---|---|
+| Symbole (bulles) | `GRAD_LOGO` (`blue` vers `violet`, 45°) | `#3893CD` vers `#5C4BB9` | `#5AAEE0` vers `#B4A9F5` |
+| Points de la bulle | `T.navy` | `#1B3A66` | `#E8EEF8` |
+| Mot-symbole | `T.navy` | `#1B3A66` | `#E8EEF8` |
+| Accents des « é » | `T.violet` | `#5C4BB9` | `#B4A9F5` |
+| Sur un dégradé de marque sombre (`white`, `dark`) | `ON.text` | blanc | blanc |
+
+Composants : `RepetMark`, `RepetWord`, `RepetLogo` (`src/ui.jsx`). La variante claire du thème sombre vient des mêmes jetons : plus de filtre d'inversion. Le logo animé d'attente (`BrandLoader`), l'écran de chargement d'`index.html` (valeurs recopiées des jetons, clair et sombre) et l'icône du site (`public/favicon.svg`, qui suit le thème du système) prennent les mêmes couleurs.
 
 ### 1.4 Texte sur fond sombre ou dégradé
 
@@ -163,6 +199,9 @@ Trois familles, sans exception : **Manrope** (`FD`) pour les titres, **Inter** (
 | Code saisi | `TY.code` | JetBrains Mono | 700 | 24 / 1 | 0,25em | 24 | Champ du code à 6 caractères |
 | Horodatage | `TY.time` | JetBrains Mono | 700 | 11 / 1 | 0 | 11 | Pastille « 0:03 », numéro d'étape |
 | Mono | `TY.mono` | JetBrains Mono | 500 | 12 / 1,5 | 0 | 12 | Code dans une liste, durée, lien affiché, message technique |
+| Titre de page secondaire | `TY.pageTitle` | Manrope | 800 | 38 / 1,1 | -0,03em | 26 | `h1` de `PageHero` et titre d'article (rendu validé) |
+| Citation | `TY.quote` | Manrope | 700 | 20 / 1,45 | 0 | 18 | Citation d'article |
+| Mise en avant | `TY.strong` | | 700 | | | | `<strong>` dans un paragraphe |
 
 Tailles autorisées (px) : **11, 12, 13, 14, 16, 18, 20, 24, 26, 28, 32, 38, 54**. Graisses autorisées : Manrope 700 et 800 ; Inter 400, 600, 700 ; JetBrains Mono 500 et 700. Toute autre valeur est une erreur (Inter 500 disparaît : `body` ou `bodyStrong`).
 
@@ -225,7 +264,7 @@ Base 4. `sp(n) = 4n`. **Échelle autorisée (px) : 0, 2, 4, 8, 12, 16, 20, 24, 3
 | Jeton | Valeur | Éléments |
 |---|---|---|
 | `RAD.xs` | 6 | Case à cocher, repère carré, coin d'un commentaire à filet |
-| `RAD.sm` | 10 | Bloc interne d'une carte (conseil), pastille d'icône, emplacement du logo d'organisme |
+| `RAD.sm` | 10 | Bloc interne d'une carte (conseil), pastille d'icône |
 | `RAD.md` | 16 | Boutons, champs, zones de texte, bascules, tuiles (`pad="sm"`), observations, messages |
 | `RAD.lg` | 24 | Cartes, modales, zone vidéo |
 | `RAD.xl` | 32 | Carte de démonstration du héros et bandeau d'appel final, rien d'autre |
@@ -243,6 +282,9 @@ Les valeurs littérales de 0 à 4 restent permises pour les micro-éléments de 
 | 3, flottant | `SH.lg` | Modale, carte survolée, élément flottant du héros, bandeau d'appel final |
 | Halo de champ | `SH.ring` **nouveau** | Focus d'un champ |
 | Repère actif | `ringOf(couleur)` **nouveau** | `0 0 0 4px` de la teinte de fond associée |
+| Lueur colorée (v3.1) | `SH.glow` | Ombre diffuse teintée bleu (large flou, faible opacité) : photos des pages publiques, scènes et cartes flottantes du héros, visuel de la strate, carte animée survolée |
+| Lueur assistant (v3.1) | `SH.glowAi` | Même ombre teintée violet : carte « Repères de l'assistant » du héros, bandeau d'appel final (dégradé de marque) |
+| Ombres des boutons | `SH.btn.*` | `[repos, survol]` des boutons pleins, utilisées par `Btn` uniquement |
 
 Les ombres colorées des boutons sont définies dans `Btn` et nulle part ailleurs. Hors de `tokens.js` et `ui.jsx`, `boxShadow` ne prend que `SH.*`, `ringOf()` ou `"none"`.
 
@@ -368,6 +410,18 @@ Le commentaire du coach est un cas nommé (`Quote`) : fond `primaryBg`, filet ga
 
 `Card pad="lg"`, contenu centré : pastille d'icône 48 (`primaryBg`, icône 24 `primary`), titre `TY.h3`, une phrase `TY.body` (ce qui apparaîtra ici et comment), une action au plus. Même gabarit pour « Aucun parcours », « Aucune prise partagée », « Pas encore de prise ».
 
+### 5.9 bis Assistant de préparation d'entretien (`AssistantDock`, `src/Assistant.jsx`)
+
+Panneau latéral non modal (`role="dialog"`, `aria-modal="false"`), ouvert depuis le bouton flottant `Fab` (56 × 56, `GRAD_AI`, en bas à droite) ou par `openAssistant(contexte)` depuis un écran. Ordinateur : à droite, sous l'en-tête, largeur 400 au plus. Mobile (≤ 760) : feuille en bas de 62 % de la hauteur, la page reçoit un espace équivalent en bas pour que rien ne reste caché dessous. Bordure de 2 px en dégradé `GRAD_AI_BORDER` (bleu vers violet), animée une fois à l'apparition (neutralisée par « réduire les animations »). En-tête sans icône : titre « Assistant de préparation d'entretien », mention « Assistant automatique · ce n'est pas une personne ». Focus envoyé dans le champ à l'ouverture, rendu au bouton flottant à la fermeture, Échap ferme, réponses dans un `role="log"` `aria-live="polite"`. Bouton flottant et bulle masqués tant que la caméra ou le micro de l'enregistreur est ouvert. Bulle d'invitation (« Une question pour préparer votre entretien ? ») : à l'ouverture de la page, à la fin d'un enregistrement ou d'un entraînement, une fois par raison et par session ; « Fermer la bulle » la coupe pour la session.
+
+### 5.9 ter Panneau « Mon compte » (`AccountMenu`, `src/App.jsx`)
+
+Bouton « Mon compte » dans l'en-tête, sur toutes les pages. Déconnecté : il mène à la page « Mon espace » (code d'accès ou connexion coach). Connecté (coach ou personne accompagnée) : il ouvre un panneau latéral modal (`role="dialog"`, `aria-modal="true"`), à droite, 400 px au plus, plein écran sous 760 px, rendu dans `<body>`, sur le voile `T.overlay`. Contenu : en-tête du compte (pastille à initiale, « Mon compte », prénom ou nom et rôle : « Espace coach » ou « Espace d'entraînement »), puis Retour à mon espace, Vos données, Options d'accessibilité, Changer de code et Retirer mon consentement (personne accompagnée), Se déconnecter. Rangées de 48 px. Focus envoyé sur la première action et retenu, Échap et clic sur le voile ferment, focus rendu au bouton, défilement de la page bloqué (`lockScroll`), page inerte. Jamais ouvert en même temps que l'assistant : l'ouvrir ferme l'assistant (`closeAssistant`), et les boutons flottants sont masqués tant qu'il est ouvert.
+
+### 5.9 quater Assistant de rédaction du rapport (`CoachAssistantDock`, `src/CoachAssistant.jsx`)
+
+Même panneau que 5.9 bis (`DockPanel`, bouton flottant `Fab`, bordure `GRAD_AI_BORDER`), dans la relecture coach. Titre « Assistant de rédaction du rapport ». Cinq choix (puces `role="radio"`) : Astuces, Remarques positives, Reformuler, Introduction, Débriefing ; puces `tone="ai"` pour l'observation concernée. Chaque proposition (fond `violetBg`, `RAD.sm`) porte ses insertions en boutons `secondary` taille `sm` : « Dans l'introduction », « Sur l'observation », « Note à 0:12 » (moment courant de la vidéo). Confirmation dans un `Notice tone="success"` (`role="status"`) qui rappelle de relire avant d'envoyer. Grand écran (1180 px et plus) : le contenu se décale de 432 px pour rester visible à côté du panneau.
+
 ### 5.10 Autres éléments normalisés
 
 | Élément | Règle |
@@ -408,11 +462,20 @@ Remplace 1000, 920, 820, 720, 680, 640, 580, 560, 460.
 | `MO.fast` | 120 ms | Changement de couleur au survol |
 | `MO.base` | 200 ms | Survol avec déplacement, bascule, sélection |
 | `MO.enter` | 450 ms | Apparition d'un écran ou d'un bloc (`.up`, `.rv`) |
-| `MO.ease` | `cubic-bezier(.2,.7,.3,1)` | Courbe unique |
+| `MO.ease` | `cubic-bezier(.2,.7,.3,1)` | Courbe de l'interface (survol, sélection, apparition d'écran) |
+| `MO.reveal` (v3.1) | 700 ms | Apparition au défilement (`.rv`), éléments qui entrent dans une scène (`.rs-pop`, `.rs-in`), phrase qui se colore |
+| `MO.slow` (v3.1) | 900 ms | Fin d'accroche qui change, étapes et visuels de la strate épinglée |
+| `MO.fade` (v3.1) | 1,1 s | Fondu entre deux scènes du héros |
+| `MO.soft` (v3.1) | `cubic-bezier(.45,0,.55,1)` | Courbe douce (ease-in-out) des transitions lentes ci-dessus |
+| `PACE.scene` (v3.2) | 11 500 ms | Durée d'une scène du héros (laisse le temps de lire la scène à côté du titre). Pause au survol, au focus et par le bouton pause |
+| `PACE.accroche` (v3.2) | 11 500 ms | Fin d'accroche synchronisée avec sa scène : même cadence, même fondu (`MO.fade`) |
+| Écran de chargement (v3.2) | 2,5 s minimum (rapprochement des bulles 1,3 s, puis les points), fondu de sortie 0,7 s sur `opacity` seule, calque retiré à `transitionend` | Durée comptée depuis le début de la navigation, pour jouer une fois l'animation complète (bulles qui se rejoignent, puis trois points). « Réduire les animations » : écran statique, 0,6 s. Navigateur piloté : retrait immédiat. Retrait de secours en CSS à 10 s (`index.html`, `src/Loader.jsx`) |
+
+Les pages publiques (accueil, à propos, solutions, ressources) utilisent les durées lentes ; l'application (espaces bénéficiaire et coach) garde `MO.fast`, `MO.base` et `MO.enter` pour rester réactive.
 
 - `transition: all` est interdit : on nomme les propriétés (`background-color`, `border-color`, `box-shadow`, `transform`, `opacity`).
 - Amplitudes : bouton 1 px vers le haut, carte cliquable 2 px, apparition 12 px. On n'anime que `transform` et `opacity`.
-- Animations en boucle limitées à deux : point d'enregistrement (`blink`) et indicateur de chargement (`spin`).
+- Animations en boucle limitées à quatre : point d'enregistrement (`blink`), indicateur de chargement (`spin`), indicateur du recruteur oral pendant la lecture (`rpVoice`, barres qui pulsent, immobiles dès que la voix se tait) et lente dérive du fond de l'accueil (`rsDrift`, 26 s, pages publiques seulement, demande du propriétaire).
 - `prefers-reduced-motion: reduce` neutralise toutes les animations et transitions (règle globale de `GStyle`, à conserver). Le contenu doit rester complet sans animation : rien n'est révélé uniquement par le mouvement.
 - Aucune animation pendant l'enregistrement autre que le point rouge.
 
@@ -433,6 +496,32 @@ Remplace 1000, 920, 820, 720, 680, 640, 580, 560, 460.
 | Messages d'état | `role="status"` pour une confirmation, `role="alert"` pour une erreur |
 | Zoom | La page reste utilisable à 200 % ; tailles en px mais aucun conteneur à hauteur fixe pour du texte |
 | Langue et ton | Français, vouvoiement, écriture inclusive au point médian déjà en place, pas de tiret cadratin, pas d'emoji en guise d'icône |
+
+### 8 bis. Options d'accessibilité et thèmes
+
+**Où.** Bouton icône « Options d'accessibilité » (`I.a11y`, `IconBtn`) dans l'en-tête, à côté de « Mon compte » ; entrée « Options d'accessibilité » dans le menu mobile et dans le panneau « Mon compte ». Il ouvre une `Modal` (`src/A11y.jsx`).
+
+**Réglages** (mémorisés dans `localStorage`, clé `larepet.a11y`, lecture et écriture sous `try/catch` ; `src/lib/a11y.js`) :
+
+| Réglage | Effet | Mise en œuvre |
+|---|---|---|
+| Taille du texte | 4 niveaux : 100, 112,5, 125, 150 % | variable `--fs` : chaque taille de `TY` vaut `calc(Npx * var(--fs, 1))` |
+| Thème | Automatique (suit le système), clair, sombre | `html[data-theme]` ; variables `--c-*` |
+| Contraste renforcé | Textes secondaires et bordures plus marqués | `html[data-contrast=more]` ; palettes `HC_LIGHT`, `HC_DARK` |
+| Police lisible | Atkinson Hyperlegible (auto-hébergée) pour titres et texte | `html[data-font=lisible]` change `--ff-d` et `--ff-b` |
+| Texte espacé | Lettres 0,12 em, mots 0,16 em, lignes 1,8, texte aligné à gauche (WCAG 1.4.12) | `html[data-spacing=on]` |
+| Réduire les animations | Mêmes règles que `prefers-reduced-motion` | `html[data-motion=reduce]`, `useReducedMotion()` |
+| Mode concentration | Masque halos (`.rp-deco`), cartes animées (`.rs-fvis`), arrête les défilements automatiques | `html[data-focusmode=on]` |
+| Règle de lecture | Bande de 48 px qui suit le pointeur, le doigt ou le focus ; le reste est voilé (`T.overlay`) | `.rp-ruler` |
+| Liens toujours soulignés | Tous les liens et la navigation | `html[data-links=on]` |
+| Focus renforcé | Contour 3 px `navy`, décalage 3 px, halo `SH.ring` | `html[data-focusring=on]` |
+| Réinitialiser | Revient aux réglages par défaut et aux préférences du système | `resetA11y()` |
+
+**Sans flash.** Un script en ligne d'`index.html` pose `data-theme` (et la classe `rp-boot-dark` pour l'écran de chargement) avant tout affichage ; `src/main.jsx` injecte la feuille des variables (`themeCSS()`) et applique tous les réglages avant le premier rendu React. Au premier passage : thème automatique, contraste renforcé si `prefers-contrast: more`, animations selon `prefers-reduced-motion`.
+
+**Couleurs en variables.** Les valeurs ne sont définies qu'une fois dans `src/tokens.js` : `LIGHT` (référence de la section 1), `DARK`, `HC_LIGHT`, `HC_DARK`. `T.x` vaut `var(--c-x)` ; les écrans n'utilisent que `T`. `FIX` (valeurs claires, fixes) sert seulement aux éléments posés sur une vidéo ou sur un dégradé de marque sombre (`GRAD`, `GRAD_AI`, `GRAD_NIGHT`, pastilles sur la vidéo), dont le texte reste blanc dans les deux thèmes. La règle A1 de `test:design` vérifie chaque paire de `PAIRS` dans les quatre thèmes (clair, sombre, et leurs versions à contraste renforcé). Seule exception déclarée : `accentLt` sur `navy`, vérifiée en thème clair uniquement (`navy` y est un fond sombre, il devient une couleur de texte en thème sombre).
+
+Palette sombre (rôles identiques à la section 1.1) : `bg` `#0E141E`, `surface` `#161F2E`, `navy` (titres) `#E8EEF8`, `body` `#C5CEDC`, `muted` `#9DA9BB`, `primary` `#8DB4EA`, `accent` `#4ECBC1`, `violet` `#B4A9F5`, `successDk` `#6FD69B`, `warningDk` `#F3C46C`, `errorDk` `#FF8D9E`, fonds teintés de `#1D2A3F` à `#3A1B23`. Sur un fond plein coloré, le texte reste `T.surface` : il devient foncé en thème sombre, avec un contraste vérifié.
 
 ---
 
@@ -472,7 +561,7 @@ Décrire, ne jamais noter. Formulation positive, appui avant exploration. Un bou
 | C3 | une opacité est concaténée à un jeton | `\$\{[^}]+\}[0-9a-fA-F]{2}(?![0-9a-zA-Z])` | aucune |
 | C4 | un nom de couleur CSS est utilisé | `:\s*"(white\|black\|red\|green\|blue\|gray\|grey)"` | `"transparent"`, `"currentColor"`, `"inherit"`, `"none"` |
 | T1 | une propriété typographique est écrite | `\b(font\|fontSize\|fontWeight\|fontFamily\|lineHeight\|letterSpacing)\s*:` dans un objet de style | `fontStyle`, `font: "inherit"` |
-| T2 | une famille est nommée | `Manrope\|Inter\|JetBrains\|Segoe\|sans-serif\|monospace` | aucune |
+| T2 | une famille est nommée | `Manrope\|Inter\|JetBrains\|Segoe\|sans-serif\|monospace` | textes de contenu de `src/content/` (mentions légales qui citent les polices) |
 | S1 | `padding*`, `margin*`, `gap`, `rowGap`, `columnGap` contient un nombre de px hors de l'échelle `SPACE` | tout nombre, isolé ou dans une chaîne `"12px 16px"` ; signe négatif admis | `auto`, `%`, `vh`, `svh`, `em`, `calc()` ; les valeurs `PAD.*`, `GAP.*`, `sp(n)` |
 | S2 | `sp(n)` est appelé avec un `n` tel que `4n` est hors échelle | `sp\(([\d.]+)\)` | aucune |
 | S3 | `<Card pad=` reçoit autre chose que `"none"`, `"sm"`, `"md"`, `"lg"` | `<Card[^>]*\bpad=\{` | aucune |
@@ -486,7 +575,7 @@ Décrire, ne jamais noter. Formulation positive, appui avant exploration. Un bou
 | K4 | un élément non interactif porte `onClick` | `<(div\|span\|p\|li)\b[^>]*\bonClick=` | voile de modale dans `ui.jsx` |
 | K5 | une icône est espacée à la main | `&nbsp;\s*<Icon` ou `<Icon[^>]*/>\s*&nbsp;` | aucune |
 | L1 | un tiret cadratin ou un emoji figure dans une chaîne | le caractère U+2014 ; `\p{Extended_Pictographic}` (drapeau `u`) | aucune ; s'applique aussi à `docs/*.md` pour le tiret |
-| X1 | dans `tokens.js` et `ui.jsx` : une taille de police hors de `SIZES`, une graisse hors de `WEIGHTS` | `(\d+(?:\.\d+)?)px` dans les valeurs `font`, `font-size` ; `\b[1-9]00\b` en tête de `font` | logos (`RepetLogo`, `OrgLogo`) dont la taille est calculée à partir de `s` |
+| X1 | dans `tokens.js` et `ui.jsx` : une taille de police hors de `SIZES`, une graisse hors de `WEIGHTS` | `(\d+(?:\.\d+)?)px` dans les valeurs `font`, `font-size` ; `\b[1-9]00\b` en tête de `font` | logos (`RepetLogo`, `OrgLogo`) dont la taille est calculée à partir de `s` ; les valeurs non littérales (`${TY.h3.font}`) ne sont pas contrôlées |
 | X2 | dans `ui.jsx` : une couleur hexadécimale ou `rgba` hors de l'import de `tokens.js` | motifs C1 et C2 | ombres colorées de `Btn`, à déplacer dans `tokens.js` (`SH.btn*`) pour ramener l'exception à zéro |
 | A1 | une paire texte/fond déclarée dans `tokens.js` (`PAIRS`) a un contraste inférieur à son seuil | calcul WCAG de la luminance relative | aucune |
 
@@ -599,5 +688,47 @@ Dégradés : `GRAD` et `GRAD_AI` recomposés selon 1.3, `GRAD_NIGHT` ajouté, `G
 | 2026-11-20 | Trois paddings de carte (16, 24, 32), cinq largeurs de page | 9 paddings et 12 largeurs relevés |
 
 | 2026-11-20 | Icônes du pied de page en couleur (exception documentée en section 1) | Préférence explicite du propriétaire |
+| 2026-11-20 | Implémentation : jetons dans `src/tokens.js`, composants dans `src/ui.jsx` ; `site.jsx` supprimé (plus de doublon `TT`, `TY`, `W`, `MO`, `Field`…) | Une seule définition par jeton et par composant |
+| 2026-11-20 | `tests/design-lint.mjs` (`npm run test:design`) bloquant, ajouté à `CLAUDE.md` et `AGENTS.md` | Garantie automatique |
+| 2026-11-20 | Nouveaux jetons : `T.glass` (en-tête), `T.studio` (fond uni caméra), `HL.*`, `GRAD_PAGE`, `TY.pageTitle`, `TY.quote`, `TY.strong`, `TY.inherit`, `SH.btn.*`, `PACE`, `HEADER_H` | Valeurs présentes dans des rendus validés, désormais nommées |
+| 2026-11-20 | Composants ajoutés : `Bare` (bouton nu pour options, repères, onglets), `CheckTile` (tuile à cocher), `Chip` (`role` radio ou checkbox, `tone="ai"` pour les suggestions de l'assistant) | Supprimer tout `button` natif des écrans (règle K1) |
+| 2026-11-20 | Bouton « Arrêter » : le glyphe ■ devient l'icône `I.stop` ; boutons d'envoi : icône à gauche (seule la flèche de progression va à droite) | Section 5.1, pas de glyphe en guise d'icône |
+| 2026-11-20 | Pied de page : bloc de liens de navigation retiré (pages déjà dans l'en-tête) ; FAQ et liens légaux conservés | Demande du propriétaire |
+| 2026-11-20 | Emplacement du logo d'organisme (« Famickael », cadre pointillé) retiré de l'en-tête, du menu mobile et du pied de page ; `OrgLogo` reste dans `ui.jsx` pour un usage futur | Demande du propriétaire |
+| 2026-11-20 | v3.1 : profondeur et marque (`GRAD_TITLE`, `GRAD_ACCROCHE`, `GRAD_HERO`, `GRAD_SECTION`, `GLOW`, `SH.glow`, `SH.glowAi`) et transitions plus calmes (`MO.reveal`, `MO.slow`, `MO.fade`, `MO.soft`, `PACE`) sur les pages publiques | Demande du propriétaire : plus de dégradés et d'effets, fondus plus lents |
+| 2026-11-20 | Titres d'étape de la strate épinglée en `TY.h1` (28, mobile 24) au lieu de 24 ; chiffres de la carte de chronologie en `TY.num` ; chapeau de la phrase en `TY.lead` | Une seule échelle |
+| 2026-11-20 | « Se connecter » (coach) et « Générer le code » en `objective` ; « Échauffement · ni enregistré, ni analysé » et « Partage · vous décidez » en étiquette `primary` (contexte), « Rapport reçu » en `success` | Rôles des couleurs (1.1, 5.4) |
+| 2026-11-20 | Page « Mon espace » ramenée à `W.read` ; liste déroulante des métiers : seule dérogation (K4, option de combobox ARIA) | Largeurs et sémantique |
+| 2026-11-20 | Écran de chargement : 1,9 s minimum, fondu 0,6 s ; 0,6 s si « réduire les animations » | Demande du propriétaire : laisser voir l'animation |
+
+| 2026-11-20 | Polices auto-hébergées (`public/fonts/`, `@font-face` générés dans `GStyle`), plus aucun appel à Google Fonts ; Atkinson Hyperlegible ajoutée pour l'option « police lisible » | Conformité (docs/conformite.md, T1) |
+| 2026-11-20 | Règle T2 : exception pour `src/content/` (textes qui citent une police) | Mentions légales |
+| 2026-11-20 | `PACE.scene` 11 500 ms, `PACE.accroche` 5 000 ms | Demande du propriétaire : laisser le temps de lire les scènes |
+| 2026-11-20 | En-tête des espaces : lien « Vos données » et menu « Mes paramètres » (bouton `aria-expanded`, `role="menu"`, flèches, Début, Fin, Échap) à la place de la pastille d'espace | Conformité et demande du propriétaire |
+| 2026-11-20 | Pied de page en trois groupes de liens (Vos données, Le site, Informations légales) ; engagements cliquables | docs/conformite.md, 4.3 |
+
+| 2026-11-20 | Assistant en panneau latéral (5.9 bis), composant `Fab`, jeton `GRAD_AI_BORDER` ; plus d'encart d'assistant dans les écrans | Demande du propriétaire |
+| 2026-11-20 | Astuces de l'échauffement dans une fenêtre `Modal`, ouverte par un lien au-dessus de la phrase | Demande du propriétaire |
+
+| 2026-11-20 | Entraînement complet (7 questions dans l'ordre réel, mise en situation selon le métier) et écran récapitulatif sans score ; recruteur oral sans visage (`RecruiterVoice` : synthèse vocale de l'appareil, sous-titre mot à mot, « Réécouter », « Couper le son », enregistrement possible seulement quand la voix a fini) | Demandes du propriétaire |
+
+| 2026-11-20 | Couleurs en variables CSS (`T` → `var(--c-*)`), palettes `LIGHT`, `DARK`, `HC_LIGHT`, `HC_DARK`, `FIX` ; tailles de texte multipliées par `--fs` ; familles en variables (`--ff-d`, `--ff-b`) ; règle A1 étendue aux quatre thèmes ; options d'accessibilité (8 bis) | Demande du propriétaire : thème sombre, contraste, police lisible, taille du texte |
+
+| 2026-11-20 | Changement de page en fondu (`MO.pageOut` 300 ms, `MO.pageIn` 450 ms, View Transitions avec repli), en-tête immobile ; lien interne : défilement doux sous l'en-tête puis focus sur la cible (`scrollToTarget`) ; mouvement réduit : saut direct | Demande du propriétaire |
+| 2026-11-20 | Navigation à deux niveaux (sous-menus au survol avec délai de fermeture, au clic et au clavier ; accordéons sur mobile) ; page « L'IA et la recherche » | Demande du propriétaire |
+| 2026-11-20 | Bordure haute des cartes : pseudo-élément masqué qui épouse l'arrondi. Convention : bleu vers violet (`GRAD_MAIN`) côté personne accompagnée, vert (`GRAD_COACH`, sarcelle vers vert) côté coach, `GRAD_AI` pour l'assistant | Demande du propriétaire |
+| 2026-11-20 | Un seul en-tête de page (`PageHero`, surtitre obligatoire) : titre au même endroit sur toutes les pages, vérifié par `test:site` | Demande du propriétaire |
+| 2026-11-20 | Modales rendues dans `<body>` (portail) : toujours centrées | Demande du propriétaire |
+| 2026-11-20 | « Revenir en haut » (44 px, empilé au-dessus du bouton de l'assistant), boutons de l'en-tête sans déplacement au survol | Demande du propriétaire |
+| 2026-11-20 | Logo animé d'attente réutilisable (`BrandLoader`) : connexion à un espace, analyse d'une réponse, fin d'enregistrement ; plein écran ou dans le bloc, `role="status"`, statique en mouvement réduit | Demande du propriétaire |
+| 2026-11-20 | Accueil : fins d'accroche et scènes synchronisées (4 scènes), minuteurs en direct, lignes d'encart du bas vers le haut, fond en dégradé qui suit la souris sur toute la page, strate en pile de cartes | Demande du propriétaire |
+
+| 2026-11-21 | Logo aligné sur les couleurs du site : couches masquées colorées par `GRAD_LOGO`, `T.navy`, `T.violet` ; variante claire automatique en thème sombre ; `LOGO_GRAD` (indigo saturé) supprimé ; chargement et icône du site aux mêmes couleurs | Demande du propriétaire : adapter le logo au site, logo invisible en thème sombre |
+| 2026-11-21 | Titre de l'accueil en couleur pleine `navy` jusqu'à la virgule, dans les deux thèmes ; `GRAD_TITLE` supprimé | Demande du propriétaire (« blanc jusqu'à la virgule » en sombre) |
+| 2026-11-21 | Fond de l'accueil : calque fixe unique, halos du héros retirés, dérive autonome sur tactile, fondu avant le pied de page (`FADE_FOOT`), pied de page opaque au-dessus | Demande du propriétaire : coupure visible sous le héros, fond derrière le pied de page |
+
+| 2026-11-21 | « Mes paramètres » devient « Mon compte » : bouton présent sur toutes les pages (déconnecté : vers « Mon espace » ; connecté : panneau latéral modal, plein écran sur mobile, 5.9 ter), jamais ouvert avec l'assistant | Demande du propriétaire |
+| 2026-11-21 | Responsive : défilement réellement bloqué sous le menu et les fenêtres (`html.rp-lock`, `html` portant `overflow-y:scroll`), fond inerte et boutons flottants masqués sous le menu, en-tête resserré sous 420 et 360 px, texte des boutons d'en-tête plafonné à 115 % sur mobile, menu repliable jusqu'à 1279 px quand le texte est agrandi ou espacé (`data-textsize`), mots longs coupés dans les titres, cibles de 44 px sur mobile et écrans tactiles (puces, onglets, sommaire, fil d'Ariane, sources, bulle de l'assistant, logo) | Demande du propriétaire, audit à 11 largeurs |
+| 2026-11-21 | Assistant de rédaction du rapport côté coach (5.9 quater), panneau commun `DockPanel` | Demande du propriétaire |
 
 Ajouter une ligne à chaque évolution d'une règle ou d'une échelle.

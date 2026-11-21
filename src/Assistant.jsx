@@ -1,15 +1,116 @@
 import React, { useEffect, useRef, useState } from "react";
-import { T, GRAD_AI, GRAD_AI_SOFT, FD, FB, RAD, Icon, I } from "./ui.jsx";
+import { T, TY, RAD, Btn, Chip, Input, IconBtn, Fab, Link, I } from "./ui.jsx";
 import { askAssistant, CONTEXT_SUGGESTIONS } from "./lib/assistant.js";
+import { PHRASES } from "./content/legal.js";
 
-const REMOTE = !!import.meta.env.VITE_LLM_ENDPOINT;
+/* Assistant de préparation d'entretien : panneau latéral ouvert depuis le bord de l'écran,
+   disponible partout dans l'espace bénéficiaire. Bouton flottant, petite bulle d'invitation
+   (à l'ouverture de la page, à la fin d'un enregistrement ou d'un échauffement), qu'on peut fermer
+   et qui ne revient pas en boucle. Aucune note, aucune déduction émotionnelle.
 
-/* Assistant conversationnel réutilisable : fil de messages, saisie, suggestions cliquables,
-   relances possibles (« un exemple ? », « pourquoi ? »…). Aucune note, aucune déduction émotionnelle. */
-export default function Assistant({ context = "warmup", poste, title = "Posez directement votre question", intro, placeholder = "Votre question…", inputLabel = "Votre question à l'assistant", id = "assistant", maxHeight = 360 }) {
-  const [msgs, setMsgs] = useState(() => intro ? [{ role: "assistant", content: intro, suggestions: CONTEXT_SUGGESTIONS[context] || [] }] : []);
+   Commandes depuis n'importe quel écran (événements de fenêtre) :
+     openAssistant(context)   ouvre le panneau, avec les suggestions du contexte ;
+     nudgeAssistant(reason)   propose la bulle (une fois par raison et par session) ;
+     setRecording(on)         masque le bouton flottant pendant un enregistrement. */
+const EV = "rp-assistant";
+export const openAssistant = context => window.dispatchEvent(new CustomEvent(EV, { detail: { action: "open", context } }));
+export const nudgeAssistant = reason => window.dispatchEvent(new CustomEvent(EV, { detail: { action: "nudge", reason } }));
+export const closeAssistant = () => window.dispatchEvent(new CustomEvent(EV, { detail: { action: "close" } }));
+export const setRecording = on => window.dispatchEvent(new CustomEvent(EV, { detail: { action: "recording", on } }));
+
+const NUDGE_KEY = "larepet.nudges";
+const readNudges = () => { try { return JSON.parse(sessionStorage.getItem(NUDGE_KEY) || "null") || { off: false, seen: [] }; } catch { return { off: false, seen: [] }; } };
+const writeNudges = v => { try { sessionStorage.setItem(NUDGE_KEY, JSON.stringify(v)); } catch { /* stockage indisponible */ } };
+
+const INTRO = "Bonjour ! Je suis l'assistant de préparation d'entretien. Je suis un programme, pas une personne. Posez-moi une question, puis demandez-moi un exemple si vous voulez.";
+
+export default function AssistantDock({ poste, context = "general" }) {
+  const [open, setOpen] = useState(false);
+  const [ctx, setCtx] = useState(context);
+  const [bubble, setBubble] = useState(false);
+  const [recording, setRec] = useState(false);
+  const [ctxKey, setCtxKey] = useState(0); // change à chaque ouverture depuis un écran : les suggestions suivent l'écran
+  const fab = useRef(null), openRef = useRef(false), recRef = useRef(false), pending = useRef(false);
+  openRef.current = open; recRef.current = recording;
+  useEffect(() => { setCtx(context); }, [context]);
+
+  const nudge = reason => {
+    if (openRef.current) return;
+    const n = readNudges();
+    if (n.off || n.seen.includes(reason)) return;
+    writeNudges({ ...n, seen: [...n.seen, reason] });
+    if (recRef.current) { pending.current = true; return; } // affichée à la sortie de l'enregistreur
+    setBubble(true);
+  };
+  useEffect(() => {
+    const on = e => {
+      const d = e.detail || {};
+      if (d.action === "open") { if (d.context) setCtx(d.context); setCtxKey(k => k + 1); setBubble(false); setOpen(true); }
+      if (d.action === "close") { setOpen(false); setBubble(false); }
+      if (d.action === "nudge") nudge(d.reason);
+      if (d.action === "recording") { setRec(!!d.on); if (!d.on && pending.current) { pending.current = false; setBubble(true); } }
+    };
+    window.addEventListener(EV, on);
+    const t = setTimeout(() => nudge("open"), 1200);
+    return () => { window.removeEventListener(EV, on); clearTimeout(t); };
+  }, []); // eslint-disable-line
+  useEffect(() => { if (!bubble) return; const t = setTimeout(() => setBubble(false), 15000); return () => clearTimeout(t); }, [bubble]);
+
+  const close = () => setOpen(false);
+  const dismissBubble = () => { setBubble(false); writeNudges({ ...readNudges(), off: true }); };
+
+  return (<>
+    <DockPanel id="asst-panel" title="Assistant de préparation d'entretien" open={open} onClose={close} focusId="asst-panel-input" returnFocus={fab}>
+      <Conversation poste={poste} context={ctx} ctxKey={ctxKey} />
+    </DockPanel>
+    {!open && !recording && bubble && (
+      <div className="rp-ai-bubble noprint" role="status">
+        <Link onClick={() => { setBubble(false); setOpen(true); }} style={{ ...TY.small, ...TY.link, color: T.navy, textDecoration: "none", textAlign: "left" }}>Une question pour préparer votre entretien ?</Link>
+        <IconBtn icon={I.close} label="Fermer la bulle" tone="muted" size={16} onClick={dismissBubble} />
+      </div>
+    )}
+    {!open && !recording && (
+      <Fab ref={fab} icon={I.chat} className="noprint" label="Ouvrir l'assistant de préparation d'entretien" aria-expanded={open} aria-controls="asst-panel"
+        onClick={() => { setBubble(false); setOpen(true); }} />
+    )}
+  </>);
+}
+
+/* Panneau latéral commun aux deux assistants (préparation côté bénéficiaire, rédaction du rapport côté coach) :
+   non modal, bordure en dégradé, Échap ferme, focus envoyé dans le panneau à l'ouverture et rendu au bouton
+   flottant à la fermeture ; sur mobile, feuille en bas de l'écran et espace équivalent réservé sous la page. */
+export function DockPanel({ id, title, mention = "Assistant automatique · ce n'est pas une personne", open, onClose, focusId, returnFocus, children }) {
+  const refocus = useRef(false);
+  useEffect(() => {
+    document.documentElement.classList.toggle("rp-asst-open", open);
+    if (!open) return;
+    requestAnimationFrame(() => (focusId ? document.getElementById(focusId) : document.querySelector(`#${id} button`))?.focus());
+    return () => document.documentElement.classList.remove("rp-asst-open");
+  }, [open]); // eslint-disable-line
+  useEffect(() => { if (!open && refocus.current) { refocus.current = false; returnFocus?.current?.focus(); } }, [open]); // eslint-disable-line
+  const close = () => { refocus.current = true; onClose(); };
+  return (
+    <div id={id} role="dialog" aria-modal="false" aria-labelledby={`${id}-title`} hidden={!open}
+      className={`rp-ai-panel noprint ${open ? "is-in" : ""}`} onKeyDown={e => { if (e.key === "Escape") { e.stopPropagation(); close(); } }}>
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8, padding: "16px 12px 12px 20px", borderBottom: `1px solid ${T.line}` }}>
+        <div style={{ display: "grid", gap: 2, minWidth: 0 }}>
+          <h2 id={`${id}-title`} style={{ ...TY.h3, color: T.navy, margin: 0 }}>{title}</h2>
+          <div style={{ ...TY.caption, color: T.violet }}>{mention}</div>
+        </div>
+        <IconBtn icon={I.close} label="Fermer l'assistant" tone="muted" onClick={close} />
+      </div>
+      {children}
+    </div>
+  );
+}
+
+/* Fil de conversation : messages, suggestions cliquables, relances (« un exemple ? », « pourquoi ? »). */
+function Conversation({ poste, context, ctxKey }) {
+  const [msgs, setMsgs] = useState([{ role: "assistant", content: INTRO, suggestions: [] }]);
   const [text, setText] = useState("");
   const [typing, setTyping] = useState(false);
+  const [fresh, setFresh] = useState(false);
+  useEffect(() => { if (ctxKey) setFresh(true); }, [ctxKey]);
   const memory = useRef({});
   const threadRef = useRef(null);
   const alive = useRef(true);
@@ -19,7 +120,7 @@ export default function Assistant({ context = "warmup", poste, title = "Posez di
   async function send(q) {
     const question = (q ?? text).trim();
     if (!question || typing) return;
-    setText("");
+    setText(""); setFresh(false);
     const history = [...msgs.map(({ role, content }) => ({ role, content })), { role: "user", content: question }];
     setMsgs(m => [...m, { role: "user", content: question }]);
     setTyping(true);
@@ -33,65 +134,42 @@ export default function Assistant({ context = "warmup", poste, title = "Posez di
     setTyping(false);
   }
 
-  const lastAssistant = [...msgs].reverse().find(m => m.role === "assistant");
-  const chips = typing ? [] : msgs.length === 0 ? (CONTEXT_SUGGESTIONS[context] || []) : msgs[msgs.length - 1].role === "assistant" ? lastAssistant.suggestions || [] : [];
-
-  return (
-    <section aria-labelledby={`${id}-title`} style={{ border: `1px solid ${T.violet}33`, borderRadius: RAD.md, background: "#fff", overflow: "hidden" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 16px", background: GRAD_AI_SOFT, borderBottom: `1px solid ${T.violet}1f` }}>
-        <div aria-hidden style={{ width: 30, height: 30, borderRadius: "50%", background: GRAD_AI, display: "grid", placeItems: "center", flexShrink: 0 }}><Icon d={I.chat} s={16} c="#fff" /></div>
-        <div style={{ minWidth: 0 }}>
-          <h2 id={`${id}-title`} style={{ font: `800 15.5px ${FD}`, color: T.navy, margin: 0 }}>{title}</h2>
-          <div style={{ font: `500 11.5px ${FB}`, color: T.violet }}>Assistant · fonctionnement du site et préparation d'entretien</div>
+  const last = msgs[msgs.length - 1];
+  const chips = typing ? [] : msgs.length === 1 || fresh ? (CONTEXT_SUGGESTIONS[context] || CONTEXT_SUGGESTIONS.general) : last.role === "assistant" ? last.suggestions || [] : [];
+  const bubble = mine => ({
+    maxWidth: "88%", padding: "8px 12px", ...TY.body, whiteSpace: "pre-line", overflowWrap: "anywhere",
+    borderRadius: mine ? `${RAD.md}px ${RAD.md}px ${RAD.xs}px ${RAD.md}px` : `${RAD.md}px ${RAD.md}px ${RAD.md}px ${RAD.xs}px`,
+    background: mine ? T.primary : T.violetBg, color: mine ? T.surface : T.navy,
+  });
+  return (<>
+    <div ref={threadRef} role="log" aria-live="polite" aria-relevant="additions" aria-label="Conversation avec l'assistant"
+      style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: "16px 16px 4px", display: "flex", flexDirection: "column", gap: 8 }}>
+      {msgs.map((m, i) => (
+        <div key={i} style={{ display: "flex", justifyContent: m.role === "user" ? "flex-end" : "flex-start" }}>
+          <div style={bubble(m.role === "user")}><span className="rp-sr">{m.role === "user" ? "Vous : " : "Assistant : "}</span>{m.content}</div>
         </div>
-      </div>
-
-      <div ref={threadRef} role="log" aria-live="polite" aria-relevant="additions" aria-label="Conversation avec l'assistant"
-        style={{ maxHeight, overflowY: "auto", padding: msgs.length || typing ? "14px 14px 4px" : 0, display: "flex", flexDirection: "column", gap: 10 }}>
-        {msgs.map((m, i) => (
-          <div key={i} style={{ display: "flex", justifyContent: m.role === "user" ? "flex-end" : "flex-start" }}>
-            <div style={{
-              maxWidth: "88%", padding: "10px 13px", font: `400 14px/1.55 ${FB}`, whiteSpace: "pre-line", overflowWrap: "anywhere",
-              borderRadius: m.role === "user" ? "14px 14px 4px 14px" : "14px 14px 14px 4px",
-              background: m.role === "user" ? T.primary : `${T.violet}0d`, color: m.role === "user" ? "#fff" : T.navy,
-              border: m.role === "user" ? "none" : `1px solid ${T.violet}1f`,
-            }}>
-              <span className="rp-sr">{m.role === "user" ? "Vous : " : "Assistant : "}</span>{m.content}
-            </div>
+      ))}
+      {typing && (
+        <div style={{ display: "flex" }}>
+          <div role="status" style={{ ...bubble(false), display: "inline-flex", alignItems: "center", gap: 8, ...TY.small, color: T.violet }}>
+            <span className="rp-dots" aria-hidden><i /><i /><i /></span> L'assistant écrit…
           </div>
-        ))}
-        {typing && (
-          <div style={{ display: "flex" }}>
-            <div role="status" style={{ padding: "10px 14px", borderRadius: "14px 14px 14px 4px", background: `${T.violet}0d`, border: `1px solid ${T.violet}1f`, display: "inline-flex", alignItems: "center", gap: 8, font: `500 12.5px ${FB}`, color: T.violet }}>
-              <span className="rp-dots" aria-hidden><i /><i /><i /></span> L'assistant écrit…
-            </div>
-          </div>
-        )}
-      </div>
-
-      {chips.length > 0 && (
-        <div style={{ padding: "10px 14px 0", display: "flex", flexWrap: "wrap", gap: 6 }} aria-label="Suggestions de questions">
-          {chips.map(c => (
-            <button key={c} type="button" onClick={() => send(c)}
-              style={{ font: `600 12.5px/1.3 ${FB}`, color: T.violet, background: "#fff", border: `1.5px solid ${T.violet}55`, borderRadius: RAD.pill, padding: "7px 12px", cursor: "pointer", textAlign: "left", maxWidth: "100%" }}>
-              {c}
-            </button>
-          ))}
         </div>
       )}
-
-      <form onSubmit={e => { e.preventDefault(); send(); }} style={{ display: "flex", gap: 8, padding: 14 }}>
-        <label htmlFor={`${id}-input`} className="rp-sr">{inputLabel}</label>
-        <input id={`${id}-input`} value={text} onChange={e => setText(e.target.value)} placeholder={placeholder} autoComplete="off" maxLength={400}
-          style={{ flex: 1, minWidth: 0, height: 46, padding: "0 14px", borderRadius: RAD.md, border: `1.5px solid ${T.line}`, font: `400 15px ${FB}`, color: T.navy, background: T.bg }} />
-        <button type="submit" disabled={!text.trim() || typing} aria-label="Envoyer la question"
-          style={{ width: 46, height: 46, flexShrink: 0, borderRadius: RAD.md, border: "none", background: GRAD_AI, display: "grid", placeItems: "center", cursor: !text.trim() || typing ? "not-allowed" : "pointer", opacity: !text.trim() || typing ? 0.5 : 1 }}>
-          <Icon d={I.send} s={17} c="#fff" />
-        </button>
+      {chips.length > 0 && (
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, paddingTop: 4 }} role="group" aria-label="Suggestions de questions">
+          {chips.map(c => <Chip key={c} tone="ai" check={false} onClick={() => send(c)}>{c}</Chip>)}
+        </div>
+      )}
+    </div>
+    <div style={{ padding: "8px 16px 16px", borderTop: `1px solid ${T.lineLt}`, display: "grid", gap: 8 }}>
+      <div style={{ ...TY.caption, color: T.body }}>{PHRASES.assistantChat} {PHRASES.noPersonal}</div>
+      <form onSubmit={e => { e.preventDefault(); send(); }} style={{ display: "flex", gap: 8 }}>
+        <label htmlFor="asst-panel-input" className="rp-sr">Votre question à l'assistant</label>
+        <Input id="asst-panel-input" value={text} onChange={e => setText(e.target.value)} placeholder="Par exemple : comment parler de mes qualités ?" autoComplete="off" maxLength={400} style={{ flex: 1, minWidth: 0 }} />
+        <Btn kind="ai" type="submit" disabled={!text.trim() || typing} aria-label="Envoyer la question" icon={I.send} style={{ width: 48, padding: 0 }} />
       </form>
-      <div style={{ padding: "0 14px 12px", font: `400 11.5px/1.45 ${FB}`, color: T.muted }}>
-        {REMOTE ? "Vos questions sont transmises au service de l'assistant, sans aucune image ni son." : "Les réponses sont préparées sur cet appareil : vos questions n'en sortent pas."} Ne saisissez pas d'informations personnelles.
-      </div>
-    </section>
-  );
+      <div style={{ ...TY.caption, color: T.muted }}>Une question sur le site ? <Link href="#/a-propos/faq" target="_blank" rel="noopener">Questions fréquentes (nouvel onglet)</Link></div>
+    </div>
+  </>);
 }

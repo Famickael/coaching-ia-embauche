@@ -22,17 +22,20 @@ function read() {
 let state = read();
 
 /* Parcours d'essai : code générique pour découvrir l'outil sans passer par la création d'un parcours.
-   Recréé au chargement s'il a été supprimé. À retirer en production (voir README). */
+   Créé au moment où le code est saisi ou ouvert par lien (pas au chargement de la page : rien n'est
+   écrit sur l'appareil avant une action de la personne), recréé s'il a été supprimé. À retirer en production (voir README). */
 export const TRIAL_CODE = "REPETE";
 export const TRIAL_COACH = "Sophie M.";
-/* Connexion coach simulée : identifiants fictifs pré-remplis (aucune vérification). */
-export const TRIAL_LOGIN = { email: "s.martin@famickael.fr", password: "repet-2026", name: TRIAL_COACH };
-if (!state.parcours[TRIAL_CODE]) {
+/* Connexion coach de démonstration : identifiants fictifs pré-remplis (domaine réservé aux exemples), aucune vérification. */
+export const TRIAL_LOGIN = { email: "sophie.m@exemple.fr", password: "repet-2026", name: TRIAL_COACH };
+function ensureTrial() {
+  if (state.parcours[TRIAL_CODE]) return;
   state = { ...state, parcours: { ...state.parcours, [TRIAL_CODE]: {
     code: TRIAL_CODE, prenom: "Camille", poste: "agent d'accueil", warmup: true, counselor: "",
     trial: true, createdAt: new Date().toISOString(), openedAt: null, consent: null,
   } } };
   try { localStorage.setItem(KEY, JSON.stringify(state)); } catch { /* mode privé */ }
+  queueMicrotask(() => listeners.forEach(fn => fn(state))); // pas de mise à jour pendant un rendu
 }
 
 function write(next) {
@@ -47,6 +50,7 @@ export function useStore() {
   const [s, setS] = useState(state);
   useEffect(() => {
     listeners.add(setS);
+    setS(state); // rattrape une écriture faite avant l'abonnement (parcours d'essai créé pendant le premier rendu)
     const onStorage = e => { if (e.key === KEY) { state = read(); listeners.forEach(fn => fn(state)); } };
     window.addEventListener("storage", onStorage); // synchronise deux onglets (bénéficiaire / coach)
     return () => { listeners.delete(setS); window.removeEventListener("storage", onStorage); };
@@ -95,7 +99,9 @@ export function createParcours({ prenom, poste, warmup }) {
 }
 
 export function findParcours(code) {
-  return state.parcours[(code || "").trim().toUpperCase()] || null;
+  const c = (code || "").trim().toUpperCase();
+  if (c === TRIAL_CODE) ensureTrial();
+  return state.parcours[c] || null;
 }
 
 export function updateParcours(code, patch) {
@@ -114,13 +120,15 @@ export async function deleteParcours(code) {
   write({ ...state, parcours: nextParcours, takes: nextTakes });
 }
 
-/* Retrait du consentement : supprime prises et vidéos, garde le parcours (accès coach). */
+/* Retrait du consentement : supprime réponses et vidéos, garde le parcours (accès coach),
+   trace la date du retrait et la version des textes acceptés (RGPD, art. 7(1)). */
 export async function withdrawConsent(code) {
   const takes = Object.values(state.takes).filter(t => t.code === code);
   for (const t of takes) await deleteVideo(t.id);
   const nextTakes = { ...state.takes };
   takes.forEach(t => delete nextTakes[t.id]);
-  write({ ...state, takes: nextTakes, parcours: { ...state.parcours, [code]: { ...state.parcours[code], consent: null } } });
+  const prev = state.parcours[code];
+  write({ ...state, takes: nextTakes, parcours: { ...state.parcours, [code]: { ...prev, consent: null, consentWithdrawnAt: new Date().toISOString(), consentHistory: [...(prev?.consentHistory || []), ...(prev?.consent ? [{ ...prev.consent, withdrawnAt: new Date().toISOString() }] : [])] } } });
 }
 
 /* ── Prises ── */
@@ -139,6 +147,13 @@ export async function createTake({ code, question, duration, blob, transcript, s
   };
   write({ ...state, takes: { ...state.takes, [id]: t } });
   return id;
+}
+
+/* Reprendre un envoi : le coach ne voit plus la réponse, la personne la garde (tant qu'aucun rapport n'est envoyé). */
+export function unshareTake(id) {
+  const t = state.takes[id];
+  if (!t || t.report) return;
+  write({ ...state, takes: { ...state.takes, [id]: { ...t, shared: false, sharedAt: null, draft: null } } });
 }
 
 export function updateTake(id, patch) {
@@ -161,7 +176,7 @@ export function parcoursStatus(p, s = state) {
   if (shared.some(t => !t.report)) return { key: "toreview", label: "À relire", tone: "warning" };
   if (shared.length) return { key: "sent", label: "Rapport envoyé", tone: "success" };
   if (takes.length || p.openedAt) return { key: "training", label: "S'entraîne", tone: "primary" };
-  return { key: "new", label: "Code transmis", tone: "muted" };
+  return { key: "new", label: "Pas encore ouvert", tone: "muted" };
 }
 
 /* ── IndexedDB (vidéos) ── */

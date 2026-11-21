@@ -1,9 +1,10 @@
-import React, { useMemo, useState } from "react";
-import { T, RAD, SH, Btn, Tag, Icon, I } from "./ui.jsx";
-import { Reveal } from "./motion.jsx";
-import { TT, TY, W, SI, img, Eyebrow, Section, PageHero, Chip, IconTile, Input } from "./site.jsx";
+import React, { useMemo, useRef, useState } from "react";
+import { T, GAP, GRAD_PAGE, RAD, SH, Btn, Tag, Icon, I, TY, W, SI, img, Eyebrow, Section, PageHero, Chip, IconTile, Input } from "./ui.jsx";
+import { Reveal, scrollToTarget } from "./motion.jsx";
 import { FinalBand } from "./Home.jsx";
-import { ARTICLES, CATEGORIES, TYPES, findArticle, findCategory, search } from "./content/resources.js";
+import { ARTICLES, CATEGORIES, TYPES, findArticle, findCategory, search, norm } from "./content/resources.js";
+
+const TYPES_PL = { guide: "Guides", cas: "Scénarios d'usage" };
 
 /* Centre de ressources à deux niveaux :
    #/ressources              catégories, articles à la une, recherche et filtre, glossaire
@@ -36,24 +37,21 @@ function Hub({ go, openSpace }) {
   const featured = ARTICLES.filter(a => a.featured).slice(0, 3);
   return (
     <main>
-      <PageHero eyebrow="Ressources" title="Le centre de ressources de La Répét'"
-        lead="Des conseils concrets pour préparer un entretien d'embauche, des guides pour prendre l'outil en main, et des scénarios d'usage pour les équipes.">
-        <form role="search" onSubmit={e => { e.preventDefault(); document.getElementById("toutes")?.scrollIntoView({ block: "start" }); }} style={{ position: "relative", maxWidth: 520, marginTop: 8 }}>
-          <label htmlFor="rs-q" className="rs-sr">Rechercher une ressource</label>
-          <span aria-hidden style={{ position: "absolute", left: 16, top: 14, color: T.muted, display: "flex" }}><Icon d={I.search} s={20} /></span>
-          <Input id="rs-q" type="search" placeholder="Rechercher : visio, salaire, trac…" value={q} onChange={e => setQ(e.target.value)} style={{ paddingLeft: 48 }} />
-        </form>
+      <PageHero eyebrow="Ressources" title="Des conseils pour préparer votre entretien"
+        lead="Des conseils concrets pour l'entretien d'embauche. Des guides pour utiliser La Répét'. Des exemples d'usage pour les équipes.">
+        <SearchBox q={q} setQ={setQ} go={go} />
       </PageHero>
 
       <div className="rs-pad" style={wrap}>
-        <Section first eyebrow="Explorer" title="Par thème">
+        <section className="rs-section" aria-labelledby="rs-themes" style={{ paddingTop: GAP.block + 16 }}>
+          <h2 id="rs-themes" className="rs-sr">Thèmes</h2>
           <div className="rs-g3">
             {CATEGORIES.map((c, i) => {
               const n = ARTICLES.filter(a => a.category === c.id).length;
               return (
                 <Reveal key={c.id} delay={(i % 3) * 70} style={{ height: "100%" }}>
                   <a href={`#/ressources/c/${c.id}`} className="rs-card-btn" style={{ height: "100%", textDecoration: "none" }}>
-                    <div style={{ position: "relative", aspectRatio: "16 / 9", background: TT.primaryBg }}>
+                    <div style={{ position: "relative", aspectRatio: "16 / 9", background: T.primaryBg }}>
                       <img src={img(`categories/${c.id}.webp`)} alt="" width={800} height={450} loading="lazy" decoding="async" style={{ display: "block", width: "100%", height: "100%", objectFit: "cover" }} />
                     </div>
                     <div style={{ padding: 24, display: "grid", gap: 8 }}>
@@ -69,7 +67,7 @@ function Hub({ go, openSpace }) {
               );
             })}
           </div>
-        </Section>
+        </section>
 
         {featured.length > 0 && (
           <Section eyebrow="À la une" title="Pour bien commencer">
@@ -77,7 +75,7 @@ function Hub({ go, openSpace }) {
           </Section>
         )}
 
-        <Section id="toutes" eyebrow="Toutes les ressources" title={q ? `Résultats pour « ${q} »` : "Tous les articles"}>
+        <Section id="toutes" eyebrow="Rechercher" title={q ? `Résultats pour « ${q} »` : "Toutes les ressources"}>
           <div className="rs-chips rs-scroll" role="group" aria-label="Filtrer par thème" style={{ marginBottom: 24 }}>
             <Chip pressed={!fcat} onClick={() => setFcat("")}>Tous les thèmes</Chip>
             {CATEGORIES.map(c => <Chip key={c.id} pressed={fcat === c.id} onClick={() => setFcat(fcat === c.id ? "" : c.id)}>{c.title}</Chip>)}
@@ -87,7 +85,6 @@ function Hub({ go, openSpace }) {
             : <Empty text="Aucune ressource ne correspond à cette recherche. Essayez un autre mot, ou retirez le filtre de thème." />}
         </Section>
 
-        <Glossary />
         <FinalBand title="Passer de la lecture à la pratique" text="Le plus utile reste de s'entraîner à voix haute. Votre code suffit." openSpace={openSpace} go={go} />
       </div>
     </main>
@@ -104,7 +101,7 @@ const Empty = ({ text }) => (
 function ArticleCard({ a }) {
   return (
     <a href={`#/ressources/${a.slug}`} className="rs-card-btn" style={{ height: "100%", textDecoration: "none", display: "flex", flexDirection: "column" }}>
-      <div style={{ aspectRatio: "16 / 9", background: TT.primaryBg }}>
+      <div style={{ aspectRatio: "16 / 9", background: T.primaryBg }}>
         <img src={img(a.image)} alt="" width={1200} height={675} loading="lazy" decoding="async" style={{ display: "block", width: "100%", height: "100%", objectFit: "cover" }} />
       </div>
       <div style={{ padding: 24, display: "flex", flexDirection: "column", gap: 8, flex: 1 }}>
@@ -112,7 +109,7 @@ function ArticleCard({ a }) {
           <Tag tone={a.type === "cas" ? "ai" : "primary"}>{TYPES[a.type]}</Tag>
           <span style={{ ...TY.caption, color: T.muted }}>{catTitle(a.category)}</span>
         </div>
-        <h3 style={{ ...TY.h3, fontSize: 18, color: T.navy, margin: 0 }}>{a.title}</h3>
+        <h3 style={{ ...TY.h3, color: T.navy, margin: 0 }}>{a.title}</h3>
         <p style={{ ...TY.body, color: T.body, margin: 0, flex: 1 }}>{a.summary}</p>
         <span style={{ ...TY.caption, color: T.muted, display: "inline-flex", alignItems: "center", gap: 4 }}><Icon d={SI.clock} s={16} c={T.muted} /> {a.readingTime} min de lecture</span>
       </div>
@@ -134,7 +131,7 @@ function CategoryView({ c, go, openSpace }) {
           {types.length > 1 && (
             <div className="rs-chips" role="group" aria-label="Filtrer par type" style={{ marginBottom: 24 }}>
               <Chip pressed={!ft} onClick={() => setFt("")}>Tous les types</Chip>
-              {types.map(t => <Chip key={t} pressed={ft === t} onClick={() => setFt(ft === t ? "" : t)}>{TYPES[t]}s</Chip>)}
+              {types.map(t => <Chip key={t} pressed={ft === t} onClick={() => setFt(ft === t ? "" : t)}>{TYPES_PL[t]}</Chip>)}
             </div>
           )}
           <p role="status" style={{ ...TY.small, color: T.muted, margin: "0 0 16px" }}>{list.length} ressource{list.length > 1 ? "s" : ""}</p>
@@ -154,7 +151,7 @@ function CategoryView({ c, go, openSpace }) {
 }
 
 const Crumbs = ({ items }) => (
-  <nav aria-label="Fil d'Ariane" style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+  <nav aria-label="Fil d'Ariane" className="rp-crumbs" style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
     {items.map(([h, l], i) => (
       <React.Fragment key={h}>
         {i > 0 && <Icon d={SI.chevronR} s={12} c={T.muted} />}
@@ -185,9 +182,9 @@ function inline(text) {
 
 const CALLOUT = {
   conseil: { label: "Conseil", icon: I.bulb, fg: T.accent, bg: T.accentBg },
-  exemple: { label: "Exemple", icon: I.chat, fg: T.primary, bg: TT.primaryBg },
-  attention: { label: "Point d'attention", icon: I.info, fg: TT.warningDk, bg: T.warningBg },
-  "a-retenir": { label: "À retenir", icon: I.check, fg: T.primary, bg: TT.primaryBg },
+  exemple: { label: "Exemple", icon: I.chat, fg: T.primary, bg: T.primaryBg },
+  attention: { label: "Point d'attention", icon: I.info, fg: T.warningDk, bg: T.warningBg },
+  "a-retenir": { label: "À retenir", icon: I.check, fg: T.primary, bg: T.primaryBg },
 };
 
 function Blocks({ blocks }) {
@@ -241,16 +238,16 @@ function Article({ a, go, openSpace }) {
   return (
     <main>
       <article>
-        <header style={{ background: `linear-gradient(180deg, ${TT.primaryBg}, ${T.bg})` }}>
+        <header style={{ background: GRAD_PAGE }}>
           <div className="rs-pad" style={{ ...wrap, padding: "48px 24px 0" }}>
             <div className="up" style={{ display: "grid", gap: 16, maxWidth: W.read }}>
               <div style={{ ...TY.small }}><Crumbs items={[["#/ressources", "Ressources"], [`#/ressources/c/${a.category}`, catTitle(a.category)]]} /></div>
               <div><Tag tone={cas ? "ai" : "primary"}>{TYPES[a.type]}</Tag></div>
-              <h1 className="ty-xl" style={{ ...TY.xl, fontSize: 38, color: T.navy, margin: 0 }}>{a.title}</h1>
+              <h1 className="ty-xl" style={{ ...TY.pageTitle, color: T.navy, margin: 0 }}>{a.title}</h1>
               <p className="ty-lead" style={{ ...TY.lead, color: T.body, margin: 0 }}>{a.summary}</p>
               {meta}
             </div>
-            <div style={{ marginTop: 32, borderRadius: RAD.lg, overflow: "hidden", aspectRatio: "1200 / 630", background: TT.primaryBg, boxShadow: SH.sm }}>
+            <div style={{ marginTop: 32, borderRadius: RAD.lg, overflow: "hidden", aspectRatio: "1200 / 630", background: T.primaryBg, boxShadow: SH.sm }}>
               <img src={img(a.image)} alt={a.imageAlt} width={1200} height={630} decoding="async" style={{ display: "block", width: "100%", height: "100%", objectFit: "cover" }} />
             </div>
           </div>
@@ -273,34 +270,33 @@ function Article({ a, go, openSpace }) {
                       </div>
                     ))}
                   </dl>
-                  <p style={{ ...TY.caption, color: T.muted, margin: 0 }}>Organisation fictive et générique. Les effets décrits sont des hypothèses, sans résultat mesuré.</p>
+                  <p style={{ ...TY.caption, color: T.muted, margin: 0 }}>Organisme fictif. Ce scénario décrit un usage possible. Aucun résultat n'a été mesuré.</p>
                 </div>
               ) : toc.length > 1 && (
                 <nav className="rs-toc" aria-label="Sommaire de l'article">
                   <div style={{ ...TY.overline, color: T.muted, marginBottom: 8 }}>Sommaire</div>
-                  {toc.map(h => <a key={h.id} href={`#/ressources/${a.slug}`} onClick={e => { e.preventDefault(); document.getElementById(h.id)?.scrollIntoView({ behavior: "smooth", block: "start" }); }}>{h.text}</a>)}
+                  {toc.map(h => <a key={h.id} href={`#/ressources/${a.slug}`} onClick={e => { e.preventDefault(); scrollToTarget(h.id); }}>{h.text}</a>)}
                 </nav>
               )}
             </aside>
-            <div className="rs-prose" style={{ maxWidth: 720 }}><Blocks blocks={a.blocks} /></div>
+            <div className="rs-prose" style={{ maxWidth: W.read }}><Blocks blocks={a.blocks} /></div>
           </div>
         </div>
       </article>
 
       <div className="rs-pad" style={wrap}>
         {related(a).length > 0 && (
-          <Section eyebrow="À lire ensuite" title="Articles liés">
+          <Section eyebrow="À lire ensuite" title="Sur le même thème">
             <div className="rs-g3">{related(a).map(x => <ArticleCard key={x.slug} a={x} />)}</div>
           </Section>
         )}
         {cas ? (
-          <FinalBand title="Envisager ce dispositif chez vous ?" text="Parlons de vos ateliers, de vos publics et de votre hébergement.">
-            <Btn kind="white" size="lg" onClick={() => go("#/demo")}>Demander une démo <Icon d={I.arrow} s={20} c={T.primary} /></Btn>
-            <Btn kind="ghostDark" size="lg" onClick={() => go("#/solutions/organismes")}>Pour les organismes</Btn>
+          <FinalBand title="Et dans votre organisme ?" text="Direction, DSI, juridique : voyez comment l'outil s'installe chez vous.">
+            <Btn kind="white" size="lg" onClick={() => go("#/solutions/organismes")} iconRight={I.arrow}>Voir le déploiement</Btn>
           </FinalBand>
         ) : (
           <FinalBand title="Mettez ces conseils en pratique" text="Ouvrez votre espace et répétez à voix haute, à votre rythme." openSpace={openSpace} go={go}>
-            <Btn kind="white" size="lg" onClick={openSpace}>Ouvrir mon espace <Icon d={I.arrow} s={20} c={T.primary} /></Btn>
+            <Btn kind="white" size="lg" onClick={openSpace} iconRight={I.arrow}>Ouvrir mon espace</Btn>
             <Btn kind="ghostDark" size="lg" onClick={() => go("#/ressources")}>Toutes les ressources</Btn>
           </FinalBand>
         )}
@@ -314,37 +310,52 @@ function NotFound({ go }) {
     <main className="rs-pad" style={{ maxWidth: W.form, margin: "0 auto", padding: "80px 24px", textAlign: "center", display: "grid", gap: 16, justifyItems: "center" }}>
       <IconTile icon={I.search} s={48} />
       <h1 className="ty-h1" style={{ ...TY.h1, color: T.navy, margin: 0 }}>Cette ressource est introuvable</h1>
-      <p style={{ ...TY.bodyLg, color: T.body, margin: 0 }}>Elle a peut-être été renommée. Retrouvez tous les articles dans le centre de ressources.</p>
-      <Btn kind="primary" onClick={() => go("#/ressources")}>Voir les ressources</Btn>
+      <p style={{ ...TY.bodyLg, color: T.body, margin: 0 }}>Elle a peut-être changé d'adresse. Retrouvez toutes les ressources ci-dessous.</p>
+      <Btn kind="primary" onClick={() => go("#/ressources")}>Voir toutes les ressources</Btn>
     </main>
   );
 }
 
-/* ─── Glossaire ─── */
-const GLOSSARY = [
-  ["Prise", "Un enregistrement de votre réponse à une question. Vous pouvez en faire autant que vous le souhaitez."],
-  ["Repère", "Une observation de l'assistant, située à un moment de votre réponse : débit, pause, exemple, regard."],
-  ["Point d'appui", "Un repère sur ce qui fonctionne déjà dans votre réponse. Ils sont toujours présentés en premier."],
-  ["À explorer", "Un repère sur une piste que vous pouvez travailler, présentée comme une convention et non comme une erreur."],
-  ["Parcours", "L'espace créé par votre coach pour vous, ouvert avec un code de 6 caractères."],
-  ["Débriefing", "Le temps d'échange avec votre coach, en atelier ou en rendez-vous, à partir du rapport."],
-  ["Transcription", "Le texte de votre réponse, produit automatiquement dans votre navigateur."],
-  ["AI Act", "Le règlement européen sur l'intelligence artificielle (2024/1689), qui interdit notamment la reconnaissance des émotions au travail et dans l'éducation."],
-  ["RGPD", "Le règlement général sur la protection des données, qui encadre l'usage de vos données personnelles."],
-  ["AIPD", "L'analyse d'impact relative à la protection des données, que l'organisme mène avant un déploiement."],
-];
-
-function Glossary() {
+/* Recherche avec suggestions : titres d'articles correspondants (sans tenir compte des accents),
+   combobox ARIA (flèches, Entrée, Échap), clic ou Entrée ouvre l'article. */
+function SearchBox({ q, setQ, go }) {
+  const [open, setOpen] = useState(false);
+  const [active, setActive] = useState(-1);
+  const blurT = useRef(0);
+  const tokens = norm(q).split(/\s+/).filter(Boolean);
+  const byTitle = tokens.length ? ARTICLES.filter(a => tokens.every(w => norm(a.title).includes(w))) : [];
+  const sugg = (byTitle.length ? byTitle : tokens.length ? search(q) : []).slice(0, 6);
+  const show = open && sugg.length > 0;
+  const pick = a => { setOpen(false); setActive(-1); go(`#/ressources/${a.slug}`); };
+  const onKey = e => {
+    if (e.key === "ArrowDown") { e.preventDefault(); setOpen(true); setActive(i => (sugg.length ? (i + 1) % sugg.length : -1)); }
+    else if (e.key === "ArrowUp") { e.preventDefault(); setOpen(true); setActive(i => (sugg.length ? (i <= 0 ? sugg.length - 1 : i - 1) : -1)); }
+    else if (e.key === "Enter" && show && active >= 0) { e.preventDefault(); pick(sugg[active]); }
+    else if (e.key === "Escape") { if (show) { e.preventDefault(); setOpen(false); setActive(-1); } }
+  };
   return (
-    <Section id="glossaire" eyebrow="Glossaire" title="Les mots de La Répét'">
-      <dl className="rs-g2" style={{ margin: 0, rowGap: 0 }}>
-        {GLOSSARY.map(([t, d]) => (
-          <div key={t} style={{ padding: "16px 0", borderTop: `1px solid ${T.line}`, display: "grid", gap: 4 }}>
-            <dt style={{ ...TY.h4, color: T.navy }}>{t}</dt>
-            <dd style={{ ...TY.body, color: T.body, margin: 0 }}>{d}</dd>
-          </div>
-        ))}
-      </dl>
-    </Section>
+    <form role="search" onSubmit={e => { e.preventDefault(); setOpen(false); scrollToTarget("toutes"); }} style={{ position: "relative", maxWidth: 520, marginTop: 8 }}>
+      <label htmlFor="rs-q" className="rs-sr">Rechercher une ressource</label>
+      <span aria-hidden style={{ position: "absolute", left: 16, top: 14, color: T.muted, display: "flex" }}><Icon d={I.search} s={20} /></span>
+      <Input id="rs-q" type="search" role="combobox" aria-autocomplete="list" aria-expanded={show} aria-controls="rs-q-list"
+        aria-activedescendant={show && active >= 0 ? `rs-q-opt-${active}` : undefined} autoComplete="off"
+        placeholder="Rechercher : visio, salaire, trac…" value={q} style={{ paddingLeft: 48 }}
+        onChange={e => { setQ(e.target.value); setOpen(true); setActive(-1); }} onKeyDown={onKey}
+        onFocus={() => { clearTimeout(blurT.current); setOpen(true); }} onBlur={() => { blurT.current = setTimeout(() => setOpen(false), 160); }} />
+      {show && (
+        <ul id="rs-q-list" role="listbox" aria-label="Ressources suggérées"
+          style={{ position: "absolute", left: 0, right: 0, top: "calc(100% + 8px)", zIndex: 30, margin: 0, padding: 4, listStyle: "none", background: T.surface, border: `1px solid ${T.line}`, borderRadius: RAD.md, boxShadow: SH.lg }}>
+          {sugg.map((a, i) => (
+            // design-lint-disable-next-line K4 -- option d'une liste combobox ARIA : le clavier passe par le champ (aria-activedescendant), le clic ouvre l'article
+            <li key={a.slug} id={`rs-q-opt-${i}`} role="option" aria-selected={i === active} className="rp-opt"
+              onMouseDown={e => e.preventDefault()} onClick={() => pick(a)} onMouseMove={() => active !== i && setActive(i)}
+              style={{ padding: "12px", borderRadius: RAD.sm, cursor: "pointer", display: "grid", gap: 2, background: i === active ? T.primaryBg : undefined }}>
+              <span style={{ ...TY.bodyStrong, color: T.navy }}>{a.title}</span>
+              <span style={{ ...TY.caption, color: T.muted }}>{catTitle(a.category)} · {TYPES[a.type]}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </form>
   );
 }

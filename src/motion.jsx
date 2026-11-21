@@ -4,14 +4,18 @@ import React, { useEffect, useRef, useState } from "react";
 
 const hasIO = () => typeof window !== "undefined" && "IntersectionObserver" in window;
 
+/* Mouvement réduit : réglage du système, option « Réduire les animations » ou « Mode concentration »
+   (qui arrête aussi les défilements automatiques et les cartes animées). */
+const reducedNow = () => typeof window !== "undefined" && ((!!window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches)
+  || document.documentElement.dataset.motion === "reduce" || document.documentElement.dataset.focusmode === "on");
 export function useReducedMotion() {
-  const q = "(prefers-reduced-motion: reduce)";
-  const [r, setR] = useState(() => typeof window !== "undefined" && !!window.matchMedia && window.matchMedia(q).matches);
+  const [r, setR] = useState(reducedNow);
   useEffect(() => {
-    if (!window.matchMedia) return;
-    const m = window.matchMedia(q), on = () => setR(m.matches);
-    m.addEventListener ? m.addEventListener("change", on) : m.addListener(on);
-    return () => (m.removeEventListener ? m.removeEventListener("change", on) : m.removeListener(on));
+    const on = () => setR(reducedNow());
+    const m = window.matchMedia ? window.matchMedia("(prefers-reduced-motion: reduce)") : null;
+    m && (m.addEventListener ? m.addEventListener("change", on) : m.addListener(on));
+    window.addEventListener("rp-a11y", on);
+    return () => { m && (m.removeEventListener ? m.removeEventListener("change", on) : m.removeListener(on)); window.removeEventListener("rp-a11y", on); };
   }, []);
   return r || !hasIO();
 }
@@ -51,4 +55,27 @@ export function useCount(target, start, delay, reduced) {
     return () => { clearTimeout(to); cancelAnimationFrame(raf); };
   }, [start, reduced, target, delay]);
   return n;
+}
+
+/* Défile jusqu'à une section de la page (routes du type #/solutions/coachs). */
+/* Lien vers une autre partie de la même page : défilement doux (direct en mouvement réduit), sous l'en-tête collant,
+   puis focus sur la cible pour le clavier et les lecteurs d'écran. */
+export function scrollToTarget(target, { focus = true } = {}) {
+  const el = typeof target === "string" ? document.getElementById(target) : target;
+  if (!el) return;
+  const header = document.querySelector("header");
+  const off = (header ? header.getBoundingClientRect().height : 64) + 16;
+  const top = Math.max(0, el.getBoundingClientRect().top + window.scrollY - off);
+  window.scrollTo({ top, behavior: reducedNow() ? "auto" : "smooth" });
+  if (focus) {
+    if (!el.hasAttribute("tabindex")) el.setAttribute("tabindex", "-1");
+    el.focus({ preventScroll: true });
+  }
+}
+export function useSectionScroll(section) {
+  useEffect(() => {
+    if (!section) return;
+    const t = setTimeout(() => scrollToTarget(section), 80);
+    return () => clearTimeout(t);
+  }, [section]);
 }

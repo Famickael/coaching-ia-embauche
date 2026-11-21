@@ -4,12 +4,13 @@
    aucune autre information n'est extraite de l'image. */
 
 import { FilesetResolver, ImageSegmenter } from "@mediapipe/tasks-vision";
+import { FIX } from "../tokens.js";
 
-const WASM = import.meta.env.VITE_MEDIAPIPE_WASM || "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm";
+const WASM = import.meta.env.VITE_MEDIAPIPE_WASM || "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.2.3/wasm";
 const MODEL = import.meta.env.VITE_SEGMENTER_MODEL ||
-  "https://storage.googleapis.com/mediapipe-models/image_segmenter/selfie_segmenter/float16/latest/selfie_segmenter.tflite";
+  "https://storage.googleapis.com/mediapipe-models/image_segmenter/selfie_segmenter/float16/1/selfie_segmenter.tflite";
 
-export const BG_COLOR = "#DCE6F2"; // couleur unie proposée (bleu très clair du design system)
+export const BG_COLOR = FIX.studio; // couleur unie proposée (jeton du référentiel)
 
 let segPromise = null;
 /* Charge le modèle une seule fois. En cas d'échec, un nouvel essai reste possible plus tard. */
