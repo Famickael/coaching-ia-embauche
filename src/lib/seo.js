@@ -23,47 +23,47 @@ export const SEO = {
   /* Routes actuelles (src/App.jsx, src/app/router.js) */
   "#/": {
     title: `S'entraîner aux entretiens avec un coach${SEP}${SITE_NAME}`,
-    description: "Préparez un entretien d'embauche ou de mobilité : vous répétez à votre rythme, un retour décrit votre réponse sans la noter et votre coach garde la main.",
+    description: "Préparez un entretien d'embauche ou de mobilité : vous répétez à votre rythme, un retour décrit votre réponse sans la noter et votre coach garde la main.",
   },
   "#/a-propos": {
     title: t("Qui sommes-nous"),
-    description: "L'organisme d'accompagnement derrière La Répét' : des coachs qui préparent aux entretiens, pour des commanditaires publics et des entreprises.",
+    description: "L'organisme d'accompagnement derrière La Répét' : des coachs qui préparent aux entretiens, pour des commanditaires publics et des entreprises.",
   },
   "#/a-propos/faq": {
     title: t("Questions fréquentes"),
-    description: "Les réponses aux questions courantes sur La Répét' : comment se passe l'entraînement, ce que devient la vidéo, le rôle du coach et celui de l'assistant.",
+    description: "Les réponses aux questions courantes sur La Répét' : comment se passe l'entraînement, ce que devient la vidéo, le rôle du coach et celui de l'assistant.",
   },
   "#/a-propos/ia-et-recherche": {
-    title: t("IA et recherche : nos choix"),
+    title: t("IA et recherche : nos choix"),
     description: "Pourquoi l'assistant décrit sans noter ni deviner les émotions, et sur quels travaux de recherche s'appuie la préparation aux entretiens de La Répét'.",
   },
   "#/solutions": {
     title: t("Nos accompagnements"),
-    description: "Ce que propose l'organisme : un accompagnement à l'entretien mené par des coachs, outillé par La Répét', pour les personnes accompagnées et leurs financeurs.",
+    description: "Ce que propose l'organisme : un accompagnement à l'entretien mené par des coachs, outillé par La Répét', pour les personnes accompagnées et leurs financeurs.",
   },
   "#/solutions/demandeurs-emploi": {
     title: t("Demandeurs d'emploi"),
-    description: "Pour les personnes en recherche d'emploi : répéter ses réponses chez soi, relire un retour qui décrit sans juger, puis en parler avec son coach.",
+    description: "Pour les personnes en recherche d'emploi : répéter ses réponses chez soi, relire un retour qui décrit sans juger, puis en parler avec son coach.",
   },
   "#/solutions/collaborateurs": {
     title: t("Salariés en mobilité"),
-    description: "Pour les salariés qui préparent une mobilité interne ou une évolution professionnelle : s'entraîner à l'entretien en toute discrétion, avec un coach.",
+    description: "Pour les salariés qui préparent une mobilité interne ou une évolution professionnelle : s'entraîner à l'entretien en toute discrétion, avec un coach.",
   },
   "#/solutions/coachs": {
     title: t("Coachs et conseillers"),
-    description: "Pour les coachs : créer un parcours d'entraînement, relire les réponses envoyées par la personne et rédiger un retour, avec l'aide d'un assistant.",
+    description: "Pour les coachs : créer un parcours d'entraînement, relire les réponses envoyées par la personne et rédiger un retour, avec l'aide d'un assistant.",
   },
   "#/solutions/commanditaires": {
     title: t("Commanditaires"),
-    description: "Pour les financeurs publics et les entreprises : confier à l'organisme la préparation aux entretiens des personnes que vous accompagnez ou employez.",
+    description: "Pour les financeurs publics et les entreprises : confier à l'organisme la préparation aux entretiens des personnes que vous accompagnez ou employez.",
   },
   "#/ressources": {
     title: t("Conseils pour l'entretien"),
-    description: "Articles et fiches pratiques pour préparer un entretien : se présenter, parler de ses expériences, réussir une visio, questions à poser au recruteur.",
+    description: "Articles et fiches pratiques pour préparer un entretien : se présenter, parler de ses expériences, réussir une visio, questions à poser au recruteur.",
   },
   "#/demo": {
     title: t("Nous contacter"),
-    description: "Vous financez ou organisez un accompagnement vers l'emploi ou la mobilité ? Décrivez votre projet à l'organisme : publics concernés, calendrier, attentes.",
+    description: "Vous financez ou organisez un accompagnement vers l'emploi ou la mobilité ? Décrivez votre projet à l'organisme : publics concernés, calendrier, attentes.",
   },
   "#/espace": {
     title: t("Accéder à mon espace"),
@@ -75,15 +75,15 @@ export const SEO = {
   },
   "#/s": {
     title: t("Mon entraînement"),
-    description: "Votre espace d'entraînement personnel : questions choisies avec votre coach, réponses enregistrées sur cet appareil, retours qui décrivent sans noter.",
+    description: "Votre espace d'entraînement personnel : questions choisies avec votre coach, réponses enregistrées sur cet appareil, retours qui décrivent sans noter.",
   },
   "#/coach": {
     title: t("Espace coach"),
-    description: "L'espace des coachs : parcours d'entraînement des personnes accompagnées, réponses reçues à relire et rapports de retour à rédiger puis à envoyer.",
+    description: "L'espace des coachs : parcours d'entraînement des personnes accompagnées, réponses reçues à relire et rapports de retour à rédiger puis à envoyer.",
   },
   "#/vos-donnees": {
     title: t("Vos données, vos choix"),
-    description: "Ce que La Répét' garde, où et pour combien de temps : la vidéo reste sur votre appareil, et rien ne part chez votre coach sans votre accord explicite.",
+    description: "Ce que La Répét' garde, où et pour combien de temps : la vidéo reste sur votre appareil, et rien ne part chez votre coach sans votre accord explicite.",
   },
   "#/vos-donnees/video": {
     title: t("Que devient ma vidéo"),
@@ -91,11 +91,11 @@ export const SEO = {
   },
   "#/vos-donnees/assistant": {
     title: t("Ce que fait l'assistant"),
-    description: "Ce que fait l'assistant de La Répét', et ce qu'il ne fait pas : il décrit votre réponse, ne la note pas, ne devine aucune émotion et ne décide jamais pour vous.",
+    description: "Ce que fait l'assistant de La Répét', et ce qu'il ne fait pas : il décrit votre réponse, ne la note pas, ne devine aucune émotion et ne décide jamais pour vous.",
   },
   "#/vos-donnees/droits": {
     title: t("Vos droits sur vos données"),
-    description: "Accès, rectification, effacement, retrait de votre accord : comment exercer vos droits sur vos données personnelles, et qui contacter pour le faire.",
+    description: "Accès, rectification, effacement, retrait de votre accord : comment exercer vos droits sur vos données personnelles, et qui contacter pour le faire.",
   },
   "#/vos-donnees/appareil": {
     title: t("Données gardées sur cet appareil"),
@@ -103,23 +103,23 @@ export const SEO = {
   },
   "#/vos-donnees/notice": {
     title: t("Information complète sur vos données"),
-    description: "Le texte complet d'information sur le traitement de vos données : responsable, finalités, base légale, durées de conservation, destinataires et droits.",
+    description: "Le texte complet d'information sur le traitement de vos données : responsable, finalités, base légale, durées de conservation, destinataires et droits.",
   },
   "#/vos-donnees/coachs": {
     title: t("Données des coachs"),
-    description: "Pour les coachs : quelles données de votre compte et de vos parcours sont gardées, pourquoi, combien de temps, et comment exercer vos droits dessus.",
+    description: "Pour les coachs : quelles données de votre compte et de vos parcours sont gardées, pourquoi, combien de temps, et comment exercer vos droits dessus.",
   },
   "#/conditions": {
     title: t("Règles d'utilisation"),
-    description: "Les règles d'utilisation de La Répét' : à quoi sert l'outil, ce que chacun s'engage à faire, et les limites de l'assistant automatique d'entraînement.",
+    description: "Les règles d'utilisation de La Répét' : à quoi sert l'outil, ce que chacun s'engage à faire, et les limites de l'assistant automatique d'entraînement.",
   },
   "#/mentions-legales": {
     title: t("Mentions légales"),
-    description: "Mentions légales de La Répét' : éditeur du site, responsable de la publication, hébergeur et contacts, conformément à la loi pour la confiance numérique.",
+    description: "Mentions légales de La Répét' : éditeur du site, responsable de la publication, hébergeur et contacts, conformément à la loi pour la confiance numérique.",
   },
   "#/accessibilite": {
     title: t("Accessibilité du site"),
-    description: "Déclaration d'accessibilité de La Répét' : état de conformité, contenus non accessibles, options d'affichage proposées et contact pour signaler un problème.",
+    description: "Déclaration d'accessibilité de La Répét' : état de conformité, contenus non accessibles, options d'affichage proposées et contact pour signaler un problème.",
   },
   notfound: {
     title: t("Page introuvable"),
@@ -129,19 +129,19 @@ export const SEO = {
   /* Routes à venir (nouveau menu : À propos, Solutions, Cas d'usage, Ressources) */
   "#/solutions/usage-de-l-ia": {
     title: t("Notre usage de l'IA"),
-    description: "Comment l'assistant aide à s'entraîner : il met la voix par écrit et décrit la réponse, sans note ni lecture des émotions. Le coach garde toujours la main.",
+    description: "Comment l'assistant aide à s'entraîner : il met la voix par écrit et décrit la réponse, sans note ni lecture des émotions. Le coach garde toujours la main.",
   },
   "#/solutions/recherche": {
     title: t("Ce que dit la recherche"),
-    description: "Les travaux sur la préparation aux entretiens qui ont guidé La Répét' : répétition, retour descriptif et rôle de l'accompagnant, avec leurs références.",
+    description: "Les travaux sur la préparation aux entretiens qui ont guidé La Répét' : répétition, retour descriptif et rôle de l'accompagnant, avec leurs références.",
   },
   "#/solutions/fonctionnalites": {
     title: t("Fonctionnalités"),
-    description: "Questions d'entretien choisies avec le coach, enregistrement vidéo sur l'appareil, retour descriptif, relecture par le coach et rapport : l'outil pas à pas.",
+    description: "Questions d'entretien choisies avec le coach, enregistrement vidéo sur l'appareil, retour descriptif, relecture par le coach et rapport : l'outil pas à pas.",
   },
   "#/cas-d-usage/beneficiaires": {
     title: t("Personnes accompagnées"),
-    description: "Demandeurs d'emploi, salariés en mobilité ou en évolution : comment une personne accompagnée prépare son entretien avec La Répét' et avec son coach.",
+    description: "Demandeurs d'emploi, salariés en mobilité ou en évolution : comment une personne accompagnée prépare son entretien avec La Répét' et avec son coach.",
   },
   "#/cas-d-usage/coachs": {
     title: t("Coachs et conseillers"),
@@ -149,11 +149,11 @@ export const SEO = {
   },
   "#/cas-d-usage/commanditaires": {
     title: t("Commanditaires publics et privés"),
-    description: "Financeurs de l'emploi et entreprises : comment l'organisme prépare aux entretiens les personnes que vous lui confiez, avec ses coachs et La Répét'.",
+    description: "Financeurs de l'emploi et entreprises : comment l'organisme prépare aux entretiens les personnes que vous lui confiez, avec ses coachs et La Répét'.",
   },
   "#/ressources/faq": {
     title: t("Questions fréquentes"),
-    description: "Les réponses aux questions courantes sur La Répét' : déroulé de l'entraînement, devenir de la vidéo, rôle du coach, limites de l'assistant et accès au site.",
+    description: "Les réponses aux questions courantes sur La Répét' : déroulé de l'entraînement, devenir de la vidéo, rôle du coach, limites de l'assistant et accès au site.",
   },
 };
 
@@ -222,9 +222,9 @@ export function applySeo(route, extra) {
 export function checkSeo() {
   const errors = [];
   for (const [k, { title, description }] of Object.entries(SEO)) {
-    if (!title.endsWith(`${SEP}${SITE_NAME}`)) errors.push(`${k} : titre sans « ${SEP}${SITE_NAME} »`);
-    if (description.length < 140 || description.length > 160) errors.push(`${k} : description de ${description.length} caractères`);
-    if (/[—]/.test(title + description)) errors.push(`${k} : tiret cadratin`);
+    if (!title.endsWith(`${SEP}${SITE_NAME}`)) errors.push(`${k} : titre sans « ${SEP}${SITE_NAME} »`);
+    if (description.length < 140 || description.length > 160) errors.push(`${k} : description de ${description.length} caractères`);
+    if ((title + description).includes(String.fromCharCode(0x2014))) errors.push(`${k} : tiret cadratin`);
   }
   return errors;
 }
