@@ -1,23 +1,16 @@
+import CodeForm from "../CodeForm.jsx";
 import React, { useState } from "react";
-import { T, GAP, W, TY, PageHero, Tag, Btn, Link, Card, Field, Input, Txt, I, Notice } from "../ui.jsx";
+import { T, GAP, W, TY, PageHero, Tag, Btn, Link, Card, Field, Input, Txt, Notice } from "../ui.jsx";
 import { PHRASES } from "../content/legal.js";
-import { setLastSpace, setCounselor, findParcours, TRIAL_CODE, TRIAL_LOGIN } from "../lib/store.js";
+import { setLastSpace, setCounselor, TRIAL_LOGIN } from "../lib/store.js";
 import { go, openSpace } from "./router.js";
 
 /* ─── « Mon espace » : code d'accès ou connexion coach (plus d'écran de connexion séparé) ─── */
 export function Espace() {
-  const [code, setCode] = useState(TRIAL_CODE);
-  const [err, setErr] = useState("");
   const [email, setEmail] = useState(TRIAL_LOGIN.email);
   const [pwd, setPwd] = useState(TRIAL_LOGIN.password);
   const [forgot, setForgot] = useState(false);
   const ok = /.+@.+\..+/.test(email) && pwd.length >= 4;
-  const submit = e => {
-    e.preventDefault();
-    const p = findParcours(code);
-    if (!p) return setErr("Ce code ne fonctionne pas. Vérifiez les 6 caractères, ou demandez-le à votre coach.");
-    go(`#/s/${p.code}`); // pas d'attente artificielle (UI-10)
-  };
   const login = e => {
     e.preventDefault();
     if (!ok) return;
@@ -34,16 +27,8 @@ export function Espace() {
               <div><Tag tone="primary">Je m'entraîne</Tag></div>
               <Txt v="h2" as="h2" color={T.navy}>J'ai un code d'accès</Txt>
             </div>
-            <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: GAP.field, flex: 1 }}>
-              <Field id="espace-code" label="Votre code d'accès" hint="Les 6 caractères que votre coach vous a donnés." error={err}>
-                <Input id="espace-code" variant="code" hint error={err} value={code} autoComplete="off" maxLength={6} placeholder="6 caractères"
-                  onChange={e => { setCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "")); setErr(""); }} />
-              </Field>
-              <div style={{ marginTop: "auto", display: "grid", gap: 12 }}>
-                <Btn kind="objective" full disabled={code.length < 6} iconRight={I.arrow}>Ouvrir mon espace</Btn>
-                <Txt v="caption" color={T.muted}>{PHRASES.code}</Txt>
-              </div>
-            </form>
+            <CodeForm id="espace-code" grow hint="Les 6 caractères que votre coach vous a donnés." onOk={c => go(`#/s/${c}`)}
+              footer={<Txt v="caption" color={T.muted}>{PHRASES.code}</Txt>} />
           </Card>
           <Card pad="lg" level={2} topbar="coach" style={card}>
             <div style={{ display: "grid", gap: 12 }}>

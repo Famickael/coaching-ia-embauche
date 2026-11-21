@@ -38,7 +38,7 @@ r = say("comment parler de salaire"); assert.equal(r.topic, "salaire");
 r = say("entretien en visio"); assert.equal(r.topic, "visio");
 
 /* ─── Assistant de rédaction du rapport (côté coach) ─── */
-const MAIN_DIMS = ["debit", "pauses", "exemples", "appui", "structure", "regard"];
+const MAIN_DIMS = ["debit", "pauses", "exemples", "petits-mots", "structure", "regard"];
 const QS = ["Pouvez-vous vous présenter en deux minutes ?", "Pourquoi ce poste de serveur vous intéresse-t-il ?", "Racontez une expérience qui vous prépare au métier.", "Avez-vous des questions à nous poser ?", "Quelle est votre couleur préférée ?"];
 let coachCount = 0;
 for (const d of MAIN_DIMS) for (const type of ["appui", "explorer"]) for (const question of QS) for (const poste of ["", "agent d'accueil", "aide-soignant"]) {
@@ -47,6 +47,7 @@ for (const d of MAIN_DIMS) for (const type of ["appui", "explorer"]) for (const 
   list.forEach(t => assert.ok(ok(t) && coachCompliant(t), `entrée non conforme : ${t}`));
   coachCount = Math.max(coachCount, list.length);
 }
+assert.deepEqual(entriesFor("appui", "explorer", { question: QS[0] }), entriesFor("petits-mots", "explorer", { question: QS[0] }), "ancien identifiant « appui » encore lu (ARC-19)");
 Object.values(TIPS).forEach(x => [...x.appui, ...x.explorer].forEach(t => assert.ok(coachCompliant(t), `astuce non conforme : ${t}`)));
 Object.values(KIND_TIPS).flat().forEach(t => assert.ok(coachCompliant(t), `astuce de question non conforme : ${t}`));
 assert.equal(questionKind("Pouvez-vous vous présenter ?"), "presentation");

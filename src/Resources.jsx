@@ -1,7 +1,7 @@
 import React, { useMemo, useRef, useState } from "react";
-import { T, GAP, GRAD_PAGE, RAD, SH, Btn, Tag, Icon, I, TY, W, SI, img, Eyebrow, Section, PageHero, Chip, IconTile, Input } from "./ui.jsx";
+import { T, GAP, GRAD_PAGE, RAD, SH, Btn, Tag, Icon, I, TY, W, img, Eyebrow, Section, PageHero, Chip, IconTile, Input } from "./ui.jsx";
 import { Reveal, scrollToTarget } from "./motion.jsx";
-import { FinalBand } from "./Home.jsx";
+import { FinalBand } from "./home/FinalBand.jsx";
 import { dateLong } from "./lib/format.js";
 import { useTitle } from "./lib/hooks.js";
 import { ARTICLES, CATEGORIES, TYPES, findArticle, findCategory, search, norm } from "./content/resources.js";
@@ -28,7 +28,7 @@ export default function Resources({ go, openSpace, slug, cat }) {
   return <Hub go={go} openSpace={openSpace} />;
 }
 
-const iconOf = k => SI[k] || I[k] || SI.book;
+const iconOf = k => I[k] || I.book;
 const catTitle = id => findCategory(id)?.title || id;
 const fmtDate = dateLong; // src/lib/format.js
 const wrap = { maxWidth: W.page, margin: "0 auto", padding: "0 24px" };
@@ -115,7 +115,7 @@ function ArticleCard({ a }) {
         </div>
         <h3 style={{ ...TY.h3, color: T.navy, margin: 0 }}>{a.title}</h3>
         <p style={{ ...TY.body, color: T.body, margin: 0, flex: 1 }}>{a.summary}</p>
-        <span style={{ ...TY.caption, color: T.muted, display: "inline-flex", alignItems: "center", gap: 4 }}><Icon d={SI.clock} s={16} c={T.muted} /> {a.readingTime} min de lecture</span>
+        <span style={{ ...TY.caption, color: T.muted, display: "inline-flex", alignItems: "center", gap: 4 }}><Icon d={I.clock} s={16} c={T.muted} /> {a.readingTime} min de lecture</span>
       </div>
     </a>
   );
@@ -158,7 +158,7 @@ const Crumbs = ({ items }) => (
   <nav aria-label="Fil d'Ariane" className="rp-crumbs" style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
     {items.map(([h, l], i) => (
       <React.Fragment key={h}>
-        {i > 0 && <Icon d={SI.chevronR} s={12} c={T.muted} />}
+        {i > 0 && <Icon d={I.chevronR} s={12} c={T.muted} />}
         <a href={h} style={{ color: T.primary, textDecoration: "underline", textUnderlineOffset: 3 }}>{l}</a>
       </React.Fragment>
     ))}
@@ -201,7 +201,7 @@ function Blocks({ blocks }) {
     if (b.t === "quote" || (b.t === "callout" && b.kind === "citation")) {
       return (
         <figure key={i} className="rs-quote" style={{ margin: "32px 0" }}>
-          <Icon d={SI.quote} s={24} c={T.primary} />
+          <Icon d={I.quote} s={24} c={T.primary} />
           <blockquote style={{ margin: "8px 0 0" }}><Blocks blocks={b.blocks} /></blockquote>
           {b.title && <figcaption style={{ ...TY.caption, color: T.muted, marginTop: 8 }}>{b.title}</figcaption>}
         </figure>
@@ -233,8 +233,8 @@ function Article({ a, go, openSpace }) {
   const meta = (
     <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap", ...TY.small, color: T.muted }}>
       <span>{a.author}</span>
-      {a.date && <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}><Icon d={SI.calendar} s={16} c={T.muted} /> {fmtDate(a.date)}</span>}
-      <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}><Icon d={SI.clock} s={16} c={T.muted} /> {a.readingTime} min de lecture</span>
+      {a.date && <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}><Icon d={I.calendar} s={16} c={T.muted} /> {fmtDate(a.date)}</span>}
+      <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}><Icon d={I.clock} s={16} c={T.muted} /> {a.readingTime} min de lecture</span>
     </div>
   );
   const facts = [["Contexte", a.facts.context], ["Public", a.facts.audience], ["Durée", a.facts.duration], ["Dispositif", a.facts.setup]].filter(([, v]) => v);

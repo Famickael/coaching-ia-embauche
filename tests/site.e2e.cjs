@@ -316,7 +316,7 @@ async function run(b, vw, vh, opts = {}) {
   await visit("#/espace");
   await p.getByRole("button", { name: "Se connecter" }).click();
   await p.waitForFunction(() => location.hash === "#/coach", null, { timeout: 5000 }).catch(() => {}); await p.waitForTimeout(1000);
-  check(((await p.getByRole("heading", { level: 1 }).first().textContent()) || "").startsWith("Bienvenue"), `[${tag}] connexion coach : « Bienvenue » attendu`);
+  check(((await p.getByRole("heading", { level: 1 }).first().textContent()) || "") === "Mes parcours" && (await p.getByText(/^Bienvenue /).count()) > 0, `[${tag}] connexion coach : titre « Mes parcours » et « Bienvenue » attendus`);
   await shot("24-espace-coach");
   await visit("#/ressources");
   const account = p.getByRole("button", { name: "Mon compte" });

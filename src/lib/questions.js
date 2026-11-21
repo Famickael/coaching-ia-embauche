@@ -1,8 +1,8 @@
 /* Banque de questions d'entraînement. {poste} est remplacé par le poste visé du parcours (fillPoste, src/lib/text.js :
    « de {poste} » prend l'élision, « d'agent d'accueil »). */
 import { posteLabel, dePoste, fillPoste } from "./text.js";
+import { stripAccents } from "./text.js";
 export { posteLabel, dePoste };
-export const WARMUP_QUESTION = "En une phrase, qu'est-ce qui vous a donné envie de postuler à ce poste ?";
 
 export const QUESTIONS = [
   { id: "presentation", theme: "Présentation de soi", text: "Pouvez-vous vous présenter en deux minutes ?" },
@@ -95,7 +95,7 @@ const SITUATIONS = [
   [["batiment", "macon", "electric", "plomb", "peint", "menuis", "chantier", "entretien", "proprete", "jardin", "agent de"], "Pendant votre travail, vous remarquez un risque pour la sécurité d'un collègue. Que faites-vous ?"],
   [["administr", "comptab", "assistant", "gestion", "bureau", "informati", "secretariat"], "On vous confie deux dossiers urgents à rendre en même temps. Comment vous organisez-vous ?"],
 ];
-const normJob = s => (s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+const normJob = stripAccents;
 export function situationFor(poste) {
   const p = normJob(poste);
   const hit = SITUATIONS.find(([keys]) => keys.some(k => p.includes(normJob(k))));

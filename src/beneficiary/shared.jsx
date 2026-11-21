@@ -4,8 +4,6 @@ import { loadVideoUrl } from "../lib/store.js";
 import { hasMedia, isAudio, noFeedback } from "../lib/takes.js";
 import { dateTime, duration } from "../lib/format.js";
 
-export const CODE_ERR = "Ce code ne fonctionne pas. Vérifiez les 6 caractères, ou demandez-le à votre coach.";
-
 /* Ouvrir une réponse : choix du mode de lecture seulement s'il y a un retour de l'assistant et un enregistrement. */
 export const openView = t => (!hasMedia(t) ? ["report", "simple"] : noFeedback(t) ? ["report", "video"] : ["choose", "simple"]);
 

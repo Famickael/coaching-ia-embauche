@@ -1,7 +1,7 @@
 /* Catégories et types des ressources, séparés des articles (PERF-02) : l'en-tête du site les affiche sans charger
    les articles. */
 /* Catégories : identifiant (utilisé dans l'en-tête des articles et dans l'adresse), titre, description,
-   icône (clé de SI ou I) et image d'illustration (public/img/categories/<id>.webp). */
+   icône (clé de I) et image d'illustration (public/img/categories/<id>.webp). */
 export const CATEGORIES = [
   { id: "preparer", title: "Préparer son entretien", desc: "Se présenter, parler de ses expériences, gérer le trac, préparer sa venue.", icon: "target" },
   { id: "questions", title: "Questions de recruteurs", desc: "Les questions fréquentes, comment y répondre, et celles à poser à votre tour.", icon: "chat" },

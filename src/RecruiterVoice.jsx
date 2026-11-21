@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { T, TY, RAD, GAP, Btn, Icon, I } from "./ui.jsx";
+import { prefersReduced } from "./lib/a11y.js";
 
 /* Recruteur oral, sans visage : la question est lue par la synthèse vocale française de l'appareil
    (speechSynthesis, voix fr-FR, aucun service externe). Indicateur discret pendant la lecture,
@@ -10,8 +11,7 @@ import { T, TY, RAD, GAP, Btn, Icon, I } from "./ui.jsx";
 const MUTE_KEY = "larepet.voix.coupee";
 const readMuted = () => { try { return localStorage.getItem(MUTE_KEY) === "1"; } catch { return false; } };
 const writeMuted = v => { try { localStorage.setItem(MUTE_KEY, v ? "1" : "0"); } catch { /* stockage indisponible */ } };
-export const reducedMotion = () => typeof window !== "undefined" && (document.documentElement.dataset.motion === "reduce"
-  || (!!window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches));
+export const reducedMotion = () => prefersReduced();
 
 /* Voix française de l'appareil, ou null. Les voix arrivent parfois après le premier appel (voiceschanged). */
 function frenchVoice() {

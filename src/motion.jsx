@@ -1,13 +1,13 @@
 /* Outils de mouvement : apparition au défilement et respect de « réduire les animations ».
    IntersectionObserver uniquement, aucun écouteur de défilement. */
+import { prefersReduced } from "./lib/a11y.js";
 import React, { useEffect, useRef, useState } from "react";
 
 const hasIO = () => typeof window !== "undefined" && "IntersectionObserver" in window;
 
 /* Mouvement réduit : réglage du système, option « Réduire les animations » ou « Mode concentration »
    (qui arrête aussi les défilements automatiques et les cartes animées). */
-const reducedNow = () => typeof window !== "undefined" && ((!!window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches)
-  || document.documentElement.dataset.motion === "reduce" || document.documentElement.dataset.focusmode === "on");
+const reducedNow = () => prefersReduced(true);
 export function useReducedMotion() {
   const [r, setR] = useState(reducedNow);
   useEffect(() => {

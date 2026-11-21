@@ -4,7 +4,7 @@ import { loadVideoUrl } from "./lib/store.js";
 import { fmt } from "./lib/analysis.js";
 import { hasMedia, isAudio, noFeedback } from "./lib/takes.js";
 
-export const toneOf = d => (d.type === "appui" ? T.accent : T.violet);
+const toneOf = d => (d.type === "appui" ? T.accent : T.violet);
 
 /* Charge l'URL locale de l'enregistrement d'une réponse : { url, status: "loading" | "ready" | "missing" } (UI-10). */
 export function useVideoUrl(take) {

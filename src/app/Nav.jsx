@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
 import { T, W, Z, TY, HEADER_H, RepetLogo, Btn, Bare, IconBtn, Link, Icon, I, ScrollProgress, lockScroll } from "../ui.jsx";
-import Home from "../Home.jsx";
 import { CATEGORIES } from "../content/categories.js";
 import { openA11y } from "../A11y.jsx";
 import { PUBLIC, go, openSpace } from "./router.js";

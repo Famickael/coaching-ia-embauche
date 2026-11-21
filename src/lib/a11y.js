@@ -66,7 +66,9 @@ export function applyA11y(s) {
   window.dispatchEvent(new CustomEvent("rp-a11y", { detail: s }));
 }
 
-/* Mouvement réduit : réglage du système ou option du site. */
-export const prefersReduced = () => mq("(prefers-reduced-motion: reduce)") || (typeof document !== "undefined" && document.documentElement.dataset.motion === "reduce");
+/* Mouvement réduit : réglage du système ou option du site ; withFocus : le mode concentration compte aussi (il arrête
+   les défilements automatiques et les cartes animées). Détection unique du site (ARC-13). */
+export const prefersReduced = (withFocus = false) => mq("(prefers-reduced-motion: reduce)")
+  || (typeof document !== "undefined" && (document.documentElement.dataset.motion === "reduce" || (withFocus && document.documentElement.dataset.focusmode === "on")));
 /* Mode concentration : pas de défilement automatique, pas de carte animée. */
 export const focusMode = () => typeof document !== "undefined" && document.documentElement.dataset.focusmode === "on";

@@ -5,7 +5,7 @@ import { spawn, execSync } from "child_process";
 import { readdirSync, statSync, readFileSync } from "fs";
 import { join } from "path";
 
-const OUT = "node_modules/.cache/site-dist", PORT = 5097;
+const OUT = process.env.SITE_OUT || "node_modules/.cache/site-dist", PORT = Number(process.env.SITE_PORT || 5097);
 execSync(`npx vite build --outDir ${OUT} --emptyOutDir`, { stdio: "inherit" });
 /* Garde-fous de conformité sur le site construit (docs/conformite.md, point 34) :
    aucune police chez Google, aucune version « @latest », aucune mention « haut risque ». */

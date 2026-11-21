@@ -76,7 +76,7 @@ export default function Beneficiary({ initialCode, setModal, onCode }) {
               <Txt v="body" color={T.body}>Rien ne vous interrompt pendant que vous parlez. Vous pouvez recommencer autant de fois que vous voulez.</Txt>
             </div>
             <RecruiterVoice key={`${ctx.qi || 0}-${ctx.question}`} label={series?.full ? `Le recruteur · ${series.step}` : "Question du recruteur"} text={series?.full && series.i === 0 ? `${FULL_INTRO} ${ctx.question}` : ctx.question} onSpeaking={setSpeaking} />
-            <Recorder question={null} speaking={speaking} beforeStart={() => { try { window.speechSynthesis?.cancel(); } catch { /* rien */ } }} setModal={setModal} onCancel={() => go("pick")}
+            <Recorder speaking={speaking} beforeStart={() => { try { window.speechSynthesis?.cancel(); } catch { /* rien */ } }} setModal={setModal} onCancel={() => go("pick")}
               trackGaze={!!p.consent.ai} validateLabel={p.consent.ai ? "Voir mon retour" : "Garder cette réponse"}
               onDone={rec => go("processing", { recording: rec })} />
             {/* Sous la caméra (UI-13) : la caméra reste au-dessus de la ligne de flottaison sur téléphone */}

@@ -1,3 +1,4 @@
+import { prefersReduced } from "../lib/a11y.js";
 import React, { useEffect, useState } from "react";
 import { IconBtn, I } from "../ui.jsx";
 
@@ -14,7 +15,7 @@ export function ToTop({ lift }) {
   }, []);
   if (!show) return null;
   const up = () => {
-    const reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches || document.documentElement.dataset.motion === "reduce";
+    const reduced = prefersReduced();
     window.scrollTo({ top: 0, behavior: reduced ? "auto" : "smooth" });
     const h = document.querySelector("main h1");
     if (h) { h.setAttribute("tabindex", "-1"); h.focus({ preventScroll: true }); }

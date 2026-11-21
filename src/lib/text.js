@@ -1,5 +1,10 @@
 /* Outils de texte partagés. */
 
+/* Minuscules sans accents (ARC-14) : recherche, correspondance de mots-clés, adresses. */
+export const stripAccents = s => String(s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+/* Identifiant d'adresse : « Préparer son entretien » donne « preparer-son-entretien ». */
+export const slugify = s => stripAccents(s).replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+
 /* Métier sans ses parenthèses : « serveur(se) » devient « serveur ». */
 export const posteLabel = poste => (poste || "").replace(/\s*\([^)]*\)/g, "").trim();
 

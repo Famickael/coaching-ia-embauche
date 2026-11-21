@@ -14,6 +14,7 @@
 
 import { textCompliant } from "./compliance.js";
 import { fillPoste } from "./text.js";
+import { stripAccents } from "./text.js";
 
 /* Garde-fou de l'assistant : il peut parler du trac quand la personne en parle, jamais qualifier la personne ni noter. */
 export const assistantCompliant = t => textCompliant(t, "assistant") && !/\u2014/.test(t);
@@ -474,7 +475,7 @@ const SYN = {
   accompagnatrice: "coach", accompagnateur: "coach", referente: "coach", referent: "coach", trous: "trou",
   flouter: "flou", floute: "flou", stressee: "stresse", stressant: "stress", angoissee: "angoisse",
 };
-export const normalize = s => (s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "")
+export const normalize = s => stripAccents(s)
   .replace(/œ/g, "oe").replace(/[’'`]/g, " ").replace(/[^a-z0-9?]+/g, " ").replace(/\s+/g, " ").trim();
 const stem = w => (w.length > 4 && /[sx]$/.test(w) ? w.slice(0, -1) : w);
 const tokens = s => normalize(s).replace(/\?/g, " ").split(" ").filter(Boolean).map(w => SYN[w] || w).map(stem).filter(w => !STOP.has(w));

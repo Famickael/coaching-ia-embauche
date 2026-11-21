@@ -131,7 +131,8 @@ export function localAnalysis({ segments, duration, gaze }) {
   if (m.fillerTotal) {
     const top = Object.entries(m.fillers).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([f, n]) => `« ${f} » (${n})`).join(", ");
     dims.push({
-      id: "appui", titre: "Petits mots répétés", type: perMin <= 4 ? "appui" : "explorer", t: m.firstFillerAt ?? 0,
+      // identifiant « petits-mots » (ancien « appui », encore lu par lib/coachAssistant.js, ARC-19)
+      id: "petits-mots", titre: "Petits mots répétés", type: perMin <= 4 ? "appui" : "explorer", t: m.firstFillerAt ?? 0,
       observation: `${m.fillerTotal} petit${m.fillerTotal > 1 ? "s" : ""} mot${m.fillerTotal > 1 ? "s" : ""} répété${m.fillerTotal > 1 ? "s" : ""} : ${top}.`,
       conseil: perMin <= 4
         ? "Leur présence reste discrète et ne gêne pas la compréhension."

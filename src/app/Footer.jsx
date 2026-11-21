@@ -3,7 +3,8 @@ import { T, GAP, W, TY, RepetLogo, Link, Icon, I } from "../ui.jsx";
 
 /* ─── Pied de page (non collant) ─── */
 
-export function Footer() {
+/* compact : dans les espaces (entraînement, coach), pied réduit aux engagements et aux liens essentiels (UI-14). */
+export function Footer({ compact = false }) {
   /* Exception documentée (référentiel 1.5) : chaque engagement garde sa couleur d'icône. */
   const trust = [
     [I.lock, "Votre vidéo reste sur votre appareil", T.successDk, "#/vos-donnees/video"],
@@ -17,6 +18,21 @@ export function Footer() {
     ["Informations légales", [["#/conditions", "Conditions d'utilisation"], ["#/mentions-legales", "Mentions légales"], ["#/accessibilite", "Accessibilité : non conforme"]]],
   ];
   const lk = { ...TY.caption, ...TY.link, minHeight: 44, display: "inline-flex", alignItems: "center" };
+  const trustList = (
+    <ul className="rp-trust" style={{ display: "flex", gap: 20, ...TY.caption, color: T.body, flexWrap: "wrap", listStyle: "none", margin: 0, padding: 0 }}>
+      {trust.map(([ic, l, c, h]) => <li key={l}><a href={h} className="rp-trustlink" style={{ display: "inline-flex", alignItems: "center", gap: 8, color: T.body, textDecoration: "none", minHeight: 44 }}><Icon d={ic} s={16} c={c} /> {l}</a></li>)}
+    </ul>
+  );
+  if (compact) return (
+    <footer className="noprint" style={{ position: "relative", zIndex: 1, borderTop: `1px solid ${T.line}`, background: T.surface, marginTop: GAP.section / 2 }}>
+      <div className="rp-pad" style={{ maxWidth: W.page, margin: "0 auto", padding: "12px 24px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "4px 24px" }}>
+        {trustList}
+        <nav aria-label="Informations" style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
+          {[["#/vos-donnees", "Vos données"], ["#/mentions-legales", "Mentions légales"], ["#/accessibilite", "Accessibilité : non conforme"]].map(([h, l]) => <Link key={h} href={h} style={lk}>{l}</Link>)}
+        </nav>
+      </div>
+    </footer>
+  );
   return (
     <footer className="noprint" style={{ position: "relative", zIndex: 1, borderTop: `1px solid ${T.line}`, background: T.surface, marginTop: GAP.section / 2 }}>
       <div className="rp-pad" style={{ maxWidth: W.page, margin: "0 auto", padding: "24px 24px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 20 }}>
@@ -24,9 +40,7 @@ export function Footer() {
           <RepetLogo s={14} tagline={false} />
           <p style={{ ...TY.caption, color: T.body, margin: 0 }}>La Répét' aide à préparer l'entretien d'embauche. On répète à voix haute, l'assistant décrit sans noter, votre coach vous accompagne.</p>
         </div>
-        <ul className="rp-trust" style={{ display: "flex", gap: 20, ...TY.caption, color: T.body, flexWrap: "wrap", listStyle: "none", margin: 0, padding: 0 }}>
-          {trust.map(([ic, l, c, h]) => <li key={l}><a href={h} className="rp-trustlink" style={{ display: "inline-flex", alignItems: "center", gap: 8, color: T.body, textDecoration: "none", minHeight: 44 }}><Icon d={ic} s={16} c={c} /> {l}</a></li>)}
-        </ul>
+        {trustList}
       </div>
       <div style={{ borderTop: `1px solid ${T.lineLt}` }}>
         <div className="rp-pad rp-fgroups" style={{ maxWidth: W.page, margin: "0 auto", padding: "16px 24px 24px", display: "grid", gridTemplateColumns: "repeat(3,minmax(0,1fr))", gap: 24 }}>

@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { T, FIX, ON, TY, RAD, W, MO, GRAD_NIGHT, ringOf, Btn, Chip, Icon, I, RadioGroup } from "./ui.jsx";
 import { PHRASES } from "./content/legal.js";
+import StageIdle from "./StageIdle.jsx";
 import { openStream, mediaError, watchEnded } from "./lib/media.js";
 
 /* Aperçu en direct pour l'échauffement : caméra ou voix seule.
@@ -117,16 +118,7 @@ export default function WarmupStage({ setModal }) {
           style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", transform: "scaleX(-1)", display: showCanvas ? "block" : "none" }} />
 
         {(phase === "idle" || phase === "error") && (
-          <div className="rs-on-dark" style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", padding: 20 }}>
-            <div style={{ textAlign: "center", color: ON.text, maxWidth: W.narrow, display: "grid", gap: 8 }}>
-              <div style={{ ...TY.h3, color: ON.text }}>{phase === "error" ? error?.title : "Voulez-vous vous voir ?"}</div>
-              <div style={{ ...TY.small, color: ON.text }}>{phase === "error" ? error?.text : "Activez la caméra pour vous voir pendant que vous parlez. Ou restez en voix seule."}</div>
-              <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap", marginTop: 8 }}>
-                <Btn kind="white" onClick={() => open(false)} icon={I.video}>Activer la caméra</Btn>
-                <Btn kind="ghostDark" onClick={() => open(true)} icon={I.mic}>Rester en voix seule</Btn>
-              </div>
-            </div>
-          </div>
+          <StageIdle title={phase === "error" ? error?.title : "Voulez-vous vous voir ?"} text={phase === "error" ? error?.text : "Activez la caméra pour vous voir pendant que vous parlez. Ou restez en voix seule."} onCamera={() => open(false)} onVoice={() => open(true)} voiceLabel="Rester en voix seule" pad={20} />
         )}
 
         {phase === "audio" && (

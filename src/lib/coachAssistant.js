@@ -14,6 +14,7 @@
 
 import { textCompliant } from "./compliance.js";
 import { dePoste } from "./text.js";
+import { stripAccents } from "./text.js";
 
 /* ─── Garde-fou ─── */
 /* Jugement sur la personne ou appréciation chiffrée ou globale : refusé, en plus des règles d'isCompliant. */
@@ -28,7 +29,7 @@ export function coachCompliant(text) {
 const keep = list => list.filter(coachCompliant);
 
 /* ─── Situations : catégorie de la question posée et famille du métier visé ─── */
-const norm = s => (s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+const norm = stripAccents;
 export const QUESTION_KINDS = {
   presentation: { label: "présentation", keys: ["presenter", "presentez", "parlez-moi de vous", "parlez moi de vous", "votre parcours"] },
   motivation: { label: "motivation", keys: ["pourquoi ce poste", "pourquoi notre", "interesse", "motivation", "envie de postuler", "pourquoi vous"] },
@@ -77,7 +78,7 @@ const KIND_HOOKS = {
    appui : formulations positives et descriptives, à reprendre telles quelles ou à adapter ;
    explorer : astuces concrètes à proposer, présentées comme des pistes. */
 export const DIM_LABELS = {
-  debit: "Rythme de parole", pauses: "Pauses", exemples: "Exemples concrets", appui: "Petits mots répétés",
+  debit: "Rythme de parole", pauses: "Pauses", exemples: "Exemples concrets", "petits-mots": "Petits mots répétés", appui: "Petits mots répétés",
   structure: "Construction de la réponse", regard: "Direction du regard", repetitions: "Mots qui reviennent", captation: "Son enregistré",
 };
 export const TIPS = {
@@ -165,7 +166,7 @@ export const TIPS = {
       "Une astuce : un exemple court et précis vaut souvent mieux qu'une longue liste d'expériences.",
     ],
   },
-  appui: {
+  "petits-mots": {
     appui: [
       "Les petits mots de liaison restent rares : la réponse est fluide.",
       "Votre réponse va droit au but, sans mots de remplissage.",
@@ -173,7 +174,7 @@ export const TIPS = {
       "Les quelques petits mots présents ne gênent pas la compréhension.",
       "Vous remplacez les hésitations par de courts silences, ce qui rend la réponse plus nette.",
       "Les transitions entre vos idées sont claires et directes.",
-      "Votre réponse garde un fil continu, avec très peu de mots d'appui.",
+      "Votre réponse garde un fil continu, avec très peu de petits mots répétés.",
       "Vous commencez vos phrases directement par l'idée principale.",
       "Le texte de votre réponse se lit facilement : les mots de remplissage sont peu nombreux.",
       "Vous passez d'une idée à l'autre avec des mots de liaison utiles (« ensuite », « par exemple »).",
@@ -288,9 +289,13 @@ export const KIND_TIPS = {
   generique: ["Vous pouvez reprendre la même question à l'entraînement en visant une seule amélioration à la fois.", "Une piste : réécouter la réponse le lendemain, avec un regard neuf.", "Vous pouvez noter les questions qui vous semblent les plus difficiles et les travailler en premier."],
 };
 
+/* Repère « Petits mots répétés » : identifiant « petits-mots », ancien « appui » encore lu (ARC-19). */
+export const dimKey = id => (id === "appui" ? "petits-mots" : id);
+
 /* Entrées d'une observation dans une situation donnée : formulations de base, puis variantes reliées
    à la question posée et au métier visé. Au moins 40 entrées par observation principale et par situation. */
-export function entriesFor(dimId, type, { question, poste } = {}) {
+export function entriesFor(dimId0, type, { question, poste } = {}) {
+  const dimId = dimKey(dimId0);
   const base = TIPS[dimId]?.[type === "appui" ? "appui" : "explorer"] || [];
   const kind = questionKind(question);
   const hooks = [...KIND_HOOKS[kind], ...KIND_HOOKS.generique];
@@ -410,7 +415,7 @@ export function localSuggestions(ctx) {
     return { items: pick(pool, N, page).map(text => ({ text, dimId: dim.id })) };
   }
   if (mode === "positive") {
-    const pool = dim && dim.type === "appui" ? entriesFor(dim.id, "appui", { question, poste }) : [...(dim ? keep(TIPS[dim.id]?.appui || []) : []), ...keep(POSITIVE_GENERIC)];
+    const pool = dim && dim.type === "appui" ? entriesFor(dim.id, "appui", { question, poste }) : [...(dim ? keep(TIPS[dimKey(dim.id)]?.appui || []) : []), ...keep(POSITIVE_GENERIC)];
     return { items: pick(pool, N, page).map(text => ({ text, dimId: dim?.id })) };
   }
   if (mode === "intro") return { items: pick(introIdeas({ prenom, question, poste, dims }), N, page).map(text => ({ text })) };

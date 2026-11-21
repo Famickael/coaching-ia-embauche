@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { T, FIX, ON, TY, RAD, W, GAP, GRAD_NIGHT, Btn, Back, Icon, I, BrandLoader, Notice } from "./ui.jsx";
 import { PHRASES } from "./content/legal.js";
+import StageIdle from "./StageIdle.jsx";
 import { setRecording, nudgeAssistant } from "./lib/bus.js";
 import { useLeaveGuard } from "./lib/hooks.js";
 import { openStream, mediaError, watchEnded } from "./lib/media.js";
@@ -25,7 +26,7 @@ function pickMime(audioOnly) {
 /* Enregistreur : caméra + micro, ou micro seul.
    onDone({ blob, duration, gaze, audioOnly }) est appelé quand la personne valide sa prise.
    beforeStart : appelé au démarrage (le recruteur oral se tait, BUG-10) ; speaking : la question est en cours de lecture. */
-export default function Recorder({ question, onDone, onCancel, trackGaze = true, setModal, validateLabel = "Garder cette réponse", speaking = false, beforeStart }) {
+export default function Recorder({ onDone, onCancel, trackGaze = true, setModal, validateLabel = "Garder cette réponse", speaking = false, beforeStart }) {
   const liveRef = useRef(null), streamRef = useRef(null), recRef = useRef(null), chunks = useRef([]);
   const gazeRef = useRef(null), t0 = useRef(0), urlRef = useRef(null), alive = useRef(true), unwatch = useRef(null);
   const [phase, setPhase] = useState("idle"); // idle | live | recording | stopping | done | error
@@ -133,12 +134,6 @@ export default function Recorder({ question, onDone, onCancel, trackGaze = true,
   return (
     <div style={{ display: "grid", gap: 16 }}>
       <div role="status" className="rp-sr">{said}</div>
-      {question && (
-        <div style={{ background: T.primaryBg, borderRadius: RAD.md, padding: "16px 20px", display: "grid", gap: 8 }}>
-          <div style={{ ...TY.overline, color: T.primary }}>Question</div>
-          <div style={{ ...TY.h2, color: T.navy }}>« {question} »</div>
-        </div>
-      )}
 
       <div style={{ position: "relative", borderRadius: RAD.lg, overflow: "hidden", aspectRatio: "16/9", background: GRAD_NIGHT }}>
         <video ref={liveRef} muted playsInline aria-label="Aperçu de votre caméra" style={{ width: "100%", height: "100%", objectFit: "cover", transform: "scaleX(-1)", display: (phase === "live" || phase === "recording") && !audioOnly ? "block" : "none" }} />
@@ -153,16 +148,7 @@ export default function Recorder({ question, onDone, onCancel, trackGaze = true,
           : <video src={result.url} controls playsInline aria-label="Votre vidéo, avant de la garder" style={{ width: "100%", height: "100%", objectFit: "contain", background: T.videoBg }} />)}
 
         {(phase === "idle" || phase === "error") && (
-          <div className="rs-on-dark" style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", padding: 24 }}>
-            <div style={{ textAlign: "center", color: ON.text, maxWidth: W.narrow, display: "grid", gap: 8 }}>
-              <div style={{ ...TY.h3, color: ON.text }}>{phase === "error" ? error?.title : "Quand vous voulez"}</div>
-              <div style={{ ...TY.small, color: ON.text }}>{phase === "error" ? error?.text : "L'image reste sur votre appareil. Vous pouvez aussi répondre en voix seule."}</div>
-              <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap", marginTop: 8 }}>
-                <Btn kind="white" onClick={() => open(false)} icon={I.video}>Activer la caméra</Btn>
-                <Btn kind="ghostDark" onClick={() => open(true)} icon={I.mic}>Voix seule</Btn>
-              </div>
-            </div>
-          </div>
+          <StageIdle title={phase === "error" ? error?.title : "Quand vous voulez"} text={phase === "error" ? error?.text : "L'image reste sur votre appareil. Vous pouvez aussi répondre en voix seule."} onCamera={() => open(false)} onVoice={() => open(true)} voiceLabel="Voix seule" pad={24} />
         )}
 
         {(phase === "live" || phase === "recording") && audioOnly && (

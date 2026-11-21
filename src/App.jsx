@@ -4,7 +4,7 @@ import { flushSync } from "react-dom";
 import { T, W, TY, BrandLoader, Notice, GStyle } from "./ui.jsx";
 import { dismissLoader } from "./Loader.jsx";
 import LegalPage, { LegalModal } from "./Legal.jsx";
-import Home from "./Home.jsx";
+import Home from "./home/index.jsx";
 import A11yLayer from "./A11y.jsx";
 import { useStore, getState, setLastSpace, getStorageError } from "./lib/store.js";
 import { go, openSpace, reducedMotion, routeFromHash, titleOf } from "./app/router.js";
@@ -16,7 +16,7 @@ import { ToTop } from "./app/ToTop.jsx";
 /* La Répét' : entraînement à l'entretien d'embauche, avec un assistant IA et votre coach.
    Routes (dans l'ancre de l'adresse, pour que le bouton Retour du navigateur fonctionne) :
      #/                         accueil
-     #/a-propos(/faq)           à propos (et sa FAQ)
+     #/a-propos(/faq)           à propos (et sa FAQ) ; #/a-propos/ia-et-recherche : L'IA et la recherche
      #/solutions(/public)       solutions par public : beneficiaires, coachs, organismes
      #/fonctionnement           ancienne adresse, redirigée vers #/solutions
      #/ressources               centre de ressources (catégories, articles mis en avant, recherche)
@@ -122,7 +122,7 @@ export default function App() {
         {route.role === "coach" && s.counselor && <Counselor />}
         </Suspense>
         </div>
-        <Footer />
+        <Footer compact={route.role === "benef" || (route.role === "coach" && !!s.counselor)} />
       </div>
       <LegalModal modal={modal} close={() => setModal(null)} />
       <A11yLayer />

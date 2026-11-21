@@ -433,6 +433,16 @@ Même panneau que 5.9 bis (`DockPanel`, bouton flottant `Fab`, bordure `GRAD_AI_
 | Rail d'étapes (`Rail`) | Pastille 28. Terminée : fond `successDk`, coche blanche, libellé `successDk`. En cours : fond `accent`, libellé `accent` gras, `aria-current="step"`. À venir : fond blanc, bordure `lineStrong`, libellé `muted`. Mobile : seul le libellé de l'étape en cours est affiché, précédé de « Étape 2 sur 4 » |
 | Repères de lecture | Appui : rond plein `accent`. À explorer : rond `violet` évidé. Note du coach : carré `primary` (`RAD.xs`). La forme distingue autant que la couleur |
 | Icônes (`Icon`) | Tailles 12 (dans `Tag`), 16 (bouton, ligne), 20 (défaut), 24 (pastille), 40 (illustration). Trait 2. `aria-hidden` par défaut |
+| Bouton flottant de l'assistant (`Fab`) | 56 × 56, rond, dégradé `GRAD_AI`, `aria-label` obligatoire ; masqué pendant un enregistrement et sous un panneau ouvert ; bulle d'invitation à sa gauche, 240 px au plus |
+| Bulle d'information (`InfoTip`, `beneficiary/SpaceHome.jsx`) | Bouton icône `info` 44 ; contenu `role="note"`, fond `surface`, `SH.lg` ; survol, toucher et clavier (Échap ferme) |
+| Tuile de choix (`ChoiceTile`, `beneficiary/SpaceHome.jsx`) | Bloc interne sur fond `bg`, `RAD.md`, pastille d'icône sur `surface`, titre `h3`, une action |
+| Indicateur agrégé (`Stat`, `coach/List.jsx`) | Carte, valeur `TY.num` insécable, libellé `TY.small` ; aucun chiffre qui décrit une personne (moins de 5 parcours : texte) |
+| Logo d'attente (`BrandLoader`) | Bulles et points animés, libellé d'état `role="status"` ; statique en mouvement réduit ; plein écran (`full`) ou dans le bloc |
+| Confirmation (`ConfirmDialog`) | Construite sur `Modal` ; « Annuler » en `secondary`, action en `dangerSolid` ; remplace toute boîte native |
+| Groupe de choix (`RadioGroup`) | `role="radiogroup"` ; un seul arrêt de tabulation, flèches, Début, Fin ; enfants `Chip` ou `Toggle` de rôle `radio` |
+| Menu d'actions (`Menu`) | Bouton `ghost` « Autres actions » ; liste de `Bare` 44, destructive en `errorDk` et en dernier ; Échap et clic extérieur ferment |
+| Écran d'attente du cadre caméra (`StageIdle`) | Sur `GRAD_NIGHT` : titre `h3` et texte en `ON.text`, « Activer la caméra » en `white`, voix seule en `ghostDark` |
+| Texte de la réponse (`Transcript`, `Report.jsx`) | `details` « Afficher le texte de la réponse », mention « écrit par un programme », lignes horodatées, cliquables avec un lecteur |
 
 ---
 
@@ -450,7 +460,7 @@ Remplace 1000, 920, 820, 720, 680, 640, 580, 560, 460.
 
 - Le contenu est centré dans la page ; le texte est aligné à gauche. Le centrage du texte est réservé aux écrans de confirmation, d'accès et aux états vides.
 - Grilles : 2 ou 3 colonnes égales, gouttière `GAP.grid`. Les proportions libres (1,2fr / 1fr, 1,15fr / 1fr, 1,3fr / 1fr) sont ramenées à deux : égales, ou 3/2 pour lecteur + panneau.
-- Point de rupture unique : 760 px. En dessous : une colonne, gouttière latérale 16, cartes en `pad` mobile, groupes de boutons en pleine largeur, titres en taille mobile. Aucun défilement horizontal de page.
+- Point de rupture principal : 760 px (autres seuils de `GStyle` : 1023 px pour le menu repliable, 360 px pour les très petits écrans, hauteur 520 px en paysage). Sous 760 px : une colonne, gouttière latérale 16, cartes en `pad` mobile, groupes de boutons en pleine largeur, titres en taille mobile. Aucun défilement horizontal de page.
 - En-tête collant de 64 (mobile 56), `z-index` 50 ; modale 100 (`Z.nav`, `Z.modal`).
 - Impression : en-tête, pied et éléments `.noprint` masqués, fond blanc.
 
@@ -735,5 +745,7 @@ Dégradés : `GRAD` et `GRAD_AI` recomposés selon 1.3, `GRAD_NIGHT` ajouté, `G
 
 | 2026-11-21 | Nouveaux composants de `ui.jsx` : `ConfirmDialog` (suppression confirmée, bouton `dangerSolid`), `RadioGroup` (motif ARIA : un arrêt de tabulation, flèches), `Menu` (« Autres actions »), `Quote size="lg"` (message d'introduction du coach), icônes `volume`, `volumeOff`, `download`, `more` ; `Tag` en hauteur minimale 24 et texte qui passe à la ligne ; flèche du `Select` en icône `primary` | Audit A11Y-10, A11Y-17, UI-02, UI-08, UI-11, UI-12, UI-15 |
 | 2026-11-21 | Bulle d'invitation de l'assistant à gauche du bouton flottant, 240 px au plus, jamais sur la relecture vidéo ; mots éteints de la phrase d'accueil en `lineStrong` (3:1 sur `bg`, texte de 32 px et plus) | Audit UI-07, A11Y-12 |
+
+| 2026-11-21 | Mise à jour des valeurs en vigueur (ARC-21) : écran de chargement 2,5 s minimum, fondu 0,7 s (section 7, `Loader.jsx`) ; `PACE.accroche` 11 500 ms ; points de rupture listés en section 6. Les lignes plus anciennes du journal gardent les valeurs de leur date | Audit ARC-21 |
 
 Ajouter une ligne à chaque évolution d'une règle ou d'une échelle.

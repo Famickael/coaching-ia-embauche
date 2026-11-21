@@ -11,7 +11,7 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const tokens = await import(pathToFileURL(join(ROOT, "src/tokens.js")).href);
 const { SPACE, SIZES, WEIGHTS, PAIRS, FD, FB, FM } = tokens;
 const MAX_WAIVERS = 5;
-const TOKEN_FILES = new Set(["src/tokens.js", "src/ui.jsx"]);
+const TOKEN_FILES = new Set(["src/tokens.js", "src/ui.jsx", "src/ui/GStyle.jsx", "src/ui/icons.jsx"]);
 const BTN_KINDS = ["objective", "ai", "primary", "secondary", "ghost", "danger", "white", "ghostDark", "dangerSolid"];
 const BTN_SIZES = ["sm", "md", "lg"];
 const TAG_TONES = ["primary", "appui", "ai", "success", "warning", "error", "muted"];
@@ -185,7 +185,7 @@ function checkFile(file) {
     each(/\bfont-size\s*:\s*(\d+(?:\.\d+)?)px/g, m => { if (!SIZES.includes(+m[1])) report(m.index, "X1", m[0], `taille dans ${SIZES.join(", ")}`); });
     each(/\b(fontWeight|font-weight)\s*:\s*["']?(\d+)/g, m => { if (![...new Set(Object.values(WEIGHTS).flat())].includes(+m[2])) report(m.index, "X1", m[0], "graisse autorisée"); });
     // X2 couleur littérale dans ui.jsx
-    if (file === "src/ui.jsx") {
+    if (file === "src/ui.jsx" || file.startsWith("src/ui/")) {
       each(/(?<![&\w])#[0-9a-fA-F]{3,8}\b/g, m => report(m.index, "X2", text.slice(m.index - 10, m.index + 12), "jeton de tokens.js"));
       each(/\b(rgba?|hsla?)\(/g, m => report(m.index, "X2", text.slice(m.index, m.index + 30), "jeton de tokens.js"));
     }

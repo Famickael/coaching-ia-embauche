@@ -1,4 +1,4 @@
-import React from "react";
+import { prefersReduced } from "../lib/a11y.js";
 import { PAGES } from "../content/legal.js";
 import { getState } from "../lib/store.js";
 
@@ -34,7 +34,7 @@ export const TITLES = { notfound: "Page introuvable", research: "L'IA et la rech
 
 export const titleOf = (route, counselor) => route.role === "legal" ? PAGES[route.page].title : route.role === "coach" && !counselor ? TITLES.espace : TITLES[route.role] || TITLES.home;
 
-export const reducedMotion = () => window.matchMedia?.("(prefers-reduced-motion: reduce)").matches || document.documentElement.dataset.motion === "reduce";
+export const reducedMotion = () => prefersReduced();
 
 export const go = hash => { if (location.hash === hash) window.scrollTo({ top: 0 }); else location.hash = hash; };
 

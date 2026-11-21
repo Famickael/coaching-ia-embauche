@@ -4,6 +4,7 @@
    dans docs/briefs/chatgpt-ressources.md). Rien d'autre à modifier. */
 
 import { CATEGORIES, TYPES } from "./categories.js";
+import { stripAccents, slugify } from "../lib/text.js";
 export { CATEGORIES, TYPES };
 
 const files = import.meta.glob("./resources/*.md", { query: "?raw", import: "default", eager: true });
@@ -24,7 +25,7 @@ function parseFront(raw) {
   return { meta, body: m[2] };
 }
 
-export const slugify = s => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+export { slugify };
 
 /* Blocs : h2, h3, p, ul, ol, quote, callout. Le texte reste brut : la mise en forme en ligne
    (gras, italique, liens) est appliquée au rendu. */
@@ -91,7 +92,7 @@ export const findArticle = slug => ARTICLES.find(a => a.slug === slug);
 export const findCategory = id => CATEGORIES.find(c => c.id === id);
 
 /* Recherche sans accents ni casse. */
-export const norm = s => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+export const norm = stripAccents;
 export function search(q) {
   const t = norm(q).split(/\s+/).filter(Boolean);
   if (!t.length) return ARTICLES;

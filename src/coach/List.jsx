@@ -10,7 +10,7 @@ export const MIN_AGG = 5;
 export function Stat({ n, l, c = T.primary }) {
   return (
     <Card style={{ display: "flex", alignItems: "center", gap: 16 }}>
-      <div style={{ ...TY.num, color: c, whiteSpace: "nowrap" }}>{n}</div>
+      <div style={{ ...TY.num, color: c, whiteSpace: typeof n === "object" ? "normal" : "nowrap" }}>{n}</div>
       <div style={{ ...TY.small, color: T.body }}>{l}</div>
     </Card>
   );
