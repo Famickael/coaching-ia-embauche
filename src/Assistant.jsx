@@ -8,15 +8,9 @@ import { PHRASES } from "./content/legal.js";
    (à l'ouverture de la page, à la fin d'un enregistrement ou d'un échauffement), qu'on peut fermer
    et qui ne revient pas en boucle. Aucune note, aucune déduction émotionnelle.
 
-   Commandes depuis n'importe quel écran (événements de fenêtre) :
-     openAssistant(context)   ouvre le panneau, avec les suggestions du contexte ;
-     nudgeAssistant(reason)   propose la bulle (une fois par raison et par session) ;
-     setRecording(on)         masque le bouton flottant pendant un enregistrement. */
-const EV = "rp-assistant";
-export const openAssistant = context => window.dispatchEvent(new CustomEvent(EV, { detail: { action: "open", context } }));
-export const nudgeAssistant = reason => window.dispatchEvent(new CustomEvent(EV, { detail: { action: "nudge", reason } }));
-export const closeAssistant = () => window.dispatchEvent(new CustomEvent(EV, { detail: { action: "close" } }));
-export const setRecording = on => window.dispatchEvent(new CustomEvent(EV, { detail: { action: "recording", on } }));
+   Commandes depuis n'importe quel écran : src/lib/bus.js (openAssistant, closeAssistant, nudgeAssistant, setRecording). */
+import { ASSISTANT_EVENT as EV } from "./lib/bus.js";
+export { openAssistant, nudgeAssistant, closeAssistant, setRecording } from "./lib/bus.js";
 
 const NUDGE_KEY = "larepet.nudges";
 const readNudges = () => { try { return JSON.parse(sessionStorage.getItem(NUDGE_KEY) || "null") || { off: false, seen: [] }; } catch { return { off: false, seen: [] }; } };

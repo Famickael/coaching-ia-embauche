@@ -5,7 +5,8 @@ import {
 } from "./ui.jsx";
 import Recorder from "./Recorder.jsx";
 import WarmupStage from "./WarmupStage.jsx";
-import AssistantDock, { openAssistant, nudgeAssistant } from "./Assistant.jsx";
+import AssistantDock from "./Assistant.jsx";
+import { openAssistant, nudgeAssistant } from "./lib/bus.js";
 import { ReportBody } from "./Report.jsx";
 import { useStore, getState, TRIAL_CODE, findParcours, updateParcours, takesOf, createTake, updateTake, unshareTake, deleteTake, saveWarmupDebrief, loadWarmupDebrief, loadVideoUrl, requestPersistence } from "./lib/store.js";
 import { PHRASES, SUMMARY, PAGES, LEGAL_VERSION } from "./content/legal.js";

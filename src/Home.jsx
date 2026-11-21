@@ -556,6 +556,7 @@ function Phrase() {
   const reduced = useReducedMotion();
   const sec = useRef(null);
   const [lit, setLit] = useState(reduced ? PHRASE.length + 1 : 0);
+  const litRef = useRef(lit);
   useEffect(() => {
     if (reduced) { setLit(PHRASE.length + 1); return; }
     let raf = 0;
@@ -566,7 +567,8 @@ function Phrase() {
       const r = el.getBoundingClientRect(), range = r.height - (window.innerHeight - hh);
       // la coloration commence quand la phrase arrive au centre et finit avant la fin de la section
       const p = range > 0 ? Math.min(1, Math.max(0, (hh - r.top + window.innerHeight * 0.35) / (range + window.innerHeight * 0.1))) : 1;
-      setLit(Math.round(p * (PHRASE.length + 1)));
+      const n = Math.round(p * (PHRASE.length + 1));
+      if (n !== litRef.current) { litRef.current = n; setLit(n); } // nouveau rendu seulement au changement de mot (PERF-06)
     };
     const on = () => { if (!raf) raf = requestAnimationFrame(upd); };
     upd();

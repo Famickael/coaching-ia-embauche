@@ -7,6 +7,12 @@
     <meta name="theme-color" content="#F8FAFC" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#0E141E" media="(prefers-color-scheme: dark)" />
     <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+    <!-- Polices et masques du logo découverts avant le JavaScript (PERF-03, PERF-07) -->
+    <link rel="preload" href="./fonts/manrope-latin-800-normal.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="./fonts/inter-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="stylesheet" href="./fonts/fonts.css" />
+    <link rel="preload" href="./img/logo/bulles.png" as="image" crossorigin />
+    <link rel="preload" href="./img/logo/lettres.png" as="image" crossorigin />
     <title>La Répét' · S'entraîner à l'entretien d'embauche</title>
     <script>
       /* Options d'accessibilité appliquées avant tout affichage (thème, animations) : pas de flash clair en thème sombre.

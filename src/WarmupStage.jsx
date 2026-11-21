@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
 import { T, FIX, ON, TY, RAD, W, MO, GRAD_NIGHT, ringOf, Btn, Chip, Icon, I, RadioGroup } from "./ui.jsx";
-import { loadSegmenter, startBackground, BG_COLOR } from "./lib/background.js";
 import { PHRASES } from "./content/legal.js";
 import { openStream, mediaError, watchEnded } from "./lib/media.js";
 
@@ -85,6 +84,7 @@ export default function WarmupStage({ setModal }) {
     if (stopBgRef.current) return; // déjà en cours : le mode est lu à chaque image
     setBgState(s => (s === "ready" ? s : "loading"));
     try {
+      const { loadSegmenter, startBackground } = await import("./lib/background.js"); // chargé au premier choix de fond (PERF-02)
       const seg = await loadSegmenter();
       if (modeRef.current === "none" || !videoRef.current || !canvasRef.current || !streamRef.current) { setBgState("ready"); return; }
       stopBgRef.current = startBackground(seg, videoRef.current, canvasRef.current, () => modeRef.current);
@@ -101,7 +101,7 @@ export default function WarmupStage({ setModal }) {
     const dis = bgState === "unavailable" && id !== "none";
     return (
       <Chip key={id} role="radio" check={false} on={bg === id} disabled={dis} onClick={() => applyBg(id)}>
-        {id === "color" && <span aria-hidden style={{ width: 12, height: 12, borderRadius: 2, background: BG_COLOR, border: `1px solid ${T.lineStrong}` }} />}
+        {id === "color" && <span aria-hidden style={{ width: 12, height: 12, borderRadius: 2, background: FIX.studio, border: `1px solid ${T.lineStrong}` }} />}
         {label}
       </Chip>
     );

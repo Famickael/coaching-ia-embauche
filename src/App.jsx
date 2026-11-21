@@ -1,4 +1,4 @@
-import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
+import React, { Suspense, lazy, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useFocusOnChange, focusMainHeading } from "./lib/hooks.js";
 import { flushSync, createPortal } from "react-dom";
 import { T, RAD, SH, GAP, W, Z, TY, PAD, HEADER_H, PageHero, BrandLoader, RepetLogo, Tag, Btn, Bare, IconBtn, Link, Card, Field, Input, Txt, Icon, I, Notice, Modal, GStyle, ScrollProgress, lockScroll } from "./ui.jsx";
@@ -6,16 +6,17 @@ import { dismissLoader } from "./Loader.jsx";
 import LegalPage, { LegalModal } from "./Legal.jsx";
 import { PAGES, PHRASES } from "./content/legal.js";
 import Home from "./Home.jsx";
-import Solutions from "./Solutions.jsx";
-import About from "./About.jsx";
-import Resources from "./Resources.jsx";
-import Demo from "./Demo.jsx";
-import Research from "./Research.jsx";
-import { CATEGORIES } from "./content/resources.js";
-import Beneficiary from "./Beneficiary.jsx";
-import Counselor from "./Counselor.jsx";
+/* Pages chargées à la demande (PERF-02) : l'accueil ne télécharge ni les espaces, ni les articles, ni MediaPipe. */
+const Solutions = lazy(() => import("./Solutions.jsx"));
+const About = lazy(() => import("./About.jsx"));
+const Resources = lazy(() => import("./Resources.jsx"));
+const Demo = lazy(() => import("./Demo.jsx"));
+const Research = lazy(() => import("./Research.jsx"));
+import { CATEGORIES } from "./content/categories.js";
+const Beneficiary = lazy(() => import("./Beneficiary.jsx"));
+const Counselor = lazy(() => import("./Counselor.jsx"));
 import A11yLayer, { openA11y } from "./A11y.jsx";
-import { closeAssistant } from "./Assistant.jsx";
+import { closeAssistant } from "./lib/bus.js";
 import { useStore, getState, setLastSpace, setCounselor, logoutCounselor, findParcours, withdrawConsent, getStorageError, TRIAL_CODE, TRIAL_LOGIN } from "./lib/store.js";
 
 /* La Répét' : entraînement à l'entretien d'embauche, avec un assistant IA et votre coach.
@@ -142,6 +143,7 @@ export default function App() {
       {/* Contenu et pied de page changent ensemble (un seul groupe de transition) : le pied ne passe jamais sur l'ancienne page */}
       <div key={enter} className={`rp-view${leaving ? " rp-leave" : ""}${enter ? " rp-enter" : ""}`} style={{ flex: 1, display: "flex", flexDirection: "column" }}>
         <div style={{ flex: 1 }}>
+        <Suspense fallback={<div style={{ minHeight: "60vh", display: "grid", placeItems: "center" }}><BrandLoader label="Chargement…" /></div>}>
         {route.role === "home" && <Home go={go} openSpace={openSpace} />}
         {route.role === "notfound" && <NotFound />}
         {route.role === "research" && <Research go={go} openSpace={openSpace} />}
@@ -153,6 +155,7 @@ export default function App() {
         {(route.role === "espace" || (route.role === "coach" && !s.counselor)) && <Espace />}
         {route.role === "benef" && <Beneficiary key={route.code || "nocode"} initialCode={route.code} setModal={setModal} onCode={onCode} />}
         {route.role === "coach" && s.counselor && <Counselor />}
+        </Suspense>
         </div>
         <Footer />
       </div>

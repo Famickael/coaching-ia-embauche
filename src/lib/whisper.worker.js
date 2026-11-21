@@ -1,6 +1,11 @@
 /* Transcription dans le navigateur (Whisper, ONNX, via transformers.js).
    Le son ne quitte pas l'appareil. Le modèle est téléchargé une fois puis mis en cache par le navigateur. */
 import { pipeline, env } from "@huggingface/transformers";
+/* Moteur ONNX Runtime servi par le site lui-même (SEC-04, PERF-01) : le fichier .wasm, déjà publié avec le site,
+   est enfin celui qui est chargé (transformers.js va sinon le chercher sur cdn.jsdelivr.net). Même version que
+   celle fixée par transformers.js 3.8.1 ; le module .mjs est déjà inclus dans le paquet du worker. */
+import ortWasm from "../../node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.jsep.wasm?url";
+env.backends.onnx.wasm.wasmPaths = { wasm: new URL(ortWasm, self.location.href).href };
 
 const MODEL = import.meta.env.VITE_WHISPER_MODEL || "onnx-community/whisper-base";
 /* Révision du modèle sur Hugging Face : « main » par défaut (dernière version publiée).

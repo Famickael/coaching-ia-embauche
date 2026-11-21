@@ -14,6 +14,9 @@ const bad = [];
 for (const f of walk(OUT).filter(f => /\.(js|css|html)$/.test(f))) {
   const t = readFileSync(f, "utf8");
   for (const [re, why] of [[/fonts\.(googleapis|gstatic)\.com/, "police chargée chez Google"], [/@latest\//, "version « @latest »"], [/haut risque/i, "mention « haut risque »"]]) if (re.test(t)) bad.push(`${f} : ${why}`);
+  /* SEC-04 : aucun code chargé depuis jsDelivr. Seule exception : la valeur par défaut de transformers.js, écrasée
+     dans le worker par wasmPaths (moteur ONNX servi par le site). */
+  if (/cdn\.jsdelivr\.net/.test(t) && !(/whisper\.worker/.test(f) && /wasmPaths=\{wasm:/.test(t.replace(/\s/g, "")))) bad.push(`${f} : code chargé depuis jsDelivr`);
 }
 if (bad.length) { console.error("Conformité du site construit :\n" + bad.join("\n")); process.exit(1); }
 const srv = spawn("node", ["node_modules/vite/bin/vite.js", "preview", "--outDir", OUT, "--port", String(PORT), "--strictPort"], { stdio: "inherit" });

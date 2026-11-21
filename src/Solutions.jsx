@@ -79,7 +79,7 @@ export default function Solutions({ go, openSpace, section }) {
 const HeroAside = () => (
   <div className="rp-hide-m" style={{ position: "relative" }}>
     <div style={{ borderRadius: RAD.xl, overflow: "hidden", boxShadow: SH.glow, aspectRatio: "3 / 2", background: T.primaryBg }}>
-      <img src={img("solutions-equipe.webp")} alt="Une coach et une personne accompagnée échangent autour d'une table ronde." width={1200} height={800} style={{ display: "block", width: "100%", height: "100%", objectFit: "cover" }} />
+      <img src={img("solutions-equipe.webp")} alt="Une coach et une personne accompagnée échangent autour d'une table ronde." width={1200} height={800} loading="lazy" decoding="async" style={{ display: "block", width: "100%", height: "100%", objectFit: "cover" }} />
     </div>
     <div style={{ position: "absolute", left: -24, bottom: -24, background: T.surface, borderRadius: RAD.md, padding: "12px 16px", boxShadow: SH.glow, display: "flex", alignItems: "center", gap: 12 }}>
       <IconTile icon={I.shield} />

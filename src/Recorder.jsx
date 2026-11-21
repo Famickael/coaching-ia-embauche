@@ -1,13 +1,19 @@
 import React, { useEffect, useRef, useState } from "react";
 import { T, FIX, ON, TY, RAD, W, GAP, GRAD_NIGHT, Btn, Back, Icon, I, BrandLoader, Notice } from "./ui.jsx";
-import { startGaze } from "./lib/gaze.js";
 import { PHRASES } from "./content/legal.js";
-import { setRecording, nudgeAssistant } from "./Assistant.jsx";
+import { setRecording, nudgeAssistant } from "./lib/bus.js";
 import { useLeaveGuard } from "./lib/hooks.js";
 import { openStream, mediaError, watchEnded } from "./lib/media.js";
 import { freeSpace } from "./lib/store.js";
 
 const MAX_SEC = 180;
+
+/* Suivi du regard chargé au premier enregistrement vidéo (PERF-02) : MediaPipe n'est téléchargé que s'il sert. */
+function lazyGaze(video, t0) {
+  const g = { inner: null, stopped: false, stop() { this.stopped = true; const r = this.inner ? this.inner.stop() : null; this.inner = null; return r; } };
+  import("./lib/gaze.js").then(m => { if (!g.stopped) g.inner = m.startGaze(video, t0); }).catch(e => console.warn("[regard] suivi indisponible", e));
+  return g;
+}
 
 function pickMime(audioOnly) {
   const list = audioOnly
@@ -94,7 +100,7 @@ export default function Recorder({ question, onDone, onCancel, trackGaze = true,
     recRef.current = rec;
     t0.current = performance.now();
     setSec(0);
-    if (trackGaze && !audioOnly && liveRef.current) gazeRef.current = startGaze(liveRef.current, t0.current);
+    if (trackGaze && !audioOnly && liveRef.current) gazeRef.current = lazyGaze(liveRef.current, t0.current);
     setPhase("recording");
     setRecording(true);
   }
