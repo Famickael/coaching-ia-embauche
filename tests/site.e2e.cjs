@@ -98,7 +98,7 @@ async function run(b, vw, vh, opts = {}) {
   // Menu mobile
   if (mobile) {
     await visit("#/", "menu");
-    await p.getByRole("button", { name: "Mon espace" }).first().waitFor();
+    await p.getByRole("button", { name: "Mon compte" }).first().waitFor();
     const burger = p.getByRole("button", { name: "Ouvrir le menu" });
     await burger.click();
     const dlg = p.getByRole("dialog", { name: "Menu" });
@@ -302,31 +302,128 @@ async function run(b, vw, vh, opts = {}) {
     await p.keyboard.press("Escape");
   }
 
-  // Rester connecté : après connexion, les pages publiques gardent « Mes paramètres » et l'accès à l'espace
+  // « Mon compte » déconnecté : mène à la page « Mon espace »
+  await visit("#/ressources");
+  await p.getByRole("button", { name: "Mon compte" }).first().click(); await p.waitForTimeout(900);
+  check(p.url().endsWith("#/espace"), `[${tag}] « Mon compte » déconnecté ne mène pas à « Mon espace » (${p.url()})`);
+  // Rester connecté : après connexion, les pages publiques gardent « Mon compte », qui ouvre un panneau latéral
   await visit("#/espace");
   await p.getByRole("button", { name: "Se connecter" }).click();
   await p.waitForFunction(() => location.hash === "#/coach", null, { timeout: 5000 }).catch(() => {}); await p.waitForTimeout(1000);
   check(((await p.getByRole("heading", { level: 1 }).first().textContent()) || "").startsWith("Bienvenue"), `[${tag}] connexion coach : « Bienvenue » attendu`);
   await shot("24-espace-coach");
   await visit("#/ressources");
-  const settings = p.getByRole("button", { name: "Mes paramètres" });
-  check(await settings.count() === 1, `[${tag}] session : « Mes paramètres » absent sur une page publique`);
-  check(await p.getByRole("button", { name: "Mon espace", exact: true }).count() === 0, `[${tag}] session : « Mon espace » ne doit pas remplacer « Mes paramètres »`);
-  await settings.click();
-  await p.getByRole("menuitem", { name: "Retour à mon espace" }).click(); await p.waitForTimeout(900);
+  const account = p.getByRole("button", { name: "Mon compte" });
+  check(await account.count() === 1, `[${tag}] session : « Mon compte » absent sur une page publique`);
+  await account.click();
+  const acc = p.getByRole("dialog", { name: "Mon compte" });
+  await acc.waitFor();
+  check(await acc.getByText(/Sophie M\. · Espace coach/).count() === 1, `[${tag}] panneau « Mon compte » : en-tête du compte absent`);
+  const st = await p.evaluate(() => ({ lock: getComputedStyle(document.documentElement).overflowY === "hidden", inert: !!document.querySelector(".rp-view")?.inert, inPanel: !!document.activeElement?.closest("#rp-account") }));
+  check(st.lock && st.inert && st.inPanel, `[${tag}] panneau « Mon compte » : défilement, fond inerte ou focus incorrects ${JSON.stringify(st)}`);
+  for (let i = 0; i < 12; i++) await p.keyboard.press("Tab");
+  check(await p.evaluate(() => !!document.activeElement?.closest("#rp-account")), `[${tag}] panneau « Mon compte » : le focus sort du panneau`);
+  await shot("25-mon-compte", false);
+  await p.keyboard.press("Escape");
+  check(await acc.count() === 0, `[${tag}] panneau « Mon compte » : Échap ne ferme pas`);
+  check(await p.evaluate(() => document.activeElement?.textContent.includes("Mon compte")), `[${tag}] panneau « Mon compte » : focus non rendu au bouton`);
+  await account.click();
+  await acc.getByRole("button", { name: "Retour à mon espace" }).click(); await p.waitForTimeout(900);
   check(p.url().endsWith("#/coach"), `[${tag}] session : « Retour à mon espace » ne mène pas à l'espace (${p.url()})`);
   await visit("#/vos-donnees/coachs");
-  check(await p.getByRole("button", { name: "Mes paramètres" }).count() === 1, `[${tag}] « Vos données » depuis l'espace : en-tête d'espace perdu`);
-  await p.getByRole("button", { name: "Mes paramètres" }).click();
-  await p.getByRole("menuitem", { name: "Se déconnecter" }).click(); await p.waitForTimeout(900);
-  check(await p.getByRole("button", { name: "Mes paramètres" }).count() === 0, `[${tag}] « Se déconnecter » ne met pas fin à la session`);
+  check(await p.getByRole("button", { name: "Mon compte" }).count() === 1, `[${tag}] « Vos données » depuis l'espace : en-tête d'espace perdu`);
+  await p.getByRole("button", { name: "Mon compte" }).click();
+  await p.getByRole("dialog", { name: "Mon compte" }).getByRole("button", { name: "Se déconnecter" }).click(); await p.waitForTimeout(900);
+  check(await p.getByRole("dialog", { name: "Mon compte" }).count() === 0 && p.url().endsWith("#/"), `[${tag}] « Se déconnecter » ne met pas fin à la session`);
+  await p.getByRole("button", { name: "Mon compte" }).first().click(); await p.waitForTimeout(900);
+  check(p.url().endsWith("#/espace"), `[${tag}] après déconnexion, « Mon compte » doit mener à « Mon espace »`);
 
   errors.forEach(e => problems.push(`[${tag}] ${e}`));
   await ctx.close();
 }
 
+/* Balayage responsive : chaque largeur (et 320 × 568, 844 × 390 en paysage), pages publiques et espaces,
+   déconnecté puis connecté (« Mon compte »), menu mobile ouvert avec ses sous-menus.
+   Échoue en cas de débordement horizontal, de chevauchement ou de sortie d'écran dans l'en-tête, de menu
+   défaillant (fermeture invisible, page qui défile ou cliquable derrière, dernier lien inatteignable) ou d'erreur. */
+const WIDTHS = [320, 360, 375, 390, 414, 430, 600, 768, 820, 1024, 1280];
+const SWEEP_PAGES = ["#/", "#/a-propos", "#/solutions", "#/ressources", "#/ressources/se-presenter-en-deux-minutes", "#/demo", "#/espace", "#/vos-donnees"];
+async function sweep(b) {
+  const views = [...WIDTHS.map(w => [w, w < 600 ? 800 : 900]), [320, 568], [844, 390]];
+  for (const [vw, vh] of views) for (const logged of [false, true]) {
+    const tag = `balayage ${vw}x${vh}${logged ? " connecté" : ""}`;
+    const mobile = vw < 760;
+    const ctx = await b.newContext({ viewport: { width: vw, height: vh }, isMobile: mobile, hasTouch: mobile, reducedMotion: "reduce" });
+    const p = await ctx.newPage();
+    const errors = [];
+    p.on("pageerror", e => errors.push(e.message));
+    await p.goto(BASE + "#/"); await p.evaluate(() => localStorage.clear());
+    if (logged) { await p.goto(BASE + "#/espace"); await p.getByRole("button", { name: "Se connecter" }).click(); await p.waitForFunction(() => location.hash === "#/coach", null, { timeout: 5000 }).catch(() => {}); }
+    for (const h of [...SWEEP_PAGES, logged ? "#/coach" : "#/s/REPETE"]) {
+      await p.goto(BASE + h); await p.waitForTimeout(250);
+      const r = await p.evaluate(() => {
+        const vw = document.documentElement.clientWidth, out = [];
+        if (document.documentElement.scrollWidth > vw + 1) out.push(`débordement horizontal ${document.documentElement.scrollWidth}px`);
+        const nav = document.querySelector("header .rp-nav");
+        const els = [...nav.querySelectorAll("a[aria-label], button, .navlink")].map(e => [e.getAttribute("aria-label") || e.textContent.trim(), e.getBoundingClientRect()]).filter(([, b]) => b.width > 0);
+        for (const [n, b] of els) if (b.left < -1 || b.right > vw + 1) out.push(`en-tête : « ${n} » hors écran`);
+        for (let i = 0; i < els.length; i++) for (let j = i + 1; j < els.length; j++) {
+          const [n1, a] = els[i], [n2, c] = els[j];
+          if (a.left < c.right - 1 && c.left < a.right - 1 && a.top < c.bottom - 1 && c.top < a.bottom - 1) out.push(`en-tête : « ${n1} » chevauche « ${n2} »`);
+        }
+        return out;
+      });
+      r.forEach(m => problems.push(`[${tag}] ${h} : ${m}`));
+      const burger = p.getByRole("button", { name: "Ouvrir le menu" });
+      const hasBurger = await burger.count() && await burger.isVisible();
+      if (vw < 1024 && h === "#/ressources" && !hasBurger) problems.push(`[${tag}] ${h} : bouton du menu absent`);
+      if (vw >= 1024 && hasBurger) problems.push(`[${tag}] ${h} : bouton du menu visible sur grand écran`);
+      if (hasBurger && (h === "#/" || h === "#/ressources")) {
+        await burger.click();
+        const dlg = p.getByRole("dialog", { name: "Menu" });
+        await dlg.waitFor();
+        const subs = dlg.getByRole("button", { name: /^Sous-menu/ });
+        for (let i = 0; i < await subs.count(); i++) await subs.nth(i).click();
+        const m = await p.evaluate(() => {
+          const menu = document.getElementById("rs-menu");
+          const close = document.querySelector("header [aria-label='Fermer le menu']").getBoundingClientRect();
+          menu.scrollTop = menu.scrollHeight;
+          const last = [...menu.querySelectorAll("a")].pop().getBoundingClientRect();
+          const mb = menu.getBoundingClientRect();
+          const under = document.elementFromPoint(innerWidth / 2, Math.min(innerHeight - 2, mb.bottom - 2));
+          return { closeOk: close.top >= 0 && close.bottom <= innerHeight && close.right <= innerWidth, locked: getComputedStyle(document.documentElement).overflowY === "hidden",
+            lastOk: last.bottom <= innerHeight + 1 && last.top >= mb.top, inert: !!document.querySelector(".rp-view")?.inert, under: !!under && (menu.contains(under) || !!under.closest("header")), sw: menu.scrollWidth <= menu.clientWidth + 1 };
+        });
+        // molette au-dessus de l'en-tête : la page ne doit pas défiler derrière le menu
+        const y0 = await p.evaluate(() => scrollY);
+        await p.mouse.move(Math.round(vw / 2), 20); await p.mouse.wheel(0, 600); await p.waitForTimeout(150);
+        if (await p.evaluate(() => scrollY) !== y0) m.locked = false;
+        if (!m.closeOk) problems.push(`[${tag}] ${h} menu : bouton de fermeture hors écran`);
+        if (!m.locked) problems.push(`[${tag}] ${h} menu : la page défile derrière le menu`);
+        if (!m.lastOk) problems.push(`[${tag}] ${h} menu : dernier lien inatteignable`);
+        if (!m.inert || !m.under) problems.push(`[${tag}] ${h} menu : la page reste cliquable derrière le panneau`);
+        if (!m.sw) problems.push(`[${tag}] ${h} menu : débordement horizontal du panneau`);
+        await p.keyboard.press("Escape");
+        if (await dlg.count()) problems.push(`[${tag}] ${h} menu : Échap ne ferme pas`);
+        if (await p.evaluate(() => document.documentElement.classList.contains("rp-lock"))) problems.push(`[${tag}] ${h} menu : défilement toujours bloqué après fermeture`);
+      }
+      if (logged && h === "#/ressources") {
+        await p.getByRole("button", { name: "Mon compte" }).click();
+        await p.locator("#rp-account").waitFor();
+        const r = await p.evaluate(() => { const b = document.getElementById("rp-account").getBoundingClientRect(); const items = [...document.querySelectorAll("#rp-account nav button")].pop().getBoundingClientRect(); return { b: [b.left, b.right, b.bottom].map(Math.round), lastOk: items.bottom <= innerHeight + 1 }; });
+        if (r.b[0] < 0 || r.b[1] > vw + 1 || r.b[2] > vh + 1) problems.push(`[${tag}] panneau « Mon compte » hors écran ${JSON.stringify(r.b)}`);
+        if (!r.lastOk) problems.push(`[${tag}] panneau « Mon compte » : dernière action inatteignable sans défiler`);
+        await p.keyboard.press("Escape");
+      }
+    }
+    errors.forEach(e => problems.push(`[${tag}] erreur ${e}`));
+    await ctx.close();
+  }
+}
+
 (async () => {
   const b = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || undefined });
+  await sweep(b);
   await run(b, 1280, 900);
   await run(b, 390, 844);
   await run(b, 1280, 900, { reduced: true });

@@ -1,8 +1,9 @@
 /* Configuration de l'organisme qui déploie La Répét' : SEUL fichier à compléter.
-   À COMPLÉTER PAR L'ORGANISME : chaque valeur null ci-dessous. Rien ne s'affiche « à compléter » à l'écran :
-   tant qu'une valeur manque, les pages « Vos données », « Mentions légales », « Conditions » et « Accessibilité »
-   utilisent une formulation neutre et vraie (« votre organisme d'accompagnement », « les coordonnées du délégué
-   à la protection des données vous sont communiquées par votre coach »). Aucune valeur n'est inventée ici.
+   À REMPLACER PAR L'ORGANISME : toutes les valeurs ci-dessous sont des EXEMPLES explicites, acceptés par le
+   propriétaire pour la présentation (mention « exemple », « à remplacer » ou « à valider » visible à l'écran).
+   Les adresses électroniques utilisent le domaine réservé exemple.fr ou example.org, jamais un domaine réel.
+   Avant toute mise en service, chaque valeur est remplacée par la valeur réelle validée par le DPO.
+   Une valeur remise à null retrouve la formulation neutre et vraie (« votre organisme d'accompagnement »…).
    Voir docs/conformite.md (sections 2.1, 2.6, 2.8 et 5) pour ce que chaque champ doit contenir. */
 
 /* Les modèles d'analyse sont-ils servis par l'organisme ? (VITE_MODELS_BASE_URL, VITE_MEDIAPIPE_WASM, VITE_FACE_MODEL) */
@@ -10,36 +11,36 @@ export const SELF_HOSTED_MODELS = !!(import.meta.env?.VITE_MODELS_BASE_URL && im
 
 export const ORG = {
   /* Responsable de traitement (RGPD, art. 13(1)(a)) */
-  name: null,            // nom ou raison sociale
-  legalForm: null,       // forme juridique
-  address: null,         // adresse du siège
-  registration: null,    // SIREN, SIRET ou RNA, s'il existe
-  email: null,           // courriel de contact
-  phone: null,           // téléphone de contact
+  name: "Organisme d'accompagnement (nom à remplacer)",            // nom ou raison sociale
+  legalForm: "association loi 1901 (forme juridique d'exemple)",       // forme juridique
+  address: "12 rue de l'Exemple, 75000 Paris (adresse d'exemple)",         // adresse du siège
+  registration: "SIRET 000 000 000 00000 (numéro d'exemple)",    // SIREN, SIRET ou RNA, s'il existe
+  email: "contact@exemple.fr",           // courriel de contact
+  phone: "01 00 00 00 00 (numéro d'exemple)",           // téléphone de contact
   /* Délégué à la protection des données (RGPD, art. 13(1)(b)) */
-  dpo: null,             // nom ou service
-  dpoEmail: null,        // courriel du DPO
-  dpoAddress: null,      // adresse postale pour exercer ses droits
+  dpo: "service protection des données (nom à remplacer)",             // nom ou service
+  dpoEmail: "dpo@exemple.fr",        // courriel du DPO
+  dpoAddress: "12 rue de l'Exemple, 75000 Paris (adresse d'exemple)",      // adresse postale pour exercer ses droits
   /* Mentions légales (LCEN, art. 1-1) */
-  publisher: null,       // responsable de la publication (prénom et nom)
+  publisher: "la direction de l'organisme (nom à remplacer)",       // responsable de la publication (prénom et nom)
   /* Hébergeur du site (à défaut : l'hébergeur actuel, HOST_DEFAULT) */
-  host: null,            // nom, adresse et téléphone de l'hébergeur de production
+  host: "hébergeur à désigner par l'organisme, hébergement en France (exemple : nom, adresse et téléphone du prestataire)",            // nom, adresse et téléphone de l'hébergeur de production
   /* Sous-traitants éventuels, mode production */
-  llmProvider: null,     // prestataire du modèle de langage et pays, si VITE_LLM_ENDPOINT est utilisé
-  sttProvider: null,     // prestataire de la transcription serveur et pays, si VITE_STT_ENDPOINT est utilisé
+  llmProvider: "prestataire de modèle de langage hébergé en France, à désigner (exemple)",     // prestataire du modèle de langage et pays, si VITE_LLM_ENDPOINT est utilisé
+  sttProvider: "prestataire de transcription hébergé en France, à désigner (exemple)",     // prestataire de la transcription serveur et pays, si VITE_STT_ENDPOINT est utilisé
   /* Durées de conservation validées par le DPO (proposition dans docs/conformite.md, 2.8) */
-  retention: null,       // texte ou tableau des durées validées
-  demoRetention: null,   // durée de conservation des demandes de démonstration
+  retention: "vidéos et réponses gardées sur votre appareil jusqu'à ce que vous les supprimiez ; réponses envoyées au coach et rapports : 6 mois après la fin de l'accompagnement ; compte coach : 1 an après le dernier accès (durées types, à valider par le délégué à la protection des données)",       // texte ou tableau des durées validées
+  demoRetention: "3 mois après le rendez-vous (durée type, à valider)",   // durée de conservation des demandes de démonstration
   /* Base légale retenue par le DPO (consentement ou mission d'intérêt public, écart R6) */
-  legalBasis: null,
+  legalBasis: "Votre accord (consentement, article 6.1.a du RGPD). Base légale type, à valider par le délégué à la protection des données.",
   /* Accessibilité : contact pour signaler un problème, schéma pluriannuel et plan annuel */
-  a11yContact: null,
-  a11yPlanUrl: null,
+  a11yContact: "accessibilite@exemple.fr",
+  a11yPlanUrl: "Schéma pluriannuel et plan d'actions de l'année à publier par l'organisme (adresse d'exemple : https://www.example.org/accessibilite).",
   /* Versions des textes, enregistrées avec l'accord de la personne */
   textsVersion: "2026-11-20",
 };
 
-/* Repère pour la documentation et les tests : jamais affiché à l'écran. */
+/* Repère pour la documentation et les tests : jamais affiché à l'écran (les valeurs d'exemple ci-dessus sont à remplacer). */
 export const TODO = "À compléter par l'organisme";
 export const missing = Object.entries(ORG).filter(([, v]) => v == null).map(([k]) => k);
 

@@ -18,12 +18,15 @@ require("fs").mkdirSync(SC, { recursive: true });
     if (w > vw + 1) overflow.push(`${n} : ${w}px pour ${vw}px`);
     await p.screenshot({ path: `${SC}/${n}.png`, fullPage: true });
   };
-  const click = t => p.getByRole("button", { name: t }).first().click();
+  const click = async t => {
+    try { await p.getByRole("button", { name: t }).first().click({ timeout: 15000 }); }
+    catch (e) { await p.screenshot({ path: `${SC}/echec.png`, fullPage: true }).catch(() => {}); throw new Error(`bouton « ${t} » : ${e.message.split("\n")[0]}`); }
+  };
 
   await p.goto("http://localhost:5098/"); await shot("01-accueil");
   await p.evaluate(() => window.scrollTo(0, document.body.scrollHeight / 3)); await p.waitForTimeout(900); await shot("01b-accueil-defilement");
   await p.goto("http://localhost:5098/#/fonctionnement"); await p.waitForTimeout(400); await shot("01c-fonctionnement");
-  await p.goto("http://localhost:5098/#/"); await click("Mon espace"); await shot("01d-mon-espace");
+  await p.goto("http://localhost:5098/#/"); await click("Mon compte"); await shot("01d-mon-espace");
   await shot("01e-connexion-coach"); await click("Se connecter");
   await click("Créer un parcours");
   await p.getByPlaceholder("Prénom et initiale").fill("Alex D."); await p.getByPlaceholder(/agent d'accueil/).fill("agent d'accueil");
@@ -127,16 +130,37 @@ require("fs").mkdirSync(SC, { recursive: true });
   await p.locator("[title*='Exemples concrets']").first().click().catch(() => {});
   await click("Envoyer à mon coach");
   await p.locator("textarea").fill("Je parle peut-être trop vite ?"); await click("Envoyer à mon coach"); await shot("08-envoye");
-  await click("Mes paramètres"); await p.getByRole("menuitem", { name: "Se déconnecter" }).waitFor(); await shot("08b-mes-parametres");
-  await p.getByRole("menuitem", { name: "Se déconnecter" }).click(); await click("Mon espace"); await click("Se connecter"); await p.waitForTimeout(300); await shot("09-liste-conseiller");
+  await click("Mon compte"); await p.getByRole("dialog", { name: "Mon compte" }).getByRole("button", { name: "Se déconnecter" }).waitFor(); await shot("08b-mon-compte");
+  await p.getByRole("dialog", { name: "Mon compte" }).getByRole("button", { name: "Se déconnecter" }).click(); await click("Mon compte"); await click("Se connecter"); await p.waitForTimeout(300); await shot("09-liste-conseiller");
   await click("Relire"); await click("Relire et annoter"); await p.waitForTimeout(800);
   await p.getByPlaceholder(/Mettez la vidéo en pause/).fill("Belle entrée en matière."); await click("Ajouter");
   await p.locator("textarea").fill("Alex, ta présentation est claire. On en parle jeudi.");
   await p.getByPlaceholder("Votre remarque sur ce repère (facultatif)").first().fill("D'accord, garde ce rythme.");
   await shot("10-relecture-conseiller");
+  // Assistant de rédaction du rapport : ouvrir, insérer une proposition dans le mot d'introduction et en note horodatée
+  await p.getByRole("button", { name: "Ouvrir l'assistant de rédaction du rapport" }).click();
+  const coachAsst = p.getByRole("dialog", { name: "Assistant de rédaction du rapport" });
+  await coachAsst.waitFor();
+  const sugg = coachAsst.locator(".rp-coach-sugg").first();
+  await sugg.waitFor();
+  const suggText = (await sugg.locator("p").textContent()).trim();
+  if (/score|\/ ?20|stress|émotion/i.test(suggText)) throw new Error("proposition de l'assistant coach non conforme : " + suggText);
+  await sugg.getByRole("button", { name: "Dans l'introduction" }).click();
+  await coachAsst.getByText(/Ajouté dans le mot d'introduction/).waitFor();
+  if (!(await p.locator("#review-intro").inputValue()).includes(suggText)) throw new Error("la proposition n'apparaît pas dans le mot d'introduction");
+  await coachAsst.getByRole("radio", { name: "Reformuler" }).click();
+  await coachAsst.getByLabel("Votre remarque à reformuler").fill("Tu parles trop vite ! Il faut que tu ralentisses.");
+  await coachAsst.getByRole("button", { name: "Reformuler", exact: true }).click();
+  await coachAsst.getByText("Vous parlez à un rythme rapide. Vous pouvez ralentir.").waitFor();
+  await coachAsst.locator(".rp-coach-sugg").first().getByRole("button", { name: /En note à/ }).click();
+  await shot("10b-assistant-coach");
+  await p.keyboard.press("Escape");
+  if (await coachAsst.isVisible()) throw new Error("Échap ne ferme pas l'assistant de rédaction");
   await click("Envoyer le rapport"); await shot("11-rapport-envoye");
   await p.goto(`http://localhost:5098/#/s/${code}`); await p.waitForTimeout(500); await shot("12-espace-benef");
   await p.getByRole("button", { name: "Ouvrir", exact: true }).first().click(); await p.getByText("Lire mon retour").first().click(); await p.waitForTimeout(500); await shot("13-rapport-final");
+  if (!(await p.locator("main").innerText()).includes(suggText.slice(0, 40))) throw new Error("la proposition insérée n'apparaît pas dans le rapport final");
+  if (!(await p.locator("main").innerText()).includes("Vous pouvez ralentir.")) throw new Error("la note reformulée n'apparaît pas dans le rapport final");
   // Entraînement complet : 7 questions dans l'ordre réel, contextualisées par le métier, recruteur oral, récapitulatif sans score
   await p.goto(`http://localhost:5098/?complet=1#/s/${code}`); await p.waitForTimeout(800);
   await click("Commencer l'entraînement");

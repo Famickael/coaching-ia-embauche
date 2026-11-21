@@ -94,7 +94,7 @@ export default function Research({ go, openSpace }) {
         </Section>
 
         <Section eyebrow="Sources" title="Pour aller plus loin">
-          <ol style={{ ...TY.body, color: T.body, margin: 0, paddingLeft: 24, display: "grid", gap: 8, maxWidth: W.read }}>
+          <ol className="rp-sources" style={{ ...TY.body, color: T.body, margin: 0, paddingLeft: 24, display: "grid", gap: 8, maxWidth: W.read }}>
             {SOURCES.map(([t, u]) => <li key={u}><a href={u} target="_blank" rel="noopener" className="rp-link" style={{ ...TY.link, color: T.primary, overflowWrap: "anywhere" }}>{t}</a> <span className="rp-sr">(nouvel onglet)</span></li>)}
           </ol>
         </Section>

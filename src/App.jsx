@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
-import { flushSync } from "react-dom";
-import { T, RAD, SH, GAP, W, Z, TY, PAD, HEADER_H, PageHero, BrandLoader, RepetLogo, Tag, Btn, Bare, IconBtn, Link, Card, Field, Input, Txt, Icon, I, Notice, Modal, GStyle, ScrollProgress } from "./ui.jsx";
+import { flushSync, createPortal } from "react-dom";
+import { T, RAD, SH, GAP, W, Z, TY, PAD, HEADER_H, PageHero, BrandLoader, RepetLogo, Tag, Btn, Bare, IconBtn, Link, Card, Field, Input, Txt, Icon, I, Notice, Modal, GStyle, ScrollProgress, lockScroll } from "./ui.jsx";
 import { dismissLoader } from "./Loader.jsx";
 import LegalPage, { LegalModal } from "./Legal.jsx";
 import { PAGES, PHRASES } from "./content/legal.js";
@@ -14,6 +14,7 @@ import { CATEGORIES } from "./content/resources.js";
 import Beneficiary from "./Beneficiary.jsx";
 import Counselor from "./Counselor.jsx";
 import A11yLayer, { openA11y } from "./A11y.jsx";
+import { closeAssistant } from "./Assistant.jsx";
 import { useStore, getState, setLastSpace, setCounselor, logoutCounselor, findParcours, withdrawConsent, clearWarmupDebrief, TRIAL_CODE, TRIAL_LOGIN } from "./lib/store.js";
 
 /* La Répét' : entraînement à l'entretien d'embauche, avec un assistant IA et votre coach.
@@ -95,7 +96,9 @@ export default function App() {
       if (inPage) { setRoute(next); if (!next.section) window.scrollTo({ top: 0, behavior: reducedMotion() ? "auto" : "smooth" }); return; }
       const apply = () => { flushSync(() => setRoute(next)); window.scrollTo({ top: 0 }); };
       if (reducedMotion()) return apply();
-      if (document.startViewTransition) { try { document.startViewTransition(apply); return; } catch { /* repli */ } }
+      if (document.startViewTransition) {
+        try { const vt = document.startViewTransition(apply); [vt.ready, vt.finished, vt.updateCallbackDone].forEach(pr => pr?.catch(() => {})); return; } catch { /* repli */ }
+      }
       setLeaving(true);
       setTimeout(() => { apply(); setLeaving(false); setEnter(k => k + 1); }, 280);
     };
@@ -132,7 +135,7 @@ export default function App() {
       </div>
       <LegalModal modal={modal} close={() => setModal(null)} />
       <A11yLayer />
-      <ToTop lift={route.role === "benef" && !!route.code} />
+      <ToTop lift={route.role === "benef" || (route.role === "coach" && !!s.counselor)} />
     </div>
   );
 }
@@ -152,7 +155,7 @@ const DATA_LINKS = [["#/vos-donnees", "Vos données"], ["#/vos-donnees/video", "
 
 function Nav({ route, s }) {
   /* Session : coach connecté, ou dernier espace bénéficiaire ouvert, tant qu'on ne s'est pas déconnecté.
-     Elle ne dépend pas de la route : sur toutes les pages, l'en-tête garde « Mes paramètres ». */
+     Elle ne dépend pas de la route : sur toutes les pages, l'en-tête garde « Mon compte ». */
   const ls = s.lastSpace;
   const session = ls?.role === "coach" && s.counselor ? { role: "coach" } : ls?.role === "benef" && s.parcours[ls.code] ? { role: "benef", code: ls.code } : null;
   const here = (route.role === "benef" && route.code && s.parcours[route.code]) ? { role: "benef", code: route.code } : (route.role === "coach" && s.counselor) ? { role: "coach" } : null;
@@ -165,8 +168,11 @@ function Nav({ route, s }) {
   useEffect(() => { setMenu(false); }, [route]);
   useEffect(() => {
     if (!menu) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    const unlock = lockScroll();
+    /* Fond inerte (A11Y-16) : la page et le pied de page ne reçoivent ni clic ni focus tant que le menu est ouvert */
+    const view = document.querySelector(".rp-view");
+    if (view) view.inert = true;
+    document.documentElement.classList.add("rp-menu-open");
     panel.current?.querySelector("a,button")?.focus();
     const key = e => {
       if (e.key === "Escape") { setMenu(false); burger.current?.focus(); }
@@ -177,17 +183,17 @@ function Nav({ route, s }) {
         else if (!e.shiftKey && i === f.length - 1) { e.preventDefault(); f[0].focus(); }
       }
     };
-    const close = () => { if (window.innerWidth > 1023) setMenu(false); };
+    const close = () => { if (burger.current && getComputedStyle(burger.current).display === "none") setMenu(false); };
     document.addEventListener("keydown", key);
     window.addEventListener("resize", close);
-    return () => { document.body.style.overflow = prev; document.removeEventListener("keydown", key); window.removeEventListener("resize", close); };
+    return () => { unlock(); if (view) view.inert = false; document.documentElement.classList.remove("rp-menu-open"); document.removeEventListener("keydown", key); window.removeEventListener("resize", close); };
   }, [menu]);
 
   return (<>
     <header className="noprint rp-header" style={{ position: "sticky", top: 0, zIndex: Z.nav, background: menu ? T.bg : T.glass, backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)", borderBottom: `1px solid ${T.line}` }}>
       <div className="rp-nav" style={{ maxWidth: W.page, margin: "0 auto", padding: "0 24px", height: HEADER_H, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 20, minWidth: 0 }}>
-          <a href="#/" onClick={e => { e.preventDefault(); go("#/"); }} aria-label="La Répét', accueil" style={{ display: "flex", flexShrink: 0 }}>
+          <a href="#/" onClick={e => { e.preventDefault(); go("#/"); }} aria-label="La Répét', accueil" className="rp-head-logo" style={{ display: "flex", alignItems: "center", minHeight: 44, flexShrink: 0 }}>
             <RepetLogo s={17} tagline={false} />
           </a>
           <nav aria-label="Navigation principale" className="rs-links" style={{ display: "flex", alignItems: "center", gap: 24, marginLeft: 12 }}>
@@ -196,13 +202,13 @@ function Nav({ route, s }) {
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
           {inSpace ? (<>
-            <IconBtn icon={I.a11y} label="Options d'accessibilité" onClick={openA11y} />
-            <SettingsMenu route={spaceRoute} s={s} />
+            <IconBtn icon={I.a11y} label="Options d'accessibilité" className="rp-head-a11y" onClick={openA11y} />
+            <AccountMenu route={spaceRoute} s={s} />
             {isPublic && <IconBtn ref={burger} variant="outline" className="rs-burger" aria-expanded={menu} aria-controls="rs-menu" label={menu ? "Fermer le menu" : "Ouvrir le menu"} icon={menu ? I.close : I.menu} onClick={() => setMenu(m => !m)} />}
           </>) : (<>
             <span className="rs-demo"><Btn kind="secondary" size="sm" style={STILL} onClick={() => go("#/demo")}>Demander une prise en main</Btn></span>
-            <IconBtn icon={I.a11y} label="Options d'accessibilité" onClick={openA11y} />
-            <Btn kind="primary" size="sm" style={STILL} onClick={openSpace}><span className="rp-hide-m" style={{ display: "inline-flex" }}><Icon d={I.user} s={16} /></span>Mon espace</Btn>
+            <IconBtn icon={I.a11y} label="Options d'accessibilité" className="rp-head-a11y" onClick={openA11y} />
+            <Btn kind="primary" size="sm" style={STILL} onClick={openSpace}><span className="rp-hide-m" style={{ display: "inline-flex" }}><Icon d={I.user} s={16} /></span>Mon compte</Btn>
             <IconBtn ref={burger} variant="outline" className="rs-burger" aria-expanded={menu} aria-controls="rs-menu" label={menu ? "Fermer le menu" : "Ouvrir le menu"} icon={menu ? I.close : I.menu} onClick={() => setMenu(m => !m)} />
           </>)}
         </div>
@@ -211,7 +217,7 @@ function Nav({ route, s }) {
     </header>
       {menu && (
         <div id="rs-menu" ref={panel} className="rs-menu" role="dialog" aria-modal="true" aria-label="Menu">
-          <nav aria-label="Navigation principale" onClick={() => setMenu(false)}>
+          <nav aria-label="Menu principal" onClick={() => setMenu(false)}>
             <a href="#/" className="rs-mlink" aria-current={route.role === "home" ? "page" : undefined}>Accueil<Icon d={I.chevronR} s={20} c={T.faint} /></a>
             {LINKS.map(([h, l, r]) => <MobileItem key={h} href={h} label={l} id={r} on={activeOf(route.role) === r} />)}
           </nav>
@@ -228,27 +234,50 @@ function Nav({ route, s }) {
   </>);
 }
 
-/* « Mes paramètres » : menu déroulant accessible (bouton aria-expanded, flèches, Début, Fin, Échap). */
-function SettingsMenu({ route, s }) {
+/* « Mon compte » (session ouverte) : panneau latéral modal, plein écran sur mobile.
+   En-tête du compte (prénom ou nom, rôle), puis les actions. Focus envoyé dans le panneau et retenu, Échap ferme,
+   focus rendu au bouton, défilement de la page bloqué, page inerte. N'est jamais ouvert en même temps que
+   l'assistant : l'ouvrir ferme l'assistant, et les boutons flottants sont retirés tant qu'il est ouvert. */
+function AccountMenu({ route, s }) {
   const [open, setOpen] = useState(false);
   const [confirm, setConfirm] = useState(false);
-  const btn = useRef(null), list = useRef(null);
+  const btn = useRef(null), panel = useRef(null);
   const coach = route.role === "coach";
   const code = route.code;
+  const p = !coach && code ? s.parcours[code] : null;
   const items = coach
     ? [["space", "Retour à mon espace", I.user], ["data", "Vos données", I.shield], ["a11y", "Options d'accessibilité", I.a11y], ["logout", "Se déconnecter", I.logout]]
     : [["space", "Retour à mon espace", I.user], ["data", "Vos données", I.shield], ["a11y", "Options d'accessibilité", I.a11y], ["code", "Changer de code", I.redo], ["withdraw", "Retirer mon consentement", I.trash], ["logout", "Se déconnecter", I.logout]];
-  const focusItem = i => { const el = list.current?.querySelectorAll("[role=menuitem]")[i]; el?.focus(); };
+  const refocus = useRef(true);
   useEffect(() => {
     if (!open) return;
-    requestAnimationFrame(() => focusItem(0));
-    const out = e => { if (!list.current?.contains(e.target) && !btn.current?.contains(e.target)) setOpen(false); };
-    document.addEventListener("pointerdown", out);
-    return () => document.removeEventListener("pointerdown", out);
+    closeAssistant();
+    refocus.current = true;
+    const unlock = lockScroll();
+    const view = document.querySelector(".rp-view"); if (view) view.inert = true;
+    document.documentElement.classList.add("rp-account-open");
+    const focusables = () => [...(panel.current?.querySelectorAll("button:not([disabled]),a[href]") || [])];
+    requestAnimationFrame(() => focusables()[1]?.focus()); // première action (après « Fermer »)
+    const key = e => {
+      if (e.key === "Escape") { e.stopPropagation(); setOpen(false); }
+      if (e.key === "Tab") {
+        const f = focusables(); if (!f.length) return;
+        const i = f.indexOf(document.activeElement);
+        if (e.shiftKey && i <= 0) { e.preventDefault(); f[f.length - 1].focus(); }
+        else if (!e.shiftKey && i === f.length - 1) { e.preventDefault(); f[0].focus(); }
+      }
+    };
+    document.addEventListener("keydown", key);
+    return () => {
+      document.removeEventListener("keydown", key); unlock(); if (view) view.inert = false;
+      document.documentElement.classList.remove("rp-account-open");
+      if (refocus.current) btn.current?.focus();
+    };
   }, [open]);
-  const close = (refocus = true) => { setOpen(false); if (refocus) btn.current?.focus(); };
+  useEffect(() => { const c = () => setOpen(false); window.addEventListener("hashchange", c); return () => window.removeEventListener("hashchange", c); }, []);
   const act = k => {
-    close(k !== "withdraw" && k !== "a11y");
+    refocus.current = !["withdraw", "a11y", "space", "data", "code", "logout"].includes(k);
+    setOpen(false);
     if (k === "a11y") openA11y();
     if (k === "space") go(coach ? "#/coach" : `#/s/${code}`);
     if (k === "data") go(coach ? "#/vos-donnees/coachs" : "#/vos-donnees");
@@ -256,35 +285,38 @@ function SettingsMenu({ route, s }) {
     if (k === "withdraw") setConfirm(true);
     if (k === "logout") { if (coach) logoutCounselor(); setLastSpace(null); go("#/"); }
   };
-  const onKey = e => {
-    const els = [...(list.current?.querySelectorAll("[role=menuitem]") || [])];
-    const i = els.indexOf(document.activeElement);
-    const k = { ArrowDown: (i + 1) % els.length, ArrowUp: (i - 1 + els.length) % els.length, Home: 0, End: els.length - 1 }[e.key];
-    if (k !== undefined) { e.preventDefault(); els[k]?.focus(); }
-    if (e.key === "Escape") { e.preventDefault(); close(); }
-    if (e.key === "Tab") setOpen(false);
-  };
-  const p = !coach && code ? s.parcours[code] : null;
+  const who = coach ? s.counselor?.name || "Coach" : p?.prenom || "Mon espace";
   return (
-    <div style={{ position: "relative" }}>
-      <Btn ref={btn} kind="secondary" size="sm" style={STILL} aria-label="Mes paramètres" aria-haspopup="menu" aria-expanded={open} aria-controls="rp-settings" onClick={() => setOpen(o => !o)}
-        onKeyDown={e => { if (e.key === "ArrowDown" && !open) { e.preventDefault(); setOpen(true); } }}>
-        <Icon d={I.user} s={16} /><span className="rp-hide-m">Mes paramètres</span><Icon d={I.chevron} s={16} />
+    <>
+      <Btn ref={btn} kind="secondary" size="sm" style={STILL} aria-haspopup="dialog" aria-expanded={open} aria-controls="rp-account" onClick={() => setOpen(true)}>
+        <span className="rp-hide-m" style={{ display: "inline-flex" }}><Icon d={I.user} s={16} /></span>Mon compte
       </Btn>
-      {open && (
-        <div ref={list} id="rp-settings" role="menu" aria-label="Mes paramètres" onKeyDown={onKey}
-          style={{ position: "absolute", right: 0, top: "calc(100% + 8px)", zIndex: Z.nav + 1, minWidth: 260, maxWidth: "calc(100vw - 32px)", background: T.surface, border: `1px solid ${T.line}`, borderRadius: RAD.md, boxShadow: SH.lg, padding: 8, display: "grid", gap: 4 }}>
-          <div style={{ ...TY.caption, color: T.muted, padding: "4px 12px 8px" }}>{coach ? `Espace coach · ${s.counselor?.name || ""}` : p ? `Espace de ${p.prenom}` : "Mon espace"}</div>
-          {items.map(([k, l, ic]) => (
-            <Bare key={k} role="menuitem" tabIndex={-1} onClick={() => act(k)} className="rp-menuitem"
-              style={{ display: "flex", alignItems: "center", gap: 12, minHeight: 44, padding: "0 12px", borderRadius: RAD.sm, ...TY.bodyStrong, color: k === "withdraw" ? T.errorDk : T.navy }}>
-              <Icon d={ic} s={16} />{l}
-            </Bare>
-          ))}
-        </div>
-      )}
+      {open && createPortal(
+        // design-lint-disable-next-line K4 -- voile du panneau « Mon compte » : fermeture au clic, comme le voile de Modal
+        <div className="rp-account-ov noprint" onClick={e => { if (e.target === e.currentTarget) setOpen(false); }}>
+          <div ref={panel} id="rp-account" role="dialog" aria-modal="true" aria-labelledby="rp-account-title" className="rp-account">
+            <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, padding: "16px 16px 16px 24px", borderBottom: `1px solid ${T.line}` }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
+                <span aria-hidden style={{ width: 40, height: 40, borderRadius: "50%", background: T.primaryBg, color: T.primary, display: "grid", placeItems: "center", flexShrink: 0, ...TY.h3 }}>{who.charAt(0).toUpperCase()}</span>
+                <div style={{ display: "grid", gap: 2, minWidth: 0 }}>
+                  <h2 id="rp-account-title" style={{ ...TY.h3, color: T.navy, margin: 0 }}>Mon compte</h2>
+                  <div style={{ ...TY.small, color: T.body }}>{who} · {coach ? "Espace coach" : "Espace d'entraînement"}</div>
+                </div>
+              </div>
+              <IconBtn icon={I.close} label="Fermer" tone="muted" onClick={() => setOpen(false)} />
+            </div>
+            <nav aria-label="Mon compte" style={{ padding: 16, display: "grid", gap: 4, overflowY: "auto" }}>
+              {items.map(([k, l, ic]) => (
+                <Bare key={k} onClick={() => act(k)} className="rp-menuitem"
+                  style={{ display: "flex", alignItems: "center", gap: 12, minHeight: 48, padding: "0 12px", borderRadius: RAD.sm, ...TY.bodyStrong, color: k === "withdraw" ? T.errorDk : T.navy, textAlign: "left" }}>
+                  <Icon d={ic} s={20} />{l}
+                </Bare>
+              ))}
+            </nav>
+          </div>
+        </div>, document.body)}
       {confirm && (
-        <Modal close={() => setConfirm(false)} title="Tout supprimer ?" footer={
+        <Modal close={() => { setConfirm(false); btn.current?.focus(); }} title="Tout supprimer ?" footer={
           <div className="rp-actions" style={{ display: "flex", justifyContent: "flex-end", gap: GAP.actions, flexWrap: "wrap" }}>
             <Btn kind="secondary" onClick={() => { setConfirm(false); btn.current?.focus(); }}>Annuler</Btn>
             <Btn kind="danger" style={{ background: T.errorDk, color: T.surface }} icon={I.trash} onClick={async () => { clearWarmupDebrief(code); await withdrawConsent(code); setConfirm(false); }}>Tout supprimer</Btn>
@@ -295,7 +327,7 @@ function SettingsMenu({ route, s }) {
           </div>
         </Modal>
       )}
-    </div>
+    </>
   );
 }
 
