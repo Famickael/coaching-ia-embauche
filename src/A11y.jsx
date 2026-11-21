@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { T, TY, GAP, Btn, Modal, Toggle, CheckTile, I } from "./ui.jsx";
+import { T, TY, GAP, Btn, Modal, Toggle, CheckTile, I, RadioGroup } from "./ui.jsx";
 import { loadA11y, saveA11y, resetA11y, applyA11y, FONT_LABELS } from "./lib/a11y.js";
 
 /* Options d'accessibilité : fenêtre de réglages (ouverte depuis l'en-tête et le menu mobile),
@@ -50,7 +50,7 @@ function A11yDialog({ s, close }) {
   const group = (id, label, children) => (
     <div style={{ display: "grid", gap: 8 }}>
       <span id={id} style={{ ...TY.label, color: T.navy }}>{label}</span>
-      <div role="radiogroup" aria-labelledby={id} style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>{children}</div>
+      <RadioGroup aria-labelledby={id} style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>{children}</RadioGroup>
     </div>
   );
   return (

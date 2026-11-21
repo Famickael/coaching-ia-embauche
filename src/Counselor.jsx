@@ -1,11 +1,12 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { T, TY, RAD, PAD, GAP, W, Card, Tag, Btn, Back, Link, IconBtn, Icon, I, Txt, Notice, Empty, Confirm, ConfirmMark, Field, Input, Textarea, Toggle, Modal, TimeChip, Bare } from "./ui.jsx";
+import { T, TY, RAD, PAD, GAP, W, Card, Tag, Btn, Back, Link, IconBtn, Icon, I, Txt, Notice, Empty, Confirm, ConfirmMark, Field, Input, Textarea, Toggle, Modal, TimeChip, Bare, ConfirmDialog, RadioGroup } from "./ui.jsx";
 import { useStore, createParcours, deleteParcours, takesOf, sendReport, saveDraft as storeDraft, parcoursStatus } from "./lib/store.js";
-import { Player, DimCard, markersOf, useVideoUrl } from "./Report.jsx";
+import { Player, DimCard, markersOf, useVideoUrl, Transcript } from "./Report.jsx";
 import { fmt } from "./lib/analysis.js";
 import CoachAssistantDock from "./CoachAssistant.jsx";
 import { isAudio, noFeedback } from "./lib/takes.js";
 import { dateTime, duration } from "./lib/format.js";
+import { useTitle, useFocusOnChange } from "./lib/hooks.js";
 
 const dateFr = dateTime; // même format que côté personne (src/lib/format.js)
 export const linkFor = code => `${location.origin}${location.pathname}#/s/${code}`;
@@ -26,14 +27,18 @@ export default function Counselor() {
     else { setGone("Ce parcours n'existe plus."); setView({ name: "list" }); }
   }, [missing]); // eslint-disable-line
   useEffect(() => { if (!missing && gone) { const t = setTimeout(() => setGone(""), 8000); return () => clearTimeout(t); } }, [view]); // eslint-disable-line
+  /* Un titre de page et un h1 propres à chaque vue (A11Y-06, A11Y-07), focus sur le titre au changement de vue (A11Y-02). */
+  useTitle(view.name === "list" ? "Mes parcours" : view.name === "parcours" ? `Parcours de ${s.parcours[view.code]?.prenom || ""}` : "Relecture");
+  useFocusOnChange(`${view.name}-${view.code || ""}-${view.takeId || ""}`);
   if (!s.counselor) return null; // sans connexion, App affiche « Mon espace » (connexion intégrée)
 
   return (
     <main className="rp-page" style={{ maxWidth: W.wide, margin: "0 auto", padding: PAD.page, ...stack(GAP.grid) }}>
       <div style={{ ...actions, alignItems: "flex-end" }} className="noprint">
         <div style={stack(4)}>
-          <Txt v="h1" as="h1" color={T.navy}>Bienvenue {(s.counselor.name || "").split(" ")[0]}</Txt>
-          <Txt v="body" color={T.body}>Vos parcours et les entretiens que l'on vous a envoyés</Txt>
+          {view.name === "list"
+            ? <><Txt v="small" color={T.body}>Bienvenue {(s.counselor.name || "").split(" ")[0]}</Txt><Txt v="h1" as="h1" color={T.navy}>Mes parcours</Txt><Txt v="body" color={T.body}>Vos parcours et les entretiens que l'on vous a envoyés</Txt></>
+            : <Txt v="body" color={T.body}>Bienvenue {(s.counselor.name || "").split(" ")[0]} · vos parcours et les entretiens que l'on vous a envoyés</Txt>}
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <Btn kind={view.name === "list" ? "primary" : "secondary"} size="sm" onClick={() => setView({ name: "list" })} aria-current={view.name === "list" ? "page" : undefined}>Mes parcours</Btn>
@@ -68,7 +73,7 @@ const MIN_AGG = 5;
 function Stat({ n, l, c = T.primary }) {
   return (
     <Card style={{ display: "flex", alignItems: "center", gap: 16 }}>
-      <div style={{ ...TY.num, color: c }}>{n}</div>
+      <div style={{ ...TY.num, color: c, whiteSpace: "nowrap" }}>{n}</div>
       <div style={{ ...TY.small, color: T.body }}>{l}</div>
     </Card>
   );
@@ -106,7 +111,7 @@ function List({ s, open, create }) {
             <div key={p.code} className="rp-row" style={{ display: "flex", alignItems: "center", gap: 16, padding: PAD.row, borderTop: i ? `1px solid ${T.lineLt}` : "none", background: st.key === "toreview" ? T.accentBg : T.surface, flexWrap: "wrap" }}>
               <div aria-hidden style={{ width: 40, height: 40, borderRadius: "50%", background: T.primaryBg, display: "grid", placeItems: "center", ...TY.h4, color: T.primary, flexShrink: 0 }}>{(p.prenom || "?")[0]?.toUpperCase()}</div>
               <div style={{ flex: 1, minWidth: 200, ...stack(4) }}>
-                <div style={{ display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}><span style={{ ...TY.h4, color: T.navy }}>{p.prenom}</span><span style={{ ...TY.mono, color: T.muted }}>{p.code}</span></div>
+                <div style={{ display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}><span style={{ ...TY.h4, color: T.navy }}>{p.prenom}</span><span style={{ ...TY.mono, color: st.key === "toreview" ? T.body : T.muted }}>{p.code}</span></div>
                 <div style={{ ...TY.small, color: T.body }}>{p.poste || "Poste non précisé"} · {takes.length} entretien{takes.length > 1 ? "s" : ""} · créé le {dateFr(p.createdAt)}</div>
               </div>
               <Tag tone={st.tone}>{st.label}</Tag>
@@ -115,12 +120,6 @@ function List({ s, open, create }) {
           ))}
         </Card>
       )}
-      {/* Emplacements vides : structure de la liste, place pour les prochains parcours */}
-      <div aria-hidden style={{ display: "grid", gap: GAP.stack }}>
-        {Array.from({ length: Math.max(2, 5 - Math.min(rows.length, 3)) }, (_, k) => (
-          <div key={k} style={{ height: 72, borderRadius: RAD.lg, border: `1.5px dashed ${T.faint}`, background: T.lineLt }} />
-        ))}
-      </div>
     </div>
   );
 }
@@ -137,10 +136,10 @@ function Create({ done, cancel }) {
       </Field>
       <div style={stack(8)}>
         <span id="new-first" style={{ ...TY.label, color: T.navy }}>Pour commencer</span>
-        <div role="radiogroup" aria-labelledby="new-first" style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+        <RadioGroup aria-labelledby="new-first" style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <Toggle on={warmup} onClick={() => setWarmup(true)}>Proposer d'abord un échauffement</Toggle>
           <Toggle on={!warmup} onClick={() => setWarmup(false)}>Aller directement à l'entraînement</Toggle>
-        </div>
+        </RadioGroup>
       </div>
       <div className="rp-actions" style={{ ...actions, marginTop: 4 }}>
         <Back onClick={cancel}>Annuler</Back>
@@ -201,20 +200,21 @@ function Created({ p, back, openAsBenef }) {
 function Parcours({ s, p, back, review }) {
   const takes = takesOf(p.code, s);
   const shared = takes.filter(t => t.shared);
-  const del = async () => { if (window.confirm(`Supprimer le parcours de ${p.prenom}, ses entretiens et ses rapports ? C'est définitif.`)) { await deleteParcours(p.code); back(); } };
+  const [confirmDel, setConfirmDel] = useState(false);
+  const del = async () => { await deleteParcours(p.code); setConfirmDel(false); back(); };
   const priv = takes.length - shared.length;
   return (
     <div style={stack(GAP.block)}>
       <Card level={2} style={actions}>
         <div style={stack(4)}>
-          <div style={{ display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}><span style={{ ...TY.h2, color: T.navy }}>{p.prenom}</span><span style={{ ...TY.mono, color: T.muted }}>{p.code}</span></div>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}><h1 className="ty-h2" style={{ ...TY.h2, color: T.navy, margin: 0 }}>{p.prenom}</h1><span style={{ ...TY.mono, color: T.muted }}>{p.code}</span></div>
           <div style={{ ...TY.small, color: T.body }}>
             {p.poste || "Poste non précisé"} · {p.consent ? `accord donné le ${dateFr(p.consent.at)}${p.consent.ai ? "" : ", sans retour de l'assistant"}` : p.consentWithdrawnAt ? `accord retiré le ${dateFr(p.consentWithdrawnAt)}` : p.openedAt ? "espace ouvert, accord pas encore donné" : "espace pas encore ouvert"}
           </div>
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <CopyBtn text={linkFor(p.code)} label="Copier le lien" />
-          <Btn kind="danger" size="sm" onClick={del} icon={I.trash}>Supprimer</Btn>
+          <Btn kind="danger" size="sm" onClick={() => setConfirmDel(true)} icon={I.trash}>Supprimer</Btn>
         </div>
       </Card>
       <section style={stack(16)}>
@@ -228,7 +228,7 @@ function Parcours({ s, p, back, review }) {
         {shared.length > 0 && (
           <div style={stack(GAP.stack)}>
             {shared.map(t => (
-              <Card key={t.id} pad="sm" hover style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
+              <Card key={t.id} pad="sm" style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
                 <div style={{ flex: 1, minWidth: 220, ...stack(4) }}>
                   <div style={{ ...TY.h4, color: T.navy }}>{t.question}</div>
                   <div style={{ ...TY.caption, color: T.muted }}>Envoyée le {dateFr(t.sharedAt)} · {duration(t.duration)}{t.report ? ` · rapport envoyé le ${dateFr(t.report.sentAt)}` : ""}</div>
@@ -241,6 +241,11 @@ function Parcours({ s, p, back, review }) {
         )}
       </section>
       <div><Back onClick={back} /></div>
+      {confirmDel && (
+        <ConfirmDialog title={`Supprimer le parcours de ${p.prenom} ?`} confirmLabel="Supprimer le parcours" onCancel={() => setConfirmDel(false)} onConfirm={del}>
+          Le parcours, ses entretiens et ses rapports sont effacés de cet appareil. C'est définitif.
+        </ConfirmDialog>
+      )}
     </div>
   );
 }
@@ -258,7 +263,7 @@ function Withdrawn({ back }) {
 }
 
 function Review({ s, p, take, back }) {
-  const url = useVideoUrl(take);
+  const { url, status } = useVideoUrl(take);
   const playerRef = useRef(null);
   const draft = take.report || take.draft || {};
   const [intro, setIntro] = useState(draft.intro || "");
@@ -307,7 +312,7 @@ function Review({ s, p, take, back }) {
   if (refused) return <Withdrawn back={back} />;
 
   if (sent) return (
-    <Confirm as="h2" title={`Rapport envoyé à ${p.prenom}`} actions={<Btn kind="primary" onClick={back}>Retour au parcours</Btn>}>
+    <Confirm as="h1" title={`Rapport envoyé à ${p.prenom}`} actions={<Btn kind="primary" onClick={back}>Retour au parcours</Btn>}>
       {p.prenom} le retrouve dans son espace, avec son code. Vos remarques apparaissent à côté de chaque repère.
     </Confirm>
   );
@@ -315,12 +320,12 @@ function Review({ s, p, take, back }) {
   return (
     <div style={stack(GAP.grid)}>
       <div style={stack(4)}>
-        <Txt v="h2" as="h2" color={T.navy}>{take.question}</Txt>
+        <Txt v="h1" as="h1" color={T.navy}>{take.question}</Txt>
         <Txt v="small" color={T.muted}>{p.prenom} · envoyée le {dateFr(take.sharedAt)}{take.report ? " · rapport déjà envoyé, vous pouvez le modifier et le renvoyer" : ""}</Txt>
       </div>
       <div className="rp-split">
         <div style={stack(GAP.stack)}>
-          <Player take={virtualTake} url={url} markers={markersOf(virtualTake)} active={active} onActive={setActive} playerRef={playerRef} />
+          <Player take={virtualTake} url={url} status={status} markers={markersOf(virtualTake)} active={active} onActive={setActive} playerRef={playerRef} />
           <Card style={stack(8)}>
             <label htmlFor="review-note" style={{ ...TY.h4, color: T.navy }}>Ajouter une remarque à ce moment {isAudio(take) ? "de l'enregistrement" : "de la vidéo"}</label>
             <Txt v="caption" color={T.muted} id="review-note-h">Mettez {isAudio(take) ? "l'enregistrement" : "la vidéo"} en pause au bon moment, puis écrivez votre remarque.</Txt>
@@ -346,19 +351,7 @@ function Review({ s, p, take, back }) {
               <p style={{ ...TY.body, color: T.navy, margin: 0, fontStyle: "italic" }}>« {take.note} »</p>
             </Card>
           )}
-          {take.transcript && (
-            <details>
-              <summary style={{ ...TY.label, color: T.primary, cursor: "pointer", minHeight: 44, display: "flex", alignItems: "center" }}>Afficher le texte de la réponse</summary>
-              <Card style={{ marginTop: 8 }}>
-                {take.segments.map((sg, i) => (
-                  <Bare key={i} onClick={() => seek(sg.start)} style={{ display: "flex", gap: 12, padding: "4px 0", width: "100%", textAlign: "left" }}>
-                    <span style={{ ...TY.time, color: T.muted, minWidth: 40, paddingTop: 4 }}>{fmt(sg.start)}</span>
-                    <span style={{ ...TY.small, color: T.navy }}>{sg.text}</span>
-                  </Bare>
-                ))}
-              </Card>
-            </details>
-          )}
+          <Transcript take={take} onSeek={t => seek(t)} />
         </div>
 
         <div style={stack(GAP.stack)}>
@@ -368,7 +361,7 @@ function Review({ s, p, take, back }) {
             <Textarea id="review-intro" aria-describedby="review-intro-h" value={intro} onChange={e => setIntro(e.target.value)} onBlur={() => saveDraft()} placeholder={`${p.prenom}, j'ai regardé votre entretien…`} />
           </Card>
           <div style={{ ...stack(4), marginTop: 8 }}>
-            <h3 style={{ ...TY.h4, color: T.navy, margin: 0 }}>Repères de l'assistant</h3>
+            <h2 style={{ ...TY.h4, color: T.navy, margin: 0 }}>Repères de l'assistant</h2>
             <Txt v="caption" color={T.muted}>Nuancez, contextualisez ou contredisez : votre lecture prime sur celle de l'assistant.</Txt>
           </div>
           {A.dimensions.length === 0 && <Card><Txt v="small" color={T.body}>{noFeedback(take) ? "La personne a choisi de ne pas recevoir le retour de l'assistant." : A.synthese || "L'assistant n'a pas de repère pour cet entretien."}</Txt></Card>}

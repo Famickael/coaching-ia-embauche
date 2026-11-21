@@ -149,20 +149,23 @@ function Conversation({ poste, context, ctxKey }) {
     background: mine ? T.primary : T.violetBg, color: mine ? T.surface : T.navy,
   });
   return (<>
-    <div ref={threadRef} role="log" aria-live="polite" aria-relevant="additions" aria-label="Conversation avec l'assistant"
-      style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: "16px 16px 4px", display: "flex", flexDirection: "column", gap: 8 }}>
-      {msgs.map((m, i) => (
-        <div key={i} style={{ display: "flex", justifyContent: m.role === "user" ? "flex-end" : "flex-start" }}>
-          <div style={bubble(m.role === "user")}><span className="rp-sr">{m.role === "user" ? "Vous : " : "Assistant : "}</span>{m.content}</div>
-        </div>
-      ))}
-      {typing && (
-        <div style={{ display: "flex" }}>
-          <div role="status" style={{ ...bubble(false), display: "inline-flex", alignItems: "center", gap: 8, ...TY.small, color: T.violet }}>
-            <span className="rp-dots" aria-hidden><i /><i /><i /></span> L'assistant écrit…
+    {/* Zone défilante : le journal (annoncé) ne contient que les messages ; les suggestions sont à côté, non relues
+        à chaque réponse (A11Y-19). */}
+    <div ref={threadRef} style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: "16px 16px 4px", display: "flex", flexDirection: "column", gap: 8 }}>
+      <div role="log" aria-live="polite" aria-relevant="additions" aria-label="Conversation avec l'assistant" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        {msgs.map((m, i) => (
+          <div key={i} style={{ display: "flex", justifyContent: m.role === "user" ? "flex-end" : "flex-start" }}>
+            <div style={bubble(m.role === "user")}><span className="rp-sr">{m.role === "user" ? "Vous : " : "Assistant : "}</span>{m.content}</div>
           </div>
-        </div>
-      )}
+        ))}
+        {typing && (
+          <div style={{ display: "flex" }}>
+            <div style={{ ...bubble(false), display: "inline-flex", alignItems: "center", gap: 8, ...TY.small, color: T.violet }}>
+              <span className="rp-dots" aria-hidden><i /><i /><i /></span> L'assistant écrit…
+            </div>
+          </div>
+        )}
+      </div>
       {chips.length > 0 && (
         <div style={{ display: "flex", flexWrap: "wrap", gap: 8, paddingTop: 4 }} role="group" aria-label="Suggestions de questions">
           {chips.map(c => <Chip key={c} tone="ai" check={false} onClick={() => send(c)}>{c}</Chip>)}

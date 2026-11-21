@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { T, FIX, ON, TY, RAD, W, MO, GRAD_NIGHT, ringOf, Btn, Chip, Icon, I } from "./ui.jsx";
+import { T, FIX, ON, TY, RAD, W, MO, GRAD_NIGHT, ringOf, Btn, Chip, Icon, I, RadioGroup } from "./ui.jsx";
 import { loadSegmenter, startBackground, BG_COLOR } from "./lib/background.js";
 import { PHRASES } from "./content/legal.js";
 import { openStream, mediaError, watchEnded } from "./lib/media.js";
@@ -113,7 +113,7 @@ export default function WarmupStage({ setModal }) {
       <div style={{ position: "relative", borderRadius: RAD.lg, overflow: "hidden", aspectRatio: "16/9", background: GRAD_NIGHT }}>
         <video ref={videoRef} muted playsInline aria-label="Aperçu de votre caméra, non enregistré"
           style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", transform: "scaleX(-1)", display: phase === "video" && !showCanvas ? "block" : "none" }} />
-        <canvas ref={canvasRef} aria-label="Aperçu avec fond modifié, non enregistré"
+        <canvas ref={canvasRef} role="img" aria-label="Aperçu avec fond modifié, non enregistré"
           style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", transform: "scaleX(-1)", display: showCanvas ? "block" : "none" }} />
 
         {(phase === "idle" || phase === "error") && (
@@ -145,7 +145,9 @@ export default function WarmupStage({ setModal }) {
             <div style={{ ...pill, top: 12, right: 12, background: FIX.successDk }}>
               <Icon d={I.lock} s={12} /> Non enregistré
             </div>
-            <div aria-live="polite" style={{ ...pill, left: 12, bottom: 12, background: ON.scrim }}>
+            {/* Pastille visuelle seulement (A11Y-05) : une seule annonce, « Micro actif », à l'ouverture */}
+            <span role="status" className="rp-sr">Micro actif</span>
+            <div aria-hidden="true" style={{ ...pill, left: 12, bottom: 12, background: ON.scrim }}>
               <span aria-hidden style={{ width: 8, height: 8, borderRadius: "50%", background: hearing ? T.accentLt : ON.line, transition: `background-color ${MO.fast}` }} />
               {hearing ? "Le micro vous entend" : "Micro actif"}
             </div>
@@ -158,9 +160,9 @@ export default function WarmupStage({ setModal }) {
           {phase === "video" ? (
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
               <span id="bg-label" style={{ ...TY.label, color: T.navy }}>Arrière-plan :</span>
-              <div role="radiogroup" aria-labelledby="bg-label" style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+              <RadioGroup aria-labelledby="bg-label" style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
                 {opt("none", "Normal")}{opt("blur", "Flou")}{opt("color", "Couleur unie")}
-              </div>
+              </RadioGroup>
             </div>
           ) : <span style={{ ...TY.small, color: T.muted }}>Idéal pour préparer un entretien téléphonique.</span>}
           <Btn kind="secondary" size="sm" onClick={() => open(phase === "video")} icon={phase === "video" ? I.mic : I.video}>

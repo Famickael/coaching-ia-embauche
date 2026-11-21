@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import {
   T, TY, RAD, SH, PAD, GAP, W, Card, Tag, Btn, Back, Link, IconBtn, IconTile, Icon, I, Rail, GradHead, RepetMark, Txt, Notice, Empty, Confirm,
-  Field, Input, Textarea, CheckTile, Chip, Modal, BrandLoader,
+  Field, Input, Textarea, CheckTile, Chip, Modal, BrandLoader, ConfirmDialog, Menu, RadioGroup,
 } from "./ui.jsx";
 import Recorder from "./Recorder.jsx";
 import WarmupStage from "./WarmupStage.jsx";
@@ -16,7 +16,7 @@ import { QUESTIONS, fill, WARMUP_PHRASES, WARMUP_PROMPTS, fillPhrase, randomPhra
 import RecruiterVoice from "./RecruiterVoice.jsx";
 import { searchJobs, norm } from "./lib/jobs.js";
 import { FEELINGS, feelingAck } from "./lib/assistant.js";
-import { useLeaveGuard } from "./lib/hooks.js";
+import { useLeaveGuard, useTitle, useFocusOnChange } from "./lib/hooks.js";
 import { hasMedia, isAudio, noFeedback } from "./lib/takes.js";
 import { dateTime, duration } from "./lib/format.js";
 
@@ -51,6 +51,11 @@ export default function Beneficiary({ initialCode, setModal, onCode }) {
   /* Réponse supprimée (autre onglet, retrait de l'accord) alors qu'un écran l'affichait : retour à l'accueil (BUG-03). */
   const orphan = ["choose", "report", "share"].includes(view) && !take;
   useEffect(() => { if (orphan) { setView("home"); setCtx(c => ({ ...c, takeId: null })); } }, [orphan]);
+  /* Titre du document et focus propres à chaque écran (A11Y-02, A11Y-06) ; après un retrait de l'accord, le focus
+     va sur « Avant de commencer » (BUG-03). */
+  const screen = !p ? "code" : !p.consent ? "consent" : view;
+  useTitle({ code: "Code d'accès", consent: "Avant de commencer", home: "Mon espace", warmup: "Échauffement", pick: "Choix des questions", record: "Votre réponse", processing: "Préparation", choose: "Lire ou revoir", report: take?.report ? "Rapport de votre coach" : "Votre retour", share: "Envoyer à mon coach", sent: "Réponse envoyée", recap: "Récapitulatif" }[screen]);
+  useFocusOnChange(`${screen}-${ctx.qi || 0}-${ctx.takeId || ""}-${ctx.mode || ""}`);
 
   if (!p) return <main className="rp-page" style={PAGE}><CodeEntry initial={initialCode} invalid={!!initialCode && !findParcours(initialCode)} onOk={c => { setCode(c); setView("home"); }} /></main>;
   if (!p.consent) return <main className="rp-page" style={PAGE}><Consent p={p} onBack={() => setCode(null)} /></main>;
@@ -82,11 +87,12 @@ export default function Beneficiary({ initialCode, setModal, onCode }) {
               <Txt v="h1" as="h1" color={T.navy}>À vous de répondre</Txt>
               <Txt v="body" color={T.body}>Rien ne vous interrompt pendant que vous parlez. Vous pouvez recommencer autant de fois que vous voulez.</Txt>
             </div>
-            <EmotionNote setModal={setModal} />
             <RecruiterVoice key={`${ctx.qi || 0}-${ctx.question}`} label={series?.full ? `Le recruteur · ${series.step}` : "Question du recruteur"} text={series?.full && series.i === 0 ? `${FULL_INTRO} ${ctx.question}` : ctx.question} onSpeaking={setSpeaking} />
             <Recorder question={null} speaking={speaking} beforeStart={() => { try { window.speechSynthesis?.cancel(); } catch { /* rien */ } }} setModal={setModal} onCancel={() => go("pick")}
               trackGaze={!!p.consent.ai} validateLabel={p.consent.ai ? "Voir mon retour" : "Garder cette réponse"}
               onDone={rec => go("processing", { recording: rec })} />
+            {/* Sous la caméra (UI-13) : la caméra reste au-dessus de la ligne de flottaison sur téléphone */}
+            <EmotionNote setModal={setModal} />
           </Card>
         )}
         {view === "processing" && <Processing p={p} ctx={ctx} go={go} />}
@@ -109,13 +115,10 @@ function CodeEntry({ initial, invalid, onOk }) {
     e?.preventDefault();
     const p = findParcours(code);
     if (!p) return setErr(CODE_ERR);
-    setBusy(true);
-    setTimeout(() => onOk(p.code), 700); // logo d'attente, durée minimale courte
+    onOk(p.code); // pas d'attente artificielle (UI-10)
   };
-  const [busy, setBusy] = useState(false);
   return (
     <div style={{ ...wrap(W.narrow), textAlign: "center", display: "grid", gap: GAP.grid, justifyItems: "center" }}>
-      {busy && <BrandLoader full label="Ouverture de votre espace…" />}
       <RepetMark s={56} />
       <div style={stack(12)}>
         <Txt v="h1" as="h1" color={T.navy}>Bienvenue sur La Répét'</Txt>
@@ -220,7 +223,7 @@ function Home({ p, takes, go, counselor }) {
             {takes.map(t => {
               const st = t.report ? ["Rapport reçu", "success"] : t.shared ? ["Envoyée à votre coach", "primary"] : ["Gardée sur cet appareil", "muted"];
               return (
-                <Card key={t.id} pad="sm" hover style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
+                <Card key={t.id} pad="sm" style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
                   <IconTile icon={hasMedia(t) && !isAudio(t) ? I.play : I.mic} />
                   <div style={{ flex: 1, minWidth: 200, ...stack(4) }}>
                     <div style={{ ...TY.h4, color: T.navy }}>{t.question}</div>
@@ -452,9 +455,9 @@ function WarmupDebrief({ p, go, again }) {
 
         <section style={stack(12)}>
           {q(1, "Comment vous sentez-vous après cet échauffement ?", "dq1")}
-          <div role="radiogroup" aria-labelledby="dq1" className="rs-chips">
+          <RadioGroup aria-labelledby="dq1" className="rs-chips">
             {FEELINGS.map(f => <Chip key={f.id} role="radio" on={feeling === f.id} onClick={() => setFeeling(v => (v === f.id ? null : f.id))}>{f.label}</Chip>)}
-          </div>
+          </RadioGroup>
           <div aria-live="polite">
             {feeling && <Notice tone="ai" icon={I.chat}><strong style={{ color: T.violet }}>Assistant :</strong> {feelingAck(feeling)}</Notice>}
           </div>
@@ -462,9 +465,9 @@ function WarmupDebrief({ p, go, again }) {
 
         <section style={stack(12)}>
           {q(2, "Qu'avez-vous pensé de cet échauffement ?", "dq2")}
-          <div role="radiogroup" aria-labelledby="dq2" className="rs-chips">
+          <RadioGroup aria-labelledby="dq2" className="rs-chips">
             {OPINIONS.map(o => <Chip key={o} role="radio" on={opinion === o} onClick={() => setOpinion(v => (v === o ? null : o))}>{o}</Chip>)}
-          </div>
+          </RadioGroup>
           <label htmlFor="dq2-text" className="rp-sr">Un commentaire sur l'échauffement (facultatif)</label>
           <Input id="dq2-text" value={comment} onChange={e => setComment(e.target.value)} onBlur={save} maxLength={300} placeholder="Un commentaire, si vous le souhaitez (facultatif)" />
         </section>
@@ -696,10 +699,12 @@ function Choose({ take, go, series, back }) {
 
 /* ─── Rapport + actions ─── */
 function TakeReport({ p, take, mode, go, series, nextQuestion, stopSeries, back }) {
-  useEffect(() => { if (series && !series.hasNext && !series.full) nudgeAssistant("training"); }, []); // eslint-disable-line
+  /* Pas de bulle sur la relecture vidéo : elle couvrirait la barre de lecture (UI-07). */
+  useEffect(() => { if (series && !series.hasNext && !series.full && mode !== "video") nudgeAssistant("training"); }, []); // eslint-disable-line
+  const [confirmDel, setConfirmDel] = useState(false);
   const del = async () => {
-    if (!window.confirm("Supprimer définitivement cette réponse et son retour ?")) return;
     await deleteTake(take.id);
+    setConfirmDel(false);
     if (series?.hasNext) nextQuestion(); else go("home", { queue: null });
   };
   const nofb = noFeedback(take);
@@ -734,15 +739,23 @@ function TakeReport({ p, take, mode, go, series, nextQuestion, stopSeries, back 
           {head(take.report ? "Rapport reçu" : take.shared ? "Réponse envoyée à votre coach" : `Envie d'en parler avec ${p.counselor || "votre coach"} ?`,
             take.shared ? (take.report ? "Vous pouvez continuer à vous entraîner et envoyer une nouvelle réponse à tout moment." : `Vous pouvez continuer à vous entraîner. ${PHRASES.sent}`) : "Cette réponse reste sur votre appareil tant que vous ne l'envoyez pas.")}
         </div>
-        <div className="rp-actions" style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <Btn kind="danger" size="sm" onClick={del} icon={I.trash}>Supprimer cette réponse</Btn>
-          {take.shared && !take.report && <Btn kind="ghost" size="sm" onClick={() => unshareTake(take.id)} icon={I.redo}>Reprendre mon envoi</Btn>}
-          {hasMedia(take) && <Btn kind="ghost" size="sm" onClick={() => downloadTake(take)} icon={I.arrow}>{isAudio(take) ? "Télécharger ma voix" : "Télécharger ma vidéo"}</Btn>}
-          <Btn kind="ghost" size="sm" onClick={() => window.print()} icon={I.print}>Imprimer</Btn>
+        {/* Deux actions visibles, les autres dans « Autres actions » (UI-02) ; la suppression en dernier, confirmée */}
+        <div className="rp-actions" style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+          <Menu items={[
+            hasMedia(take) && { label: isAudio(take) ? "Télécharger ma voix" : "Télécharger ma vidéo", icon: I.download, onClick: () => downloadTake(take) },
+            { label: "Imprimer", icon: I.print, onClick: () => window.print() },
+            { label: "Supprimer cette réponse", icon: I.trash, danger: true, onClick: () => setConfirmDel(true) },
+          ]} />
           {!series?.hasNext && <Btn kind="secondary" size="sm" onClick={() => go("pick", { queue: null, selection: null, preselect: null })} icon={I.redo}>M'entraîner encore</Btn>}
+          {take.shared && !take.report && <Btn kind="secondary" size="sm" onClick={() => unshareTake(take.id)} icon={I.redo}>Reprendre mon envoi</Btn>}
           {!take.shared && <Btn kind={series?.hasNext || series?.full ? "secondary" : "objective"} size="sm" onClick={() => go("share")} icon={I.send}>Envoyer à mon coach</Btn>}
         </div>
       </Card>
+      {confirmDel && (
+        <ConfirmDialog title="Supprimer cette réponse ?" confirmLabel="Supprimer" onCancel={() => setConfirmDel(false)} onConfirm={del}>
+          {nofb && !take.report ? "La réponse est effacée de cet appareil." : `La réponse${nofb ? "" : take.report ? ", son retour" : " et son retour"}${take.report ? " et le rapport de votre coach" : ""} sont effacés de cet appareil.`} C'est définitif.
+        </ConfirmDialog>
+      )}
       <div className="noprint">
         <Chip tone="ai" check={false} onClick={() => openAssistant("feedback")}><Icon d={I.chat} s={16} /> {nofb ? "Une question sur l'entretien ? Demandez à l'assistant" : "Une question sur ce retour ? Demandez à l'assistant"}</Chip>
       </div>
@@ -756,7 +769,7 @@ async function downloadTake(take) {
   const url = await loadVideoUrl(take.id);
   if (!url) return;
   const a = document.createElement("a");
-  a.href = url; a.download = `la-repet-reponse-${take.createdAt.slice(0, 10)}.${take.mime?.includes("mp4") ? "mp4" : "webm"}`;
+  a.href = url; a.download = `la-repet-reponse-${take.createdAt.slice(0, 10)}.${take.mime?.includes("mp4") ? (isAudio(take) ? "m4a" : "mp4") : "webm"}`; // BUG-28
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 4000);
 }

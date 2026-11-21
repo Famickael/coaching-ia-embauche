@@ -297,6 +297,7 @@ async function run(b, vw, vh, opts = {}) {
     await visit("#/"); await shot("19-accueil-sombre");
     await visit("#/espace"); await shot("20-mon-espace-sombre");
     await visit("#/vos-donnees"); await shot("21-vos-donnees-sombre");
+    await visit("#/demo"); await shot("21b-demo-sombre"); // flèche du choix et champs en thème sombre (UI-12)
     await p.goto(BASE + "?sombre=1#/a-propos", { waitUntil: "commit" });
     await p.waitForFunction(() => document.documentElement.dataset.theme !== undefined);
     check(await p.evaluate(() => document.documentElement.dataset.theme === "dark" && document.documentElement.classList.contains("rp-boot-dark")), `[${tag}] accessibilité : thème non appliqué avant l'affichage au rechargement`);

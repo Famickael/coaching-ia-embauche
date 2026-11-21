@@ -118,11 +118,15 @@ export default function Recorder({ question, onDone, onCancel, trackGaze = true,
     open(audioOnly);
   }
 
+  /* Annonces pour les lecteurs d'écran (A11Y-08) : début, 30 dernières secondes, fin de l'enregistrement. */
+  const said = phase === "recording" ? (sec >= MAX_SEC - 30 ? "Il reste 30 secondes." : "Enregistrement en cours.")
+    : phase === "done" ? "Enregistrement terminé. Vous pouvez l'écouter, recommencer ou continuer." : "";
   const mm = String(Math.floor(sec / 60)).padStart(2, "0"), ss = String(sec % 60).padStart(2, "0");
 
   const pill = { position: "absolute", top: 12, display: "flex", alignItems: "center", gap: 8, height: 32, padding: "0 12px", borderRadius: RAD.pill, color: ON.text };
   return (
     <div style={{ display: "grid", gap: 16 }}>
+      <div role="status" className="rp-sr">{said}</div>
       {question && (
         <div style={{ background: T.primaryBg, borderRadius: RAD.md, padding: "16px 20px", display: "grid", gap: 8 }}>
           <div style={{ ...TY.overline, color: T.primary }}>Question</div>
@@ -131,7 +135,7 @@ export default function Recorder({ question, onDone, onCancel, trackGaze = true,
       )}
 
       <div style={{ position: "relative", borderRadius: RAD.lg, overflow: "hidden", aspectRatio: "16/9", background: GRAD_NIGHT }}>
-        <video ref={liveRef} muted playsInline style={{ width: "100%", height: "100%", objectFit: "cover", transform: "scaleX(-1)", display: (phase === "live" || phase === "recording") && !audioOnly ? "block" : "none" }} />
+        <video ref={liveRef} muted playsInline aria-label="Aperçu de votre caméra" style={{ width: "100%", height: "100%", objectFit: "cover", transform: "scaleX(-1)", display: (phase === "live" || phase === "recording") && !audioOnly ? "block" : "none" }} />
 
         {phase === "stopping" && (
           <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", background: T.surface }}>
@@ -139,8 +143,8 @@ export default function Recorder({ question, onDone, onCancel, trackGaze = true,
           </div>
         )}
         {phase === "done" && result && (audioOnly
-          ? <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center" }}><audio src={result.url} controls style={{ width: "80%" }} /></div>
-          : <video src={result.url} controls playsInline style={{ width: "100%", height: "100%", objectFit: "cover", background: T.videoBg }} />)}
+          ? <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center" }}><audio src={result.url} controls aria-label="Votre enregistrement, avant de le garder" style={{ width: "80%" }} /></div>
+          : <video src={result.url} controls playsInline aria-label="Votre vidéo, avant de la garder" style={{ width: "100%", height: "100%", objectFit: "contain", background: T.videoBg }} />)}
 
         {(phase === "idle" || phase === "error") && (
           <div className="rs-on-dark" style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", padding: 24 }}>
@@ -148,7 +152,7 @@ export default function Recorder({ question, onDone, onCancel, trackGaze = true,
               <div style={{ ...TY.h3, color: ON.text }}>{phase === "error" ? error?.title : "Quand vous voulez"}</div>
               <div style={{ ...TY.small, color: ON.text }}>{phase === "error" ? error?.text : "L'image reste sur votre appareil. Vous pouvez aussi répondre en voix seule."}</div>
               <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap", marginTop: 8 }}>
-                <Btn kind="objective" onClick={() => open(false)} icon={I.video}>Activer la caméra</Btn>
+                <Btn kind="white" onClick={() => open(false)} icon={I.video}>Activer la caméra</Btn>
                 <Btn kind="ghostDark" onClick={() => open(true)} icon={I.mic}>Voix seule</Btn>
               </div>
             </div>
@@ -165,7 +169,7 @@ export default function Recorder({ question, onDone, onCancel, trackGaze = true,
           <div style={{ ...pill, left: 12, background: ON.scrim }}>
             <span style={{ width: 8, height: 8, borderRadius: "50%", background: T.error, animation: "blink 1.1s infinite" }} />
             <span style={{ ...TY.time, color: ON.text }}>{mm}:{ss}</span>
-            <span style={{ ...TY.time, color: ON.text, opacity: 0.8 }}>/ 03:00</span>
+            <span style={{ ...TY.time, color: ON.text }}>/ 03:00</span>
           </div>
         )}
         {(phase === "live" || phase === "recording") && (

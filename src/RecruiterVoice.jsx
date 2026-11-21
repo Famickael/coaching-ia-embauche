@@ -87,13 +87,13 @@ export default function RecruiterVoice({ label = "Question du recruteur", text, 
         <span aria-hidden className={`rp-voice ${speaking ? "on" : ""}`}><i /><i /><i /><i /></span>
         <span style={{ ...TY.overline, color: T.primary, flex: 1 }}>{label}{speaking ? " · lecture en cours" : ""}</span>
       </div>
-      <div aria-live="polite" style={{ ...TY.h2, color: T.navy, minHeight: "1.25em" }} data-testid="recruiter-subtitle">« {shown || " "} »</div>
-      {/* Texte complet pour les lecteurs d'écran, sans attendre la fin de la lecture */}
-      <span className="rp-sr">{text}</span>
+      <div aria-hidden="true" style={{ ...TY.h2, color: T.navy, minHeight: "1.25em" }} data-testid="recruiter-subtitle">« {shown || " "} »</div>
+      {/* Sous-titre mot à mot masqué aux lecteurs d'écran (A11Y-04) : il serait annoncé mot par mot par-dessus la voix. Le texte complet est lu d'un bloc, sans attendre la fin de la lecture. */}
+      <p className="rp-sr">{label} : {text}</p>
       <div style={{ display: "flex", gap: GAP.actions, flexWrap: "wrap" }} className="noprint">
         <Btn kind="ghost" size="sm" icon={I.redo} onClick={speak} disabled={muted || !available}>Réécouter</Btn>
-        <Btn kind="ghost" size="sm" aria-pressed={muted} onClick={toggleMute} icon={muted ? I.mic : I.ban}>{muted ? "Réactiver le son" : "Couper le son"}</Btn>
-        {!available && <span style={{ ...TY.caption, color: T.muted, alignSelf: "center", display: "inline-flex", gap: 8, alignItems: "center" }}><Icon d={I.info} s={16} />La question s'affiche en texte sur cet appareil.</span>}
+        <Btn kind="ghost" size="sm" aria-pressed={muted} onClick={toggleMute} icon={muted ? I.volume : I.volumeOff}>{muted ? "Réactiver le son" : "Couper le son"}</Btn>
+        {!available && <span style={{ ...TY.caption, color: T.body, alignSelf: "center", display: "inline-flex", gap: 8, alignItems: "center" }}><Icon d={I.info} s={16} />La question s'affiche en texte sur cet appareil.</span>}
       </div>
     </div>
   );

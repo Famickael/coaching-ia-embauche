@@ -586,12 +586,12 @@ function Phrase() {
               <React.Fragment key={i}>
                 <span className="rs-w" style={on && key
                   ? { background: GRAD_ACCROCHE, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text", paddingBottom: ".08em" }
-                  : { color: on ? T.navy : T.line }}>{w}</span>{i < PHRASE.length - 1 ? " " : ""}
+                  : { color: on ? T.navy : T.lineStrong }}>{w}</span>{i < PHRASE.length - 1 ? " " : ""}
               </React.Fragment>
             );
           })}
         </div>
-        <div className="ty-lead rs-w" style={{ ...TY.lead, color: lit > PHRASE.length ? T.body : T.line, maxWidth: 560 }}>{PHRASE_SUB}</div>
+        <div className="ty-lead rs-w" style={{ ...TY.lead, color: lit > PHRASE.length ? T.body : T.lineStrong, maxWidth: 560 }}>{PHRASE_SUB}</div>
       </div>
     </div>
   );
@@ -621,7 +621,7 @@ const miniCard = { background: T.surface, borderRadius: RAD.sm, padding: "12px 1
 function Features() {
   return (
     <Section eyebrow="Au fil de l'entraînement" title="Tout ce qu'il faut pour répéter à votre rythme" sub="Des outils simples, pensés pour s'entraîner seul et garder la main sur ce que l'on partage.">
-      <div className="rs-fcards">
+      <div className="rs-fcards" tabIndex={0} role="group" aria-label="Fonctions, liste à faire défiler">
         <FCard title="Un échauffement sans enregistrement" text="Des phrases à lire à voix haute pour se mettre en route. Rien n'est enregistré ni analysé.">
           <div style={{ ...TY.overline, color: T.muted, marginBottom: 8 }}>Échauffement · lisez à voix haute</div>
           <div className="rs-cyc" style={{ display: "grid" }}>

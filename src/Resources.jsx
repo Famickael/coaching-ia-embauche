@@ -3,6 +3,7 @@ import { T, GAP, GRAD_PAGE, RAD, SH, Btn, Tag, Icon, I, TY, W, SI, img, Eyebrow,
 import { Reveal, scrollToTarget } from "./motion.jsx";
 import { FinalBand } from "./Home.jsx";
 import { dateLong } from "./lib/format.js";
+import { useTitle } from "./lib/hooks.js";
 import { ARTICLES, CATEGORIES, TYPES, findArticle, findCategory, search, norm } from "./content/resources.js";
 
 const TYPES_PL = { guide: "Guides", cas: "Scénarios d'usage" };
@@ -14,6 +15,8 @@ const TYPES_PL = { guide: "Guides", cas: "Scénarios d'usage" };
    Le contenu est dans src/content/resources/*.md (voir docs/briefs/chatgpt-ressources.md). */
 
 export default function Resources({ go, openSpace, slug, cat }) {
+  /* Titre du document : celui de l'article ou de la catégorie (A11Y-06). */
+  useTitle(slug ? findArticle(slug)?.title || "Ressource introuvable" : cat ? findCategory(cat)?.title || "Ressource introuvable" : "Ressources");
   if (slug) {
     const a = findArticle(slug);
     return a ? <Article a={a} go={go} openSpace={openSpace} /> : <NotFound go={go} />;
@@ -207,10 +210,10 @@ function Blocks({ blocks }) {
     if (b.t === "callout") {
       const c = CALLOUT[b.kind] || CALLOUT.conseil;
       return (
-        <aside key={i} className="rs-callout" style={{ background: c.bg, color: T.navy }}>
+        <div key={i} role="note" className="rs-callout" style={{ background: c.bg, color: T.navy }}>
           <div className="rs-callout-t" style={{ color: c.fg }}><Icon d={c.icon} s={16} c={c.fg} /> {b.title || c.label}</div>
           <Blocks blocks={b.blocks} />
-        </aside>
+        </div>
       );
     }
     return null;

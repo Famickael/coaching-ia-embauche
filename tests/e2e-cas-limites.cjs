@@ -167,7 +167,8 @@ const take = (id, code, extra = {}) => ({ id, code, question: "Pouvez-vous vous 
     const txt = await p.locator("main").innerText();
     for (const bad of [/votre retour est prêt/i, /vous lisez ce que l'assistant/i, /retour préparé automatiquement/i, /vidéo/i, /En résumé/]) check(!bad.test(txt), `BUG-05/06 : texte inattendu sans assistant en voix seule : ${bad}`);
     check(/Réponse gardée/.test(txt), "BUG-05 : rail à trois étapes attendu");
-    check(await p.getByRole("button", { name: "Se placer dans l'enregistrement" }).count() === 1, "BUG-06 : barre de lecture nommée « vidéo » en voix seule");
+    check(await p.locator("main").getByRole("button", { name: /vidéo/i }).count() === 0, "BUG-06 : bouton nommé « vidéo » en voix seule");
+    check(await p.getByLabel("Enregistrement de la réponse").count() === 1, "BUG-06 : lecteur audio non nommé « Enregistrement »");
     await shot(p, "03-sans-assistant-voix");
     await ctx.close();
   });
@@ -197,6 +198,34 @@ const take = (id, code, extra = {}) => ({ id, code, question: "Pouvez-vous vous 
     await p.getByText("Accès refusé").waitFor({ timeout: 5000 });
     check(await p.getByText("Caméra ou micro introuvable").count() === 0, "BUG-24 : titre « introuvable » pour un accès refusé");
     await shot(p, "05-camera-refusee");
+    await ctx.close();
+  });
+
+  /* A11Y-01, 02, 03, 06 et A11Y-17, UI-02 : focus sur le titre, titre de page propre, lien d'évitement, texte de la
+     réponse pour la personne, suppression par le menu « Autres actions » et une fenêtre du site. */
+  await scenario("accessibilité structurelle et suppression confirmée", async () => {
+    const { ctx, p } = await fresh(seed({ takes: { t1: take("t1", "CASAAA") } }));
+    await p.goto(BASE + "#/s/CASAAA");
+    await p.getByRole("heading", { name: /Bonjour Lou/ }).waitFor({ timeout: 5000 });
+    check(/Mon espace/.test(await p.title()), "A11Y-06 : titre de l'accueil de l'espace");
+    await p.keyboard.press("Tab");
+    check(await p.evaluate(() => document.activeElement?.textContent) === "Aller au contenu", "A11Y-01 : le lien d'évitement n'est pas le premier arrêt");
+    await p.getByRole("button", { name: "Commencer l'entraînement" }).click();
+    await p.waitForTimeout(300);
+    check(await p.evaluate(() => document.activeElement?.tagName) === "H1", "A11Y-02 : focus sur le titre après un changement d'écran");
+    check(/Choix des questions/.test(await p.title()), "A11Y-06 : titre du choix des questions");
+    await p.getByRole("button", { name: "Retour" }).click();
+    await p.getByRole("button", { name: "Ouvrir", exact: true }).first().click();
+    await p.getByText("Lire mon retour").first().click().catch(() => {});
+    await p.getByText("Afficher le texte de la réponse").click();
+    await p.getByText("Ce texte est écrit par un programme").waitFor({ timeout: 3000 });
+    await p.getByRole("button", { name: "Autres actions" }).click();
+    await p.getByRole("button", { name: "Supprimer cette réponse" }).click();
+    const dlg = p.getByRole("dialog", { name: "Supprimer cette réponse ?" });
+    await dlg.waitFor({ timeout: 3000 });
+    await shot(p, "06-suppression-confirmee");
+    await dlg.getByRole("button", { name: "Supprimer" }).click();
+    await p.getByText("Vous n'avez pas encore de réponse enregistrée").waitFor({ timeout: 5000 });
     await ctx.close();
   });
 

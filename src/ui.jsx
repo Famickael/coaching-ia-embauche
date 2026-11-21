@@ -153,6 +153,10 @@ const I = {
   monitor: <><rect x="2" y="3" width="20" height="14" rx="2" /><line x1="8" y1="21" x2="16" y2="21" /><line x1="12" y1="17" x2="12" y2="21" /></>,
   compass: <><circle cx="12" cy="12" r="9" /><polygon points="16 8 14 14 8 16 10 10 16 8" /></>,
   a11y: <><circle cx="12" cy="4.5" r="2" /><path d="M5 8.5l7 1.5 7-1.5M12 10v4.5M9 21l3-6.5 3 6.5" /></>,
+  volume: <><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" /><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14" /></>,
+  volumeOff: <><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" /><line x1="22" y1="9" x2="16" y2="15" /><line x1="16" y1="9" x2="22" y2="15" /></>,
+  download: <><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></>,
+  more: <><circle cx="5" cy="12" r="1.5" /><circle cx="12" cy="12" r="1.5" /><circle cx="19" cy="12" r="1.5" /></>,
   list: <><line x1="8" y1="6" x2="21" y2="6" /><line x1="8" y1="12" x2="21" y2="12" /><line x1="8" y1="18" x2="21" y2="18" /><line x1="3" y1="6" x2="3.01" y2="6" /><line x1="3" y1="12" x2="3.01" y2="12" /><line x1="3" y1="18" x2="3.01" y2="18" /></>,
 };
 /* Ancien nom des icônes des pages publiques, conservé comme alias de I (même objet). */
@@ -196,6 +200,7 @@ const Btn = React.forwardRef(function Btn({ children, onClick, kind = "primary",
     secondary: { background: T.surface, color: T.primary, border: `1.5px solid ${h ? T.primary : T.primaryLt}` },
     ghost: { background: h ? T.primaryBg : "transparent", color: T.primary, border: "none" },
     danger: { background: h ? T.errorBg : "transparent", color: T.errorDk, border: "none" },
+    dangerSolid: { background: T.errorDk, color: T.surface, border: "none" }, // confirmation d'une suppression (A11Y-17)
     ghostDark: { background: ON.chip, color: ON.text, border: `1px solid ${ON.line}` },
   }[kind] || {};
   const sz = BTN_SIZE[size] || BTN_SIZE.md;
@@ -255,7 +260,7 @@ const Back = ({ onClick, children = "Retour" }) => (
 function Tag({ children, tone = "primary", icon }) {
   const t = TONE[tone] || TONE.primary;
   return (
-    <span style={{ ...TY.tag, color: t.fg, background: t.bg, height: 24, padding: "0 12px", borderRadius: RAD.pill, display: "inline-flex", alignItems: "center", gap: 4, whiteSpace: "nowrap", maxWidth: "100%" }}>
+    <span style={{ ...TY.tag, color: t.fg, background: t.bg, minHeight: 24, padding: "2px 12px", borderRadius: RAD.pill, display: "inline-flex", alignItems: "center", gap: 4, whiteSpace: "normal", maxWidth: "100%" }}>
       {icon && <Icon d={icon} s={12} />}{children}
     </span>
   );
@@ -301,9 +306,10 @@ function Notice({ tone = "info", icon, children, style, role, ...rest }) {
   );
 }
 
-/* Commentaire du coach (référentiel 5.8, cas nommé) : fond primaryBg, filet gauche 3 px primary. */
-const Quote = ({ children, icon = I.note, style }) => (
-  <div style={{ display: "flex", gap: 8, alignItems: "flex-start", background: T.primaryBg, borderLeft: `3px solid ${T.primary}`, borderRadius: RAD.xs, padding: "8px 12px", ...TY.small, color: T.navy, ...style }}>
+/* Commentaire du coach (référentiel 5.8, cas nommé) : fond primaryBg, filet gauche 3 px primary.
+   size="lg" : message d'introduction du coach en tête du rapport (UI-08). */
+const Quote = ({ children, icon = I.note, style, size }) => (
+  <div style={{ display: "flex", gap: 8, alignItems: "flex-start", background: T.primaryBg, borderLeft: `3px solid ${T.primary}`, borderRadius: RAD.xs, padding: size === "lg" ? "16px 20px" : "8px 12px", ...(size === "lg" ? TY.bodyLg : TY.small), color: T.navy, ...style }}>
     {icon && <span style={{ display: "inline-flex", marginTop: 2, color: T.primary }}><Icon d={icon} s={16} /></span>}
     <div style={{ minWidth: 0, flex: 1 }}>{children}</div>
   </div>
@@ -389,11 +395,15 @@ const Input = React.forwardRef(function Input({ id, hint, error, invalid, varian
 const Textarea = ({ id, hint, error, invalid, className, ...rest }) => (
   <textarea id={id} className={["rs-input", className].filter(Boolean).join(" ")} aria-invalid={error || invalid ? "true" : undefined} aria-describedby={describedBy(id, hint, error)} {...rest} />
 );
+/* Liste déroulante : flèche en icône (couleur primary, suit le thème sombre, UI-12). */
 const Select = ({ id, hint, error, options, placeholder, ...rest }) => (
-  <select id={id} className="rs-input" aria-invalid={error ? "true" : undefined} aria-describedby={describedBy(id, hint, error)} {...rest}>
-    {placeholder && <option value="">{placeholder}</option>}
-    {options.map(o => <option key={o} value={o}>{o}</option>)}
-  </select>
+  <div style={{ position: "relative" }}>
+    <select id={id} className="rs-input" aria-invalid={error ? "true" : undefined} aria-describedby={describedBy(id, hint, error)} {...rest}>
+      {placeholder && <option value="">{placeholder}</option>}
+      {options.map(o => <option key={o} value={o}>{o}</option>)}
+    </select>
+    <span aria-hidden style={{ position: "absolute", right: 16, top: 0, bottom: 0, display: "flex", alignItems: "center", pointerEvents: "none", color: T.primary }}><Icon d={I.chevron} s={16} /></span>
+  </div>
 );
 const Checkbox = ({ id, checked, onChange, children, error }) => (
   <div style={{ display: "grid", gap: 8 }}>
@@ -490,6 +500,9 @@ function Modal({ open = true, close, title, sub, icon, head = "none", width = "f
     if (!open) return;
     const prevFocus = document.activeElement;
     const unlock = lockScroll();
+    /* Fond inerte (A11Y-16) : page et en-tête ne reçoivent ni clic ni focus tant que la fenêtre est ouverte. */
+    const behind = [...document.querySelectorAll(".rp-view, header.rp-header")].filter(el => !el.inert);
+    behind.forEach(el => { el.inert = true; });
     const focusables = () => [...(panel.current?.querySelectorAll("a[href],button:not([disabled]),input,textarea,select,[tabindex]:not([tabindex='-1'])") || [])];
     const first = focusables().find(el => !el.classList.contains("rp-modal-close")) || focusables()[0];
     first?.focus();
@@ -503,7 +516,7 @@ function Modal({ open = true, close, title, sub, icon, head = "none", width = "f
       }
     };
     document.addEventListener("keydown", key);
-    return () => { document.removeEventListener("keydown", key); unlock(); prevFocus?.focus?.(); };
+    return () => { document.removeEventListener("keydown", key); behind.forEach(el => { el.inert = false; }); unlock(); prevFocus?.focus?.(); };
   }, [open]); // eslint-disable-line
   if (!open) return null;
   const dark = head === "grad";
@@ -533,6 +546,73 @@ function Modal({ open = true, close, title, sub, icon, head = "none", width = "f
       </div>
     </div>,
     document.body
+  );
+}
+
+/* Confirmation d'une action destructive (A11Y-17) : fenêtre du site, bouton destructif plein, à la place de window.confirm. */
+function ConfirmDialog({ title, children, confirmLabel = "Supprimer", onConfirm, onCancel }) {
+  const [busy, setBusy] = useState(false);
+  return (
+    <Modal close={onCancel} title={title} footer={
+      <div className="rp-actions" style={{ display: "flex", justifyContent: "flex-end", gap: GAP.actions, flexWrap: "wrap" }}>
+        <Btn kind="secondary" onClick={onCancel}>Annuler</Btn>
+        <Btn kind="dangerSolid" icon={I.trash} disabled={busy} onClick={async () => { setBusy(true); try { await onConfirm(); } finally { setBusy(false); } }}>{confirmLabel}</Btn>
+      </div>}>
+      <div style={{ ...TY.bodyLg, color: T.body, display: "grid", gap: 12 }}>{children}</div>
+    </Modal>
+  );
+}
+
+/* Groupe de choix exclusifs (A11Y-10, motif ARIA radiogroup) : un seul arrêt de tabulation (le choix courant, sinon le
+   premier), flèches, Début et Fin pour se déplacer et choisir. Les enfants sont des Chip ou Toggle de rôle radio. */
+function RadioGroup({ children, style, className, ...rest }) {
+  const ref = useRef(null);
+  const radios = () => [...(ref.current?.querySelectorAll('[role="radio"]:not([disabled])') || [])];
+  useEffect(() => {
+    const rs = radios();
+    const cur = rs.find(r => r.getAttribute("aria-checked") === "true") || rs[0];
+    rs.forEach(r => { r.tabIndex = r === cur ? 0 : -1; });
+  });
+  const onKeyDown = e => {
+    const rs = radios(), i = rs.indexOf(document.activeElement);
+    if (i < 0) return;
+    const to = { ArrowRight: i + 1, ArrowDown: i + 1, ArrowLeft: i - 1, ArrowUp: i - 1, Home: 0, End: rs.length - 1 }[e.key];
+    if (to === undefined) return;
+    e.preventDefault();
+    const r = rs[(to + rs.length) % rs.length];
+    r.focus(); r.click();
+  };
+  return <div ref={ref} role="radiogroup" className={className} style={style} onKeyDown={onKeyDown} {...rest}>{children}</div>;
+}
+
+/* Menu d'actions secondaires (UI-02) : bouton « Autres actions » qui ouvre une liste de boutons ; Échap ou un clic
+   ailleurs ferme, le focus revient au bouton. items : [{ label, icon, onClick, danger }]. */
+function Menu({ label = "Autres actions", items }) {
+  const [open, setOpen] = useState(false);
+  const wrapRef = useRef(null), btn = useRef(null);
+  const id = useId().replace(/:/g, "");
+  useEffect(() => {
+    if (!open) return;
+    const out = e => { if (!wrapRef.current?.contains(e.target)) setOpen(false); };
+    const key = e => { if (e.key === "Escape") { setOpen(false); btn.current?.focus(); } };
+    document.addEventListener("pointerdown", out); document.addEventListener("keydown", key);
+    requestAnimationFrame(() => wrapRef.current?.querySelector(".rp-menuitem")?.focus());
+    return () => { document.removeEventListener("pointerdown", out); document.removeEventListener("keydown", key); };
+  }, [open]);
+  return (
+    <div ref={wrapRef} style={{ position: "relative", display: "inline-block" }}>
+      <Btn ref={btn} kind="ghost" size="sm" icon={I.more} aria-expanded={open} aria-controls={id} onClick={() => setOpen(o => !o)}>{label}</Btn>
+      {open && (
+        <div id={id} style={{ position: "absolute", left: 0, bottom: "calc(100% + 8px)", zIndex: 30, minWidth: 240, background: T.surface, border: `1px solid ${T.line}`, borderRadius: RAD.md, boxShadow: SH.lg, padding: 4, display: "grid", gap: 2 }}>
+          {items.filter(Boolean).map(it => (
+            <Bare key={it.label} className="rp-menuitem" onClick={() => { setOpen(false); btn.current?.focus(); it.onClick(); }}
+              style={{ display: "flex", alignItems: "center", gap: 12, minHeight: 44, padding: "0 12px", borderRadius: RAD.sm, ...TY.bodyStrong, color: it.danger ? T.errorDk : T.navy, textAlign: "left" }}>
+              {it.icon && <Icon d={it.icon} s={16} />}{it.label}
+            </Bare>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -691,6 +771,9 @@ const GStyle = () => (
     /* Focus clavier (référentiel 1.6) : contour 2 px primary, décalage 2 px ; blanc sur fond sombre */
     a:focus-visible,button:focus-visible,summary:focus-visible,[role=button]:focus-visible,[role=tab]:focus-visible,[role=checkbox]:focus-visible,[role=radio]:focus-visible,[role=option]:focus-visible,[tabindex]:focus-visible{outline:2px solid ${T.primary};outline-offset:2px}
     .rs-on-dark :focus-visible{outline-color:${ON.text}}
+    .rp-skip{position:fixed;left:16px;top:-80px;z-index:${Z.modal + 10};background:${T.surface};color:${T.primary};padding:12px 16px;border-radius:${RAD.md}px;box-shadow:${SH.lg};font-weight:700;text-decoration:underline}
+    .rp-skip:focus{top:12px}
+    main h1[tabindex="-1"]:focus:not(:focus-visible),main[tabindex="-1"]:focus:not(:focus-visible){outline:none}
     .rp-sr,.rs-sr{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
     .rp-show-m{display:none}
     .rp-dots{display:inline-flex;gap:4px}
@@ -715,7 +798,7 @@ const GStyle = () => (
     @keyframes rpAiBorder{from{background-position:0 0,100% 50%}to{background-position:0 0,0 50%}}
     .rp-ai-fab{position:fixed;right:16px;bottom:16px;z-index:${Z.nav};width:56px;height:56px;border-radius:50%;border:none;cursor:pointer;display:grid;place-items:center;color:${T.surface};background:${GRAD_AI};box-shadow:${SH.btn.ai[0]};transition:box-shadow ${MO.base} ${MO.ease},transform ${MO.base} ${MO.ease}}
     .rp-ai-fab:hover{box-shadow:${SH.btn.ai[1]};transform:translateY(-1px)}
-    .rp-ai-bubble{position:fixed;right:16px;bottom:148px;z-index:${Z.nav};max-width:min(300px,calc(100vw - 32px));display:flex;align-items:center;gap:4px;padding:4px 4px 4px 16px;border:2px solid transparent;border-radius:${RAD.md}px;background:linear-gradient(${T.surface},${T.surface}) padding-box,${GRAD_AI_BORDER} border-box;box-shadow:${SH.lg};animation:rpAiIn ${MO.enter} ${MO.ease} both}
+    .rp-ai-bubble{position:fixed;right:84px;bottom:16px;z-index:${Z.nav};max-width:min(240px,calc(100vw - 100px));display:flex;align-items:center;gap:4px;padding:4px 4px 4px 16px;border:2px solid transparent;border-radius:${RAD.md}px;background:linear-gradient(${T.surface},${T.surface}) padding-box,${GRAD_AI_BORDER} border-box;box-shadow:${SH.lg};animation:rpAiIn ${MO.enter} ${MO.ease} both}
     .rp-has-fab{padding-bottom:96px!important}
     /* Grand écran : le contenu se décale pour rester visible à côté du panneau ouvert (insertion en un clic) */
     @media (min-width:1180px){html.rp-asst-open .rp-view{padding-right:432px}}
@@ -823,7 +906,7 @@ const GStyle = () => (
     .rs-input-icon{padding-left:40px}
     .rs-input-code{height:56px;font:${F("code")};letter-spacing:.25em;text-align:center;text-transform:uppercase}
     textarea.rs-input{height:auto;min-height:96px;padding:12px 16px;resize:vertical}
-    select.rs-input{appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23386097' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 16px center;padding-right:40px}
+    select.rs-input{appearance:none;-webkit-appearance:none;padding-right:40px}
     .rs-input::placeholder{color:${T.muted}}
     .rs-input:focus{outline:none;border-color:${T.primary}!important;box-shadow:${SH.ring}!important}
     .rs-input[aria-invalid=true]{border-color:${T.errorDk}}
@@ -1049,5 +1132,5 @@ const GStyle = () => (
 export {
   ORG_NAME, lockScroll, RepetMark, RepetWord, RepetLogo, OrgLogo, Halo, img, Icon, I, SI, Txt, Eyebrow, Bare, Btn, IconBtn, Fab, Link, Back,
   Tag, Card, Notice, Quote, IconTile, Empty, Confirm, ConfirmMark, TimeChip, fmtTime, Field, Input, Textarea, Select, Checkbox, CheckTile,
-  Chip, Toggle, Rail, GradHead, Modal, BrandLoader, Section, PageHero, Accordion, Tabs, ScrollProgress, GStyle,
+  Chip, Toggle, Rail, GradHead, Modal, ConfirmDialog, RadioGroup, Menu, BrandLoader, Section, PageHero, Accordion, Tabs, ScrollProgress, GStyle,
 };

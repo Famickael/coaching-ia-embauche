@@ -1,5 +1,5 @@
 import React, { useRef, useState } from "react";
-import { T, RAD, SH, GAP, Btn, Icon, I, TY, W, PageHero, IconTile, Field, Input, Textarea, Select, Link, Toggle, Card, Tag, Txt } from "./ui.jsx";
+import { T, RAD, SH, GAP, Btn, Icon, I, TY, W, PageHero, IconTile, Field, Input, Textarea, Select, Link, Toggle, Card, Tag, Txt, RadioGroup } from "./ui.jsx";
 import { PHRASES } from "./content/legal.js";
 
 /* Page « Demander une prise en main » : une personne demande une présentation et une première
@@ -76,9 +76,9 @@ export default function Demo({ go }) {
             <Field id="demo-prenom" label="Prénom" error={err.prenom}><Input id="demo-prenom" autoComplete="given-name" value={f.prenom} onChange={ev("prenom")} error={err.prenom} /></Field>
             <div style={{ display: "grid", gap: 8 }}>
               <span id="demo-moyen" style={{ ...TY.label, color: T.navy }}>Comment préférez-vous être contacté ?</span>
-              <div role="radiogroup" aria-labelledby="demo-moyen" style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              <RadioGroup aria-labelledby="demo-moyen" style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                 {MEANS.map(([k, l]) => <Toggle key={k} on={f.moyen === k} onClick={() => { set("moyen")(k); setErr(x => ({ ...x, contact: undefined })); }}>{l}</Toggle>)}
-              </div>
+              </RadioGroup>
             </div>
             {f.moyen !== "coach" ? (
               <Field id="demo-contact" label={contactLabel} error={err.contact}>

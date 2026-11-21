@@ -1,4 +1,5 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useFocusOnChange, focusMainHeading } from "./lib/hooks.js";
 import { flushSync, createPortal } from "react-dom";
 import { T, RAD, SH, GAP, W, Z, TY, PAD, HEADER_H, PageHero, BrandLoader, RepetLogo, Tag, Btn, Bare, IconBtn, Link, Card, Field, Input, Txt, Icon, I, Notice, Modal, GStyle, ScrollProgress, lockScroll } from "./ui.jsx";
 import { dismissLoader } from "./Loader.jsx";
@@ -107,7 +108,18 @@ export default function App() {
     return () => window.removeEventListener("hashchange", on);
   }, []);
   useEffect(() => { if (route.role === "coach" && s.counselor) setLastSpace({ role: "coach" }); }, [route.role, s.counselor]);
-  useEffect(() => { document.title = `${titleOf(route, s.counselor)} · La Répét'`; }, [route, s.counselor]);
+  /* Titre de la route (effet de mise en page) ; chaque écran l'affine ensuite par useTitle (A11Y-06). */
+  useLayoutEffect(() => { document.title = `${titleOf(route, s.counselor)} · La Répét'`; }, [route, s.counselor]);
+  /* Changement de page (A11Y-02) : focus sur le titre, annonce discrète du titre de la page. */
+  const routeKey = `${route.role}/${route.section || ""}/${route.slug || ""}/${route.cat || ""}/${route.page || ""}/${route.code || ""}`;
+  useFocusOnChange(routeKey);
+  const [announce, setAnnounce] = useState("");
+  const firstRoute = useRef(true);
+  useEffect(() => {
+    if (firstRoute.current) { firstRoute.current = false; return; }
+    const t = setTimeout(() => setAnnounce(document.title.replace(/ · La Répét'$/, "")), 400);
+    return () => clearTimeout(t);
+  }, [routeKey]);
 
   const onCode = code => {
     if (code) { setLastSpace({ role: "benef", code }); if (location.hash !== `#/s/${code}`) history.replaceState(null, "", `#/s/${code}`); }
@@ -117,6 +129,9 @@ export default function App() {
   return (
     <div className="rp-app" style={{ background: T.bg, ...TY.body, color: T.navy, display: "flex", flexDirection: "column" }}>
       <GStyle />
+      {/* Lien d'évitement (A11Y-01) : visible au focus ; ne touche pas à l'ancre de routage */}
+      <a href="#contenu" className="rp-skip" onClick={e => { e.preventDefault(); focusMainHeading(); document.querySelector("main")?.scrollIntoView(); }}>Aller au contenu</a>
+      <div className="rp-sr" aria-live="polite" role="status">{announce}</div>
       <Nav route={route} s={s} />
       {/* Stockage plein ou indisponible (ARC-01) : jamais de perte silencieuse */}
       {getStorageError() && (
@@ -327,7 +342,7 @@ function AccountMenu({ route, s }) {
         <Modal close={() => { setConfirm(false); btn.current?.focus(); }} title="Retirer mon accord et tout supprimer ?" footer={
           <div className="rp-actions" style={{ display: "flex", justifyContent: "flex-end", gap: GAP.actions, flexWrap: "wrap" }}>
             <Btn kind="secondary" onClick={() => { setConfirm(false); btn.current?.focus(); }}>Annuler</Btn>
-            <Btn kind="danger" style={{ background: T.errorDk, color: T.surface }} icon={I.trash} onClick={async () => { await withdrawConsent(code); setConfirm(false); }}>Tout supprimer</Btn>
+            <Btn kind="dangerSolid" icon={I.trash} onClick={async () => { await withdrawConsent(code); setConfirm(false); }}>Tout supprimer</Btn>
           </div>}>
           <div style={{ display: "grid", gap: 12 }}>
             <Txt v="bodyLg" color={T.body}>Si vous retirez votre accord, vos réponses et les rapports de votre coach sont effacés de cet appareil. C'est définitif.</Txt>
@@ -346,26 +361,21 @@ function Espace() {
   const [email, setEmail] = useState(TRIAL_LOGIN.email);
   const [pwd, setPwd] = useState(TRIAL_LOGIN.password);
   const [forgot, setForgot] = useState(false);
-  const [busy, setBusy] = useState("");
   const ok = /.+@.+\..+/.test(email) && pwd.length >= 4;
-  const WAIT = 700; // durée minimale courte du logo d'attente, pour ne pas clignoter
   const submit = e => {
     e.preventDefault();
     const p = findParcours(code);
     if (!p) return setErr("Ce code ne fonctionne pas. Vérifiez les 6 caractères, ou demandez-le à votre coach.");
-    setBusy("Ouverture de votre espace…");
-    setTimeout(() => go(`#/s/${p.code}`), WAIT);
+    go(`#/s/${p.code}`); // pas d'attente artificielle (UI-10)
   };
   const login = e => {
     e.preventDefault();
     if (!ok) return;
-    setBusy("Connexion à votre espace…");
-    setTimeout(() => { setCounselor(TRIAL_LOGIN.name); setLastSpace({ role: "coach" }); if (location.hash !== "#/coach") go("#/coach"); }, WAIT);
+    setCounselor(TRIAL_LOGIN.name); setLastSpace({ role: "coach" }); if (location.hash !== "#/coach") go("#/coach");
   };
   const card = { display: "flex", flexDirection: "column", gap: GAP.grid, height: "100%" };
   return (
     <main>
-      {busy && <BrandLoader full label={busy} />}
       <PageHero eyebrow="Accès" title="Mon espace" lead="Vous vous entraînez, ou vous êtes coach ?" />
       <div className="rs-pad" style={{ maxWidth: W.page, margin: "0 auto", padding: "48px 24px 0" }}>
         <div className="rp-stack rp-equal" style={{ alignItems: "stretch", maxWidth: W.wide }}>

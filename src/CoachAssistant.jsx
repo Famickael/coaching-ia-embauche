@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { T, TY, RAD, GAP, Btn, Chip, Textarea, Fab, Txt, Notice, I } from "./ui.jsx";
+import { T, TY, RAD, GAP, Btn, Chip, Textarea, Fab, Txt, Notice, I, RadioGroup } from "./ui.jsx";
 import { DockPanel } from "./Assistant.jsx";
 import { coachSuggest, MODES, DIM_LABELS } from "./lib/coachAssistant.js";
 import { fmt } from "./lib/analysis.js";
@@ -66,16 +66,16 @@ function CoachPanel({ prenom, question, poste, dims, intro, comments, getTime, o
   return (<>
     <div style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: "16px 16px 8px", display: "grid", gap: 16, alignContent: "start" }}>
       <Txt v="small" color={T.body}>Des propositions à relire et à adapter. Elles s'insèrent dans votre brouillon : rien n'est envoyé à {prenom || "la personne"} sans vous.</Txt>
-      <div role="radiogroup" aria-label="Ce que vous voulez rédiger" style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+      <RadioGroup aria-label="Ce que vous voulez rédiger" style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
         {MODES.map(([id, l]) => <Chip key={id} role="radio" on={mode === id} onClick={() => { setMode(id); setPage(0); }}>{l}</Chip>)}
-      </div>
+      </RadioGroup>
 
       {(mode === "tips" || mode === "positive") && usable.length > 0 && (
         <div style={{ display: "grid", gap: 8 }}>
           <div id="coach-asst-dim" style={{ ...TY.label, color: T.navy }}>Observation de la réponse</div>
-          <div role="radiogroup" aria-labelledby="coach-asst-dim" style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+          <RadioGroup aria-labelledby="coach-asst-dim" style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
             {usable.map(d => <Chip key={d.id} role="radio" tone="ai" on={dimId === d.id} onClick={() => { setDimId(d.id); setPage(0); }}>{d.titre}</Chip>)}
-          </div>
+          </RadioGroup>
         </div>
       )}
 

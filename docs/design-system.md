@@ -312,6 +312,7 @@ Les ombres colorées des boutons sont définies dans `Btn` et nulle part ailleur
 | `secondary` | Fond blanc, bordure 1,5 px `primaryLt`, texte `primary` | Toute autre action |
 | `ghost` | Transparent, texte `primary` | Action tertiaire, utilitaire (imprimer, copier) |
 | `danger` | Transparent, texte `errorDk` | Suppression, retrait du consentement. Fond plein `errorDk` uniquement dans la fenêtre de confirmation |
+| `dangerSolid` | Fond plein `errorDk`, texte `surface` | Bouton de confirmation d'une suppression, dans `ConfirmDialog` seulement (A11Y-17) |
 | `white` | Fond blanc, texte `primary` | Action principale sur `GRAD` |
 | `ghostDark` | Fond `ON.chip`, bordure `ON.line`, texte blanc | Action secondaire sur `GRAD` ou sur la vidéo |
 
@@ -731,5 +732,8 @@ Dégradés : `GRAD` et `GRAD_AI` recomposés selon 1.3, `GRAD_NIGHT` ajouté, `G
 | 2026-11-21 | Responsive : défilement réellement bloqué sous le menu et les fenêtres (`html.rp-lock`, `html` portant `overflow-y:scroll`), fond inerte et boutons flottants masqués sous le menu, en-tête resserré sous 420 et 360 px, texte des boutons d'en-tête plafonné à 115 % sur mobile, menu repliable jusqu'à 1279 px quand le texte est agrandi ou espacé (`data-textsize`), mots longs coupés dans les titres, cibles de 44 px sur mobile et écrans tactiles (puces, onglets, sommaire, fil d'Ariane, sources, bulle de l'assistant, logo) | Demande du propriétaire, audit à 11 largeurs |
 | 2026-11-21 | Assistant de rédaction du rapport côté coach (5.9 quater), panneau commun `DockPanel` | Demande du propriétaire |
 | 2026-11-21 | « Mon espace » : deux formulaires indépendants, donc une action `objective` chacun (« Ouvrir mon espace », « Se connecter ») ; étiquettes « Je m'entraîne » et « Coach » en `primary` (le ton `appui` reste réservé à « Point d'appui ») | Audit UI-04, RED-03 |
+
+| 2026-11-21 | Nouveaux composants de `ui.jsx` : `ConfirmDialog` (suppression confirmée, bouton `dangerSolid`), `RadioGroup` (motif ARIA : un arrêt de tabulation, flèches), `Menu` (« Autres actions »), `Quote size="lg"` (message d'introduction du coach), icônes `volume`, `volumeOff`, `download`, `more` ; `Tag` en hauteur minimale 24 et texte qui passe à la ligne ; flèche du `Select` en icône `primary` | Audit A11Y-10, A11Y-17, UI-02, UI-08, UI-11, UI-12, UI-15 |
+| 2026-11-21 | Bulle d'invitation de l'assistant à gauche du bouton flottant, 240 px au plus, jamais sur la relecture vidéo ; mots éteints de la phrase d'accueil en `lineStrong` (3:1 sur `bg`, texte de 32 px et plus) | Audit UI-07, A11Y-12 |
 
 Ajouter une ligne à chaque évolution d'une règle ou d'une échelle.
