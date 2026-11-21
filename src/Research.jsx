@@ -87,9 +87,9 @@ export default function Research({ go, openSpace }) {
           </div>
         </Section>
 
-        <Section eyebrow="Pour les organismes" title="Évaluer l'outil chez vous">
+        <Section eyebrow="Pour les commanditaires" title="Rendre compte sans surveiller">
           <p style={{ ...TY.bodyLg, color: T.body, margin: 0, maxWidth: W.read }}>
-            L'espace coach donne des chiffres d'ensemble, jamais une mesure individuelle : réponses à relire, rapports envoyés, part des personnes qui se réentraînent, délai moyen de relecture. Avec les retours des coachs et des personnes accompagnées, ils permettent de suivre l'usage et d'ajuster l'accompagnement, sans surveiller personne.
+            L'espace coach donne des chiffres d'ensemble, jamais une mesure individuelle : réponses à relire, rapports envoyés, part des personnes qui se réentraînent, délai moyen de relecture. Avec les retours des coachs et des personnes accompagnées, ils nous permettent d'ajuster l'accompagnement et d'en rendre compte à nos commanditaires, sans surveiller personne.
           </p>
         </Section>
 

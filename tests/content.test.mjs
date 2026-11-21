@@ -1,6 +1,6 @@
 /* Contenus et formats (sans navigateur) : node tests/content.test.mjs */
 import assert from "assert/strict";
-import { fill, fillPhrase, fullInterview, situationFor, QUESTIONS, WARMUP_PHRASES } from "../src/lib/questions.js";
+import { fill, fillPhrase, fullInterview, situationFor, QUESTIONS, WARMUP_PHRASES, questionsFor, topicsFor, questionsForTopics, interviewType } from "../src/lib/questions.js";
 import { searchJobs } from "../src/lib/jobs.js";
 import { CATEGORIES } from "../src/content/categories.js";
 import { readFileSync, readdirSync, existsSync } from "fs";
@@ -17,7 +17,7 @@ assert.equal(fill("Pourquoi ce poste de {poste} vous intéresse-t-il ?", ""), "P
 assert.equal(fill("Pourquoi ce poste de {poste} vous intéresse-t-il ?", "serveur(se)"), "Pourquoi ce poste de serveur vous intéresse-t-il ?");
 assert.equal(fillPoste("Pour un poste de {poste}, préparez-vous.", "", "le poste visé"), "Pour un poste, préparez-vous.");
 for (const job of ["agent d'accueil", "électricien", "aide-soignant(e)", "", "serveur(se)"]) {
-  const all = [...QUESTIONS.map(q => fill(q.text, job)), ...WARMUP_PHRASES.map(t => fillPhrase(t, { poste: job, prenom: "Lou" })), ...fullInterview(job).map(x => x.text)];
+  const all = [...QUESTIONS.map(q => fill(q.text, job)), ...WARMUP_PHRASES.map(t => fillPhrase(t, { poste: job, prenom: "Lou" })), ...fullInterview(job).map(x => x.text), ...fullInterview(job, "mobilite").map(x => x.text)];
   for (const t of all) {
     assert.ok(!/\bde [aeiouyhàâéèêîôû]/i.test(t.replace(/de (?:la|le|les)\b/gi, "")), `élision manquante : ${t}`);
     assert.ok(!/ce poste de ce poste|\{poste\}|\{prenom\}/.test(t), `gabarit mal rempli : ${t}`);
@@ -63,3 +63,22 @@ for (const f of readdirSync(dir).filter(f => f.endsWith(".md"))) {
   assert.ok(img && existsSync(new URL(`../public/img/${img}`, import.meta.url)), `${f} : image absente ${img}`);
 }
 console.log("content.test : métiers et articles OK");
+
+/* Repositionnement : type d'entretien « mobilité ou évolution » (collaborateurs d'entreprise), sans casser l'embauche. */
+assert.equal(interviewType({}), "embauche");
+assert.equal(interviewType({ type: "mobilite" }), "mobilite");
+const emb = questionsFor("embauche").map(q => q.id), mob = questionsFor("mobilite").map(q => q.id);
+assert.ok(emb.includes("motivation") && !emb.some(id => id.startsWith("mob-")), "questions d'embauche");
+assert.ok(mob[0].startsWith("mob-") && !mob.includes("motivation") && mob.includes("presentation"), "questions de mobilité");
+assert.equal(fullInterview("comptable", "mobilite").length, 7);
+assert.notDeepEqual(fullInterview("comptable", "mobilite"), fullInterview("comptable"));
+for (const type of ["embauche", "mobilite"]) {
+  const ids = new Set(questionsFor(type).map(q => q.id));
+  for (const t of topicsFor(type)) for (const id of questionsForTopics([t.id])) assert.ok(ids.has(id), `${type} : le sujet ${t.id} renvoie à une question absente (${id})`);
+}
+/* Le fournisseur du modèle d'IA n'est jamais nommé dans le site (on dit « assistant IA »). */
+const walk = d => readdirSync(d, { withFileTypes: true }).flatMap(e => e.isDirectory() ? walk(`${d}/${e.name}`) : [`${d}/${e.name}`]);
+for (const f of walk(new URL("../src", import.meta.url).pathname).filter(f => /\.(jsx?|md)$/.test(f))) {
+  assert.ok(!/\bClaude\b|Anthropic/.test(readFileSync(f, "utf8")), `${f} nomme le fournisseur du modèle d'IA`);
+}
+console.log("content.test : types d'entretien et fournisseur d'IA OK");

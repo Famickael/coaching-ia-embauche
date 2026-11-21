@@ -16,7 +16,7 @@ export function Parcours({ s, p, back, review }) {
         <div style={stack(4)}>
           <div style={{ display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}><h1 className="ty-h2" style={{ ...TY.h2, color: T.navy, margin: 0 }}>{p.prenom}</h1><span style={{ ...TY.mono, color: T.muted }}>{p.code}</span></div>
           <div style={{ ...TY.small, color: T.body }}>
-            {p.poste || "Poste non précisé"} · {p.consent ? `accord donné le ${dateFr(p.consent.at)}${p.consent.ai ? "" : ", sans retour de l'assistant"}` : p.consentWithdrawnAt ? `accord retiré le ${dateFr(p.consentWithdrawnAt)}` : p.openedAt ? "espace ouvert, accord pas encore donné" : "espace pas encore ouvert"}
+            {p.poste || "Poste non précisé"}{p.type === "mobilite" ? " · mobilité ou évolution" : ""} · {p.consent ? `accord donné le ${dateFr(p.consent.at)}${p.consent.ai ? "" : ", sans retour de l'assistant"}` : p.consentWithdrawnAt ? `accord retiré le ${dateFr(p.consentWithdrawnAt)}` : p.openedAt ? "espace ouvert, accord pas encore donné" : "espace pas encore ouvert"}
           </div>
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>

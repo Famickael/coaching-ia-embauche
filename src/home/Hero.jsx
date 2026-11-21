@@ -20,9 +20,9 @@ export function Hero({ go }) {
               <Tag tone="primary">Sans note, sans jugement</Tag>
             </div>
             <h1 className="ty-display" style={{ ...TY.display, color: T.primary, margin: 0 }}>
-              <span className="rs-sr">Répétez votre entretien d'embauche, {SCENES.map(x => x.ending.replace(".", "")).join(", ")}.</span>
+              <span className="rs-sr">Répétez votre entretien, {SCENES.map(x => x.ending.replace(".", "")).join(", ")}.</span>
               <span aria-hidden>
-                <span style={{ color: T.navy }}>Répétez votre entretien d'embauche,</span>
+                <span style={{ color: T.navy }}>Répétez votre entretien,</span>
                 <span className="rs-rot">
                   {SCENES.map(({ ending: e }, i) => (
                     <span key={e} className={i === w ? "on" : ""} style={{ background: GRAD_ACCROCHE, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>{e}</span>
@@ -31,7 +31,7 @@ export function Hero({ go }) {
               </span>
             </h1>
             <p className="ty-lead" style={{ ...TY.lead, color: T.body, maxWidth: 520, margin: 0 }}>
-              Vous répondez à des questions d'entretien, seul, autant de fois que vous voulez. Un assistant IA <strong style={{ color: T.navy }}>décrit votre réponse, sans la noter</strong>. Vous choisissez ce que vous envoyez à votre coach.
+              Entretien d'embauche, de mobilité ou professionnel : vous répondez à des questions, seul, autant de fois que vous voulez. Un assistant IA <strong style={{ color: T.navy }}>décrit votre réponse, sans la noter</strong>. Vous choisissez ce que vous envoyez à votre coach.
             </p>
             <div className="rp-wide-m" style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
               <Btn kind="objective" size="lg" onClick={() => go("#/espace")} iconRight={I.arrow}>Lancer ma première répétition</Btn>

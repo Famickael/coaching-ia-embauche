@@ -1,4 +1,4 @@
-/* Pages publiques : navigation, menu mobile, strate épinglée, FAQ, ressources, formulaire de démo.
+/* Pages publiques : navigation, menu mobile, strate épinglée, FAQ, ressources, formulaire de contact.
    Échoue en cas d'erreur JavaScript, de débordement horizontal ou d'élément attendu absent. */
 const { chromium } = require("playwright");
 const fs = require("fs");
@@ -52,7 +52,7 @@ async function run(b, vw, vh, opts = {}) {
   // Accueil
   await visit("#/", "accueil");
   check(await p.locator("#rp-loader").count() === 0, `[${tag}] écran de chargement encore présent`);
-  check(await p.getByRole("heading", { level: 1 }).first().textContent().then(t => t.includes("Répétez votre entretien d'embauche")), `[${tag}] titre du héros absent`);
+  check(await p.getByRole("heading", { level: 1 }).first().textContent().then(t => t.includes("Répétez votre entretien")), `[${tag}] titre du héros absent`);
   await p.getByRole("button", { name: "Lancer ma première répétition" }).waitFor();
   await shot("01-accueil", false);
   const dot = p.getByRole("button", { name: /Scène 2 sur 4/ });
@@ -114,18 +114,24 @@ async function run(b, vw, vh, opts = {}) {
     await visit("#/", "nav");
     await p.getByRole("navigation", { name: "Navigation principale" }).getByRole("link", { name: "Ressources" }).click(); await p.waitForTimeout(300);
     check(p.url().endsWith("#/ressources"), `[${tag}] lien Ressources de l'en-tête`);
-    check(await p.getByRole("button", { name: "Demander une prise en main" }).first().isVisible(), `[${tag}] bouton « Demander une prise en main » absent`);
+    check(await p.getByRole("button", { name: "Nous contacter" }).first().isVisible(), `[${tag}] bouton « Nous contacter » absent`);
   }
 
   // Redirection de l'ancienne adresse
   await visit("#/fonctionnement");
   check(p.url().endsWith("#/solutions"), `[${tag}] #/fonctionnement ne redirige pas vers #/solutions`);
   await shot("06-solutions");
-  const tab = p.getByRole("tab", { name: "DSI" });
+  const tab = p.getByRole("tab", { name: "Entreprises" });
   await tab.click();
-  check(await tab.getAttribute("aria-selected") === "true", `[${tag}] onglet DSI non sélectionné`);
+  check(await tab.getAttribute("aria-selected") === "true", `[${tag}] onglet Entreprises non sélectionné`);
   await p.keyboard.press("ArrowRight");
-  check(await p.getByRole("tab", { name: "Juridique et DPO" }).getAttribute("aria-selected") === "true", `[${tag}] onglets : la flèche droite ne change pas d'onglet`);
+  check(await p.getByRole("tab", { name: "Cadre et données" }).getAttribute("aria-selected") === "true", `[${tag}] onglets : la flèche droite ne change pas d'onglet`);
+  /* Repositionnement : publics de l'organisme, aucun discours de logiciel vendu. */
+  for (const id of ["demandeurs-emploi", "collaborateurs", "coachs", "commanditaires"]) check(await p.locator(`#${id}`).count() === 1, `[${tag}] Solutions : section #${id} absente`);
+  const solText = await p.locator("main").innerText();
+  check(!/licence|abonnement|tarif|équipez votre structure|Claude|Anthropic/i.test(solText), `[${tag}] Solutions : discours de logiciel ou nom du fournisseur d'IA`);
+  await visit("#/solutions/organismes");
+  check(p.url().endsWith("#/solutions/commanditaires"), `[${tag}] #/solutions/organismes ne redirige pas vers #/solutions/commanditaires`);
 
   // À propos et FAQ
   await visit("#/a-propos"); await shot("07-a-propos");
@@ -175,22 +181,23 @@ async function run(b, vw, vh, opts = {}) {
   await visit("#/ressources/inexistant");
   check(await p.getByRole("heading", { name: "Cette ressource est introuvable" }).count() === 1, `[${tag}] article inconnu : message absent`);
 
-  // Demander une prise en main (formulaire destiné aux personnes accompagnées)
+  // Nous contacter (formulaire destiné aux commanditaires : acteurs publics, entreprises)
   await visit("#/demo"); await shot("13-demo");
   check(await p.getByRole("checkbox").count() === 0, `[${tag}] formulaire : aucune case de recontact ne doit être obligatoire`);
-  check(await p.getByLabel(/Fonction/).count() === 0, `[${tag}] formulaire : le champ « Fonction » (organismes) doit être retiré`);
-  await p.getByRole("button", { name: "Préparer ma demande" }).click();
+  check(await p.getByRole("radio", { name: "Acteur public" }).count() === 1 && await p.getByRole("radio", { name: "Entreprise" }).count() === 1, `[${tag}] formulaire : type de structure absent`);
+  await p.getByRole("button", { name: "Envoyer ma demande" }).click();
   check(await p.locator("[role=alert]").count() >= 3, `[${tag}] formulaire : erreurs non signalées`);
   await shot("13b-demo-erreurs", false);
-  await p.getByLabel("Prénom").fill("Alex");
-  await p.getByLabel("Votre numéro de téléphone").fill("06 12 34 56 78");
-  await p.getByLabel("Vos disponibilités").selectOption({ index: 1 });
-  await p.getByRole("button", { name: "Préparer ma demande" }).click(); await p.waitForTimeout(300);
+  await p.getByLabel("Votre nom", { exact: true }).fill("Alex Martin");
+  await p.getByLabel("Nom de votre structure").fill("Structure d'exemple");
+  await p.getByLabel("Adresse électronique").fill("alex.martin@exemple.fr");
+  await p.getByLabel("Public accompagné").selectOption({ index: 1 });
+  await p.getByRole("button", { name: "Envoyer ma demande" }).click(); await p.waitForTimeout(300);
   /* Site construit sans VITE_CONTACT_EMAIL (BUG-01) : rien n'est envoyé, l'écran le dit et propose de copier la demande. */
   check(await p.getByRole("heading", { name: /votre demande est prête/ }).count() === 1, `[${tag}] formulaire : écran de confirmation absent`);
   const doneText = await p.locator("main").innerText();
   check(!/recontact|enregistrée|est envoyée/i.test(doneText), `[${tag}] formulaire : la confirmation ne doit pas annoncer un envoi qui n'a pas eu lieu`);
-  check(/transmettez-le à votre coach/.test(doneText), `[${tag}] formulaire : consigne de copie absente`);
+  check(/envoyez-le-nous/.test(doneText), `[${tag}] formulaire : consigne de copie absente`);
   check(await p.getByRole("button", { name: "Copier ma demande" }).count() === 1, `[${tag}] formulaire : bouton « Copier ma demande » absent`);
   await shot("14-demo-confirmation");
 

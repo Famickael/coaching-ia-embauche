@@ -1,4 +1,7 @@
-/* Configuration de l'organisme qui déploie La Répét' : SEUL fichier à compléter.
+/* Configuration de l'organisme d'accompagnement à qui appartient La Répét' : SEUL fichier à compléter.
+   Positionnement : l'organisme vend sa compétence d'accompagnement (ses coachs), outillée par La Répét', à des
+   commanditaires publics (retour à l'emploi, insertion) ou privés (mobilité et évolution des collaborateurs).
+   La Répét' n'est pas vendue comme un logiciel : aucun tarif, aucune licence, aucun discours d'éditeur.
    À REMPLACER PAR L'ORGANISME : toutes les valeurs ci-dessous sont des EXEMPLES explicites, acceptés par le
    propriétaire pour la présentation (mention « exemple », « à remplacer » ou « à valider » visible à l'écran).
    Les adresses électroniques utilisent le domaine réservé exemple.fr ou example.org, jamais un domaine réel.
@@ -30,7 +33,7 @@ export const ORG = {
   sttProvider: "prestataire de transcription hébergé en France, à désigner (exemple)",     // prestataire de la transcription serveur et pays, si VITE_STT_ENDPOINT est utilisé
   /* Durées de conservation validées par le DPO (proposition dans docs/conformite.md, 2.8) */
   retention: "vidéos et réponses gardées sur votre appareil jusqu'à ce que vous les supprimiez ; réponses envoyées au coach et rapports : 6 mois après la fin de l'accompagnement ; compte coach : 1 an après le dernier accès (durées types, à valider par le délégué à la protection des données)",       // texte ou tableau des durées validées
-  demoRetention: "3 mois après le rendez-vous (durée type, à valider)",   // durée de conservation des demandes de démonstration
+  demoRetention: "3 mois après notre réponse (durée type, à valider)",   // durée de conservation des demandes des commanditaires (page « Nous contacter »)
   /* Base légale retenue par le DPO (consentement ou mission d'intérêt public, écart R6) */
   legalBasis: "Votre accord (consentement, article 6.1.a du RGPD). Base légale type, à valider par le délégué à la protection des données.",
   /* Accessibilité : contact pour signaler un problème, schéma pluriannuel et plan annuel */

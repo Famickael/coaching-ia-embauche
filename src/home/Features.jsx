@@ -113,7 +113,7 @@ export function ForWho({ go }) {
   const doors = [
     { top: true, t: "Vous avez un code d'accès", d: "Votre coach vous a donné un code d'accès de 6 caractères. Il ouvre votre espace.", b: <Btn kind="secondary" onClick={() => go("#/espace")} iconRight={I.arrow}>Ouvrir mon espace</Btn> },
     { top: "coach", t: "Vous êtes coach", d: "Créez un parcours et transmettez le code d'accès. Relisez les réponses que l'on vous envoie. Préparez vos débriefings.", b: <Btn kind="secondary" onClick={() => go("#/espace")}>Me connecter à l'espace coach</Btn> },
-    { top: "ai", t: "Vous représentez un organisme", d: "Direction, DSI, juridique : voyez comment l'outil s'installe chez vous, avec vos règles et votre hébergement.", b: <Btn kind="secondary" onClick={() => go("#/solutions/organismes")}>Voir le déploiement</Btn> },
+    { top: "ai", t: "Vous portez un projet d'accompagnement", d: "Acteur public de l'emploi ou entreprise : confiez-nous l'accompagnement de demandeurs d'emploi ou de collaborateurs en mobilité.", b: <Btn kind="secondary" onClick={() => go("#/demo")}>Parler de votre projet</Btn> },
   ];
   return (
     <Section eyebrow="Pour qui" title="Par où commencer ?">

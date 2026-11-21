@@ -124,10 +124,11 @@ export function logoutCounselor() {
 }
 
 /* ── Parcours ── */
-export function createParcours({ prenom, poste, warmup }) {
+export function createParcours({ prenom, poste, warmup, type }) {
   const code = newCode();
   const p = {
     code, prenom: prenom.trim(), poste: poste.trim(), warmup: !!warmup,
+    type: type === "mobilite" ? "mobilite" : "embauche", // type d'entretien (INTERVIEW_TYPES, src/lib/questions.js)
     counselor: state.counselor?.name || "",
     createdAt: new Date().toISOString(), openedAt: null, consent: null,
   };

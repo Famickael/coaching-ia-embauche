@@ -1,16 +1,23 @@
 import React, { useState } from "react";
 import { T, TY, RAD, PAD, GAP, Btn, Back, I, Txt, ConfirmMark, Field, Input, Toggle, RadioGroup } from "../ui.jsx";
 import { createParcours } from "../lib/store.js";
+import { INTERVIEW_TYPES } from "../lib/questions.js";
 import { CopyBtn, actions, linkFor, stack } from "./shared.jsx";
 
 export function Create({ done, cancel }) {
-  const [prenom, setPrenom] = useState(""), [poste, setPoste] = useState(""), [warmup, setWarmup] = useState(true);
+  const [prenom, setPrenom] = useState(""), [poste, setPoste] = useState(""), [warmup, setWarmup] = useState(true), [type, setType] = useState("embauche");
   return (
-    <form onSubmit={e => { e.preventDefault(); if (prenom.trim()) done(createParcours({ prenom, poste, warmup })); }} style={stack(GAP.field)}>
+    <form onSubmit={e => { e.preventDefault(); if (prenom.trim()) done(createParcours({ prenom, poste, warmup, type })); }} style={stack(GAP.field)}>
       <Field id="new-prenom" label="Prénom et initiale" hint="Par exemple : Alex D. N'indiquez ni nom complet, ni numéro de dossier, ni adresse électronique.">
         <Input id="new-prenom" hint value={prenom} onChange={e => setPrenom(e.target.value)} placeholder="Prénom et initiale" />
       </Field>
-      <Field id="new-poste" label="Métier visé" hint="Les questions en tiennent compte. La personne peut le modifier.">
+      <div style={stack(8)}>
+        <span id="new-type" style={{ ...TY.label, color: T.navy }}>Type d'entretien</span>
+        <RadioGroup aria-labelledby="new-type" style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          {INTERVIEW_TYPES.map(t => <Toggle key={t.id} on={type === t.id} onClick={() => setType(t.id)}>{t.label}</Toggle>)}
+        </RadioGroup>
+      </div>
+      <Field id="new-poste" label="Métier ou poste visé" hint="Les questions en tiennent compte. La personne peut le modifier.">
         <Input id="new-poste" hint value={poste} onChange={e => setPoste(e.target.value)} placeholder="Par exemple : agent d'accueil" />
       </Field>
       <div style={stack(8)}>

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { T, TY, RAD, SH, GAP, W, Card, Btn, Back, IconBtn, IconTile, Icon, I, Txt, Field, Input, CheckTile } from "../ui.jsx";
-import { QUESTIONS, fill, fullInterview, posteLabel, dePoste } from "../lib/questions.js";
+import { questionsFor, interviewType, fill, fullInterview, posteLabel, dePoste } from "../lib/questions.js";
 import { stack, wrap } from "./shared.jsx";
 
 /* ─── Choix des questions (sélection multiple + questions personnelles) ─── */
@@ -9,7 +9,8 @@ export function Pick({ p, ctx, go }) {
   const [sel, setSel] = useState(init.sel);
   const [custom, setCustom] = useState(init.custom);
   const [own, setOwn] = useState("");
-  const qs = QUESTIONS.map(q => ({ key: `q:${q.id}`, theme: q.theme, text: fill(q.text, p.poste) }));
+  const type = interviewType(p);
+  const qs = questionsFor(type).map(q => ({ key: `q:${q.id}`, theme: q.theme, text: fill(q.text, p.poste) }));
   const all = [...qs, ...custom];
   const toggle = key => setSel(s => (s.includes(key) ? s.filter(k => k !== key) : [...s, key]));
   const add = e => {
@@ -28,7 +29,7 @@ export function Pick({ p, ctx, go }) {
     if (queue.length) go("record", { queue, qi: 0, question: queue[0], selection: { sel, custom }, takeId: null, preselect: null, full: false, steps: null, seriesTakes: {}, from: null });
   };
   const startFull = () => {
-    const plan = fullInterview(p.poste);
+    const plan = fullInterview(p.poste, type);
     go("record", { queue: plan.map(x => x.text), steps: plan.map(x => x.step), full: true, qi: 0, question: plan[0].text, selection: null, takeId: null, preselect: null, seriesTakes: {}, from: null });
   };
 
@@ -58,7 +59,9 @@ export function Pick({ p, ctx, go }) {
           <h2 style={{ ...TY.h3, color: T.navy, margin: 0, flex: 1 }}>Faire un entraînement complet</h2>
         </div>
         <p style={{ ...TY.body, color: T.body, margin: 0 }}>
-          Une simulation d'entretien, dans l'ordre réel : accueil, présentation, motivation, expériences, qualités, mise en situation, vos questions. 7 questions liées au métier {posteLabel(p.poste) ? dePoste(posteLabel(p.poste)) : "que vous visez"}. Le recruteur lit chaque question à voix haute.
+          {type === "mobilite"
+            ? <>Une simulation d'entretien de mobilité, dans l'ordre réel : accueil, parcours, projet, compétences, axes de progrès, mise en situation, vos questions. 7 questions liées au poste {posteLabel(p.poste) ? dePoste(posteLabel(p.poste)) : "que vous visez"}. La personne qui vous reçoit lit chaque question à voix haute.</>
+            : <>Une simulation d'entretien, dans l'ordre réel : accueil, présentation, motivation, expériences, qualités, mise en situation, vos questions. 7 questions liées au métier {posteLabel(p.poste) ? dePoste(posteLabel(p.poste)) : "que vous visez"}. Le recruteur lit chaque question à voix haute.</>}
         </p>
         <div className="rp-wide-m"><Btn kind="secondary" icon={I.play} onClick={startFull}>Faire un entraînement complet</Btn></div>
       </Card>

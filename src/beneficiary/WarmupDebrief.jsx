@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { T, TY, GAP, W, Card, Tag, Btn, I, Txt, Notice, Input, Chip, RadioGroup } from "../ui.jsx";
 import { openAssistant, nudgeAssistant } from "../lib/bus.js";
 import { saveWarmupDebrief, loadWarmupDebrief } from "../lib/store.js";
-import { WORK_TOPICS, questionsForTopics } from "../lib/questions.js";
+import { topicsFor, interviewType, questionsForTopics } from "../lib/questions.js";
 import { FEELINGS, feelingAck } from "../lib/assistant.js";
 import { actions, stack, wrap } from "./shared.jsx";
 
@@ -56,7 +56,7 @@ export function WarmupDebrief({ p, go, again }) {
         <section style={stack(12)}>
           {q(3, "Qu'aimeriez-vous travailler ensuite ?", "dq3")}
           <div role="group" aria-labelledby="dq3" className="rs-chips">
-            {WORK_TOPICS.map(t => <Chip key={t.id} role="checkbox" on={work.includes(t.id)} onClick={() => toggleWork(t.id)}>{t.label}</Chip>)}
+            {topicsFor(interviewType(p)).map(t => <Chip key={t.id} role="checkbox" on={work.includes(t.id)} onClick={() => toggleWork(t.id)}>{t.label}</Chip>)}
           </div>
           <p style={{ ...TY.caption, color: T.muted, margin: 0 }}>
             {pre.length ? `${pre.length > 1 ? `${pre.length} questions seront déjà choisies` : "1 question sera déjà choisie"} pour votre entraînement. Vous pourrez changer.` : "Vos choix serviront à vous proposer des questions pour l'entraînement."}

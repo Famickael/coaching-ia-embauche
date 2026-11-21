@@ -52,11 +52,11 @@ export const PHRASES = {
   logout: "Se déconnecter n'efface pas les données de cet appareil.",
   coachLogin: "Vous ne voyez que les réponses que l'on vous envoie.",
   noTracking: "Ce site n'utilise pas de cookies publicitaires et ne vous suit pas.",
-  contactInfo: "Vos coordonnées servent seulement à organiser ce rendez-vous. Elles sont destinées uniquement à l'équipe d'accompagnement.",
+  contactInfo: "Vos coordonnées servent seulement à répondre à votre demande. Elles sont destinées uniquement à notre équipe.",
   /* Écran de confirmation de la demande (BUG-01) : jamais « l'équipe vous recontacte » tant qu'aucun envoi réel n'a eu lieu. */
   contactMail: "Votre messagerie s'ouvre avec votre demande : il vous reste à l'envoyer.",
-  contactCopy: "Copiez ce récapitulatif et transmettez-le à votre coach, par message ou lors de votre prochain rendez-vous. Il organisera la prise en main avec vous.",
-  contactSent: "Votre demande est envoyée. L'équipe d'accompagnement vous recontacte pour fixer le rendez-vous.",
+  contactCopy: "Copiez ce récapitulatif et envoyez-le-nous par courriel.",
+  contactSent: "Votre demande est envoyée. Notre équipe vous recontacte pour en parler.",
   refuse: "Vous pouvez refuser. Cela ne change rien à votre accompagnement : vous pouvez préparer votre entretien avec votre coach.",
   changeMind: "Vous pouvez changer d'avis à tout moment, dans « Mon compte ».",
   sharedDevice: "Sur un ordinateur partagé, supprimez vos entraînements avant de partir.",
@@ -198,7 +198,7 @@ export const FULL = {
   notice: [
     { p: [`Version du ${LEGAL_DATE}.`] },
     { h: "Qui est responsable ?", p: [ORG.name ? `${ORG.name}${ORG.address ? `, ${ORG.address}` : ""}.` : "L'organisme d'accompagnement qui vous a donné votre code d'accès.", contactLine(), dpoLine()] },
-    { h: "À quoi servent vos données ?", p: ["À vous entraîner à l'entretien d'embauche, seul puis avec votre coach. À rien d'autre."] },
+    { h: "À quoi servent vos données ?", p: ["À vous entraîner à vos entretiens (embauche, mobilité, entretien professionnel), seul puis avec votre coach. À rien d'autre."] },
     { h: "Sur quelle base ?", p: [ORG.legalBasis || "Votre accord. Vous le donnez au début, et vous pouvez le retirer quand vous voulez.", "Utiliser La Répét' n'est pas obligatoire. Refuser ne change rien à votre accompagnement."] },
     { h: "Quelles données ?", list: ["Votre prénom et l'initiale de votre nom, donnés par votre coach.", "Le métier que vous visez.", "Vos enregistrements (vidéo ou voix), si vous vous enregistrez.", "Le texte de vos réponses et le retour de l'assistant.", "La direction de votre regard pendant la réponse, si vous utilisez la caméra et le retour de l'assistant.", "Le message que vous écrivez à votre coach, et son rapport.", "La date de votre accord."],
       p: ["Nous ne demandons pas votre adresse, votre courriel ni aucun numéro. Évitez de parler de votre santé dans vos réponses."] },
@@ -207,9 +207,9 @@ export const FULL = {
     { h: "Combien de temps ?", p: [ORG.retention || "Vos entraînements sont gardés le temps de votre accompagnement, et au plus jusqu'à ce que vous les supprimiez."] },
     { h: "Une machine décide-t-elle pour vous ?", p: ["Non. L'assistant prépare un retour. Il ne décide de rien. Voir « L'assistant et l'IA »."] },
     { h: "Vos droits.", p: ["Voir, supprimer, récupérer, corriger, retirer votre accord. Voir « Vos droits ».", "Réclamation : CNIL, 3 place de Fontenoy, 75007 Paris, cnil.fr."] },
-    { h: "Si vous demandez une prise en main.", p: [
-      "Votre prénom, votre moyen de contact et vos disponibilités servent seulement à organiser ce rendez-vous. Seule l'équipe d'accompagnement les voit.",
-      ORG.demoRetention ? `Durée de conservation : ${ORG.demoRetention}.` : "Ils sont supprimés quand ils ne servent plus à organiser le rendez-vous.",
+    { h: "Si vous nous contactez pour un projet d'accompagnement.", p: [
+      "Votre nom, votre structure et vos coordonnées servent seulement à répondre à votre demande. Seule notre équipe les voit.",
+      ORG.demoRetention ? `Durée de conservation : ${ORG.demoRetention}.` : "Ils sont supprimés quand ils ne servent plus à répondre à votre demande.",
     ] },
   ],
   coachs: [
@@ -222,7 +222,7 @@ export const FULL = {
   ],
   conditions: [
     { p: [`Version du ${LEGAL_DATE}. Proposé par ${orgName()}.`] },
-    { h: "1. À quoi sert La Répét' ?", p: ["À vous entraîner à l'entretien d'embauche. C'est un outil d'entraînement. Il ne vous évalue pas. Il ne décide de rien. Il ne change rien à vos droits ni à votre accompagnement."] },
+    { h: "1. À quoi sert La Répét' ?", p: ["À vous entraîner à vos entretiens : entretien d'embauche, de mobilité ou professionnel. C'est un outil d'entraînement. Il ne vous évalue pas. Il ne décide de rien. Il ne change rien à vos droits ni à votre accompagnement."] },
     { h: "2. Comment y accéder ?", p: ["Avec le code d'accès que votre coach vous a donné. Il n'y a pas de compte ni de mot de passe. Ce code est personnel : gardez-le pour vous."] },
     { h: "3. Ce que vous faites.", p: ["Vous vous enregistrez pour vous entraîner. Vous décidez seul d'envoyer une réponse à votre coach.", "Enregistrez-vous seulement vous. Ne filmez pas une autre personne sans son accord."] },
     { h: "4. Ce que fait l'assistant.", p: ["L'assistant est un programme. Son retour s'affiche tout de suite, sans relecture par une personne. Il décrit des faits. Il ne met pas de note. Il ne devine pas vos émotions. Il peut se tromper."] },

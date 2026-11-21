@@ -42,7 +42,7 @@ function Hub({ go, openSpace }) {
   return (
     <main>
       <PageHero eyebrow="Ressources" title="Des conseils pour préparer votre entretien"
-        lead="Des conseils concrets pour l'entretien d'embauche. Des guides pour utiliser La Répét'. Des exemples d'usage pour les équipes.">
+        lead="Des conseils concrets pour préparer un entretien. Des guides pour utiliser La Répét'. Des exemples d'usage de notre accompagnement.">
         <SearchBox q={q} setQ={setQ} go={go} />
       </PageHero>
 
@@ -276,7 +276,7 @@ function Article({ a, go, openSpace }) {
                       </div>
                     ))}
                   </dl>
-                  <p style={{ ...TY.caption, color: T.muted, margin: 0 }}>Organisme fictif. Ce scénario décrit un usage possible. Aucun résultat n'a été mesuré.</p>
+                  <p style={{ ...TY.caption, color: T.muted, margin: 0 }}>Situation fictive. Ce scénario décrit un usage possible. Aucun résultat n'a été mesuré.</p>
                 </div>
               ) : toc.length > 1 && (
                 <nav className="rs-toc" aria-label="Sommaire de l'article">
@@ -297,8 +297,8 @@ function Article({ a, go, openSpace }) {
           </Section>
         )}
         {cas ? (
-          <FinalBand title="Et dans votre organisme ?" text="Direction, DSI, juridique : voyez comment l'outil s'installe chez vous.">
-            <Btn kind="white" size="lg" onClick={() => go("#/solutions/organismes")} iconRight={I.arrow}>Voir le déploiement</Btn>
+          <FinalBand title="Un projet d'accompagnement ?" text="Acteur public de l'emploi ou entreprise : parlons de vos besoins.">
+            <Btn kind="white" size="lg" onClick={() => go("#/demo")} iconRight={I.arrow}>Nous contacter</Btn>
           </FinalBand>
         ) : (
           <FinalBand title="Mettez ces conseils en pratique" text="Ouvrez votre espace et répétez à voix haute, à votre rythme." openSpace={openSpace} go={go}>

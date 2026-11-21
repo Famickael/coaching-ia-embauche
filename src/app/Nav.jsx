@@ -14,7 +14,7 @@ export const LINKS = [["#/a-propos", "À propos", "about"], ["#/solutions", "Sol
 /* Sous-menus (deuxième niveau) : le clic sur l'intitulé mène toujours à la page principale. */
 export const SUBS = {
   about: [["#/a-propos", "Notre démarche"], ["#/a-propos/ia-et-recherche", "L'IA et la recherche"], ["#/a-propos/faq", "Questions fréquentes"]],
-  solutions: [["#/solutions/beneficiaires", "Personnes accompagnées"], ["#/solutions/coachs", "Coachs"], ["#/solutions/organismes", "Organismes"]],
+  solutions: [["#/solutions/demandeurs-emploi", "Demandeurs d'emploi"], ["#/solutions/collaborateurs", "Collaborateurs en mobilité"], ["#/solutions/coachs", "Coachs"], ["#/solutions/commanditaires", "Commanditaires"]],
   resources: CATEGORIES.map(c => [`#/ressources/c/${c.id}`, c.title]),
 };
 
@@ -75,7 +75,7 @@ export function Nav({ route, s }) {
             <AccountMenu route={spaceRoute} s={s} />
             {isPublic && <IconBtn ref={burger} variant="outline" className="rs-burger" aria-expanded={menu} aria-controls="rs-menu" label={menu ? "Fermer le menu" : "Ouvrir le menu"} icon={menu ? I.close : I.menu} onClick={() => setMenu(m => !m)} />}
           </>) : (<>
-            <span className="rs-demo"><Btn kind="secondary" size="sm" style={STILL} onClick={() => go("#/demo")}>Demander une prise en main</Btn></span>
+            <span className="rs-demo"><Btn kind="secondary" size="sm" style={STILL} onClick={() => go("#/demo")}>Nous contacter</Btn></span>
             <IconBtn icon={I.a11y} label="Options d'accessibilité" className="rp-head-a11y" onClick={openA11y} />
             <Btn kind="primary" size="sm" style={STILL} onClick={openSpace}><span className="rp-hide-m" style={{ display: "inline-flex" }}><Icon d={I.user} s={16} /></span>Mon compte</Btn>
             <IconBtn ref={burger} variant="outline" className="rs-burger" aria-expanded={menu} aria-controls="rs-menu" label={menu ? "Fermer le menu" : "Ouvrir le menu"} icon={menu ? I.close : I.menu} onClick={() => setMenu(m => !m)} />
@@ -91,7 +91,7 @@ export function Nav({ route, s }) {
             {LINKS.map(([h, l, r]) => <MobileItem key={h} href={h} label={l} id={r} on={activeOf(route.role) === r} />)}
           </nav>
           <div style={{ display: "grid", gap: 12, marginTop: 24 }}>
-            <Btn kind="secondary" full onClick={() => { setMenu(false); go("#/demo"); }}>Demander une prise en main</Btn>
+            <Btn kind="secondary" full onClick={() => { setMenu(false); go("#/demo"); }}>Nous contacter</Btn>
             <Btn kind="ghost" full icon={I.a11y} onClick={() => { setMenu(false); openA11y(); }}>Options d'accessibilité</Btn>
           </div>
           <nav aria-label="Vos données" onClick={() => setMenu(false)} style={{ marginTop: 24, display: "grid", gap: 4 }}>
