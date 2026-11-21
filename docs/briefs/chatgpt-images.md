@@ -45,7 +45,7 @@ Chemin : `public/img/ressources/<slug>.webp`, **1200 × 630** (format de partage
 
 | Fichier | Article | Texte alternatif attendu (consigne de scène) | État actuel |
 |---|---|---|---|
-| `ressources/confier-un-accompagnement.webp` | Confier un accompagnement outillé par La Répét' | Deux femmes échangent autour d'une petite table ronde près d'une fenêtre. | provisoire PIL |
+| `ressources/confier-un-accompagnement.webp` | Confier un accompagnement à notre organisme | Deux femmes échangent autour d'une petite table ronde près d'une fenêtre. | provisoire PIL |
 | `ressources/gerer-le-trac-et-preparer-sa-venue.webp` | Gérer le trac et préparer sa venue | Une personne vérifie un itinéraire sur son téléphone avant un rendez-vous. | provisoire PIL |
 | `ressources/parler-de-ses-experiences-methode-sar.webp` | Parler de ses expériences avec la méthode situation, action, résultat | Deux personnes échangent autour d'une table de réunion dans un bureau lumineux. | photo Unsplash provisoire |
 | `ressources/premiere-repetition-pas-a-pas.webp` | Votre première répétition, pas à pas | Un homme avec des écouteurs s'entraîne face à son ordinateur portable, un carnet ouvert devant lui. | photo Unsplash provisoire |

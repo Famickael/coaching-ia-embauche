@@ -15,6 +15,7 @@
 import { textCompliant } from "./compliance.js";
 import { dePoste } from "./text.js";
 import { stripAccents } from "./text.js";
+import { llmEnabled, llmComplete } from "./llm.js";
 
 /* ─── Garde-fou ─── */
 /* Jugement sur la personne ou appréciation chiffrée ou globale : refusé, en plus des règles d'isCompliant. */
@@ -445,27 +446,20 @@ const MODE_ASK = {
 /* Suggestions : modèle de langage si configuré (sortie filtrée ligne par ligne), sinon ou en cas d'écart, moteur local. */
 export async function coachSuggest(ctx) {
   const local = ctx.mode === "rephrase" ? rephraseResult(ctx.text) : { ...localSuggestions(ctx), source: "local" };
-  const endpoint = import.meta.env?.VITE_LLM_ENDPOINT;
-  if (!endpoint || (ctx.mode === "rephrase" && !String(ctx.text || "").trim())) return { ...local, source: "local" };
+  if (!llmEnabled() || (ctx.mode === "rephrase" && !String(ctx.text || "").trim())) return { ...local, source: "local" };
   const dim = (ctx.dims || []).find(d => d.id === ctx.dimId);
   const facts = (ctx.dims || []).map(d => `- ${d.titre} (${d.type === "appui" ? "point d'appui" : "à explorer"}) : ${d.observation || ""}`).join("\n");
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), 15000);
   try {
-    const res = await fetch(endpoint, {
-      method: "POST", signal: ctrl.signal, headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: import.meta.env.VITE_LLM_MODEL || "mistral-small-latest",
+    const content = await llmComplete("coach", {
         messages: [
           { role: "system", content: COACH_SYSTEM_PROMPT },
           { role: "user", content: `${MODE_ASK[ctx.mode]}\nQuestion posée : ${ctx.question || "non précisée"}\nMétier visé : ${ctx.poste || "non précisé"}\nObservations de l'assistant :\n${facts || "aucune"}${dim ? `\nObservation choisie : ${dim.titre}` : ""}${ctx.mode === "rephrase" ? `\nRemarque du coach : ${String(ctx.text).slice(0, 1200)}` : ""}` },
         ],
         max_tokens: 500,
-      }),
-    });
-    if (!res.ok) throw new Error(res.status);
-    const data = await res.json();
-    const raw = (data.choices?.[0]?.message?.content ?? "").replace(/\u2014/g, ",");
+    }, { signal: ctrl.signal });
+    const raw = content.replace(/\u2014/g, ",");
     const lines = raw.split(/\n+/).map(l => l.replace(/^\s*(?:[-*•]|\d+[.)])\s*/, "").trim()).filter(Boolean);
     const items = lines.filter(coachCompliant).slice(0, 4).map(text => ({ text, dimId: ctx.dimId, internal: ctx.mode === "debrief" }));
     if (!items.length) throw new Error("aucune proposition conforme");

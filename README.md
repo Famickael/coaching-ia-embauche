@@ -169,6 +169,7 @@ src/
     questions.js      banque de questions, phrases et relances d'échauffement, sujets du questionnaire de fin
     jobs.js           liste des métiers et recherche pour l'autocomplétion
     assistant.js      assistant : base de connaissances locale, relances, appel facultatif au modèle de langage
+    llm.js            point d'accès unique au modèle de langage (VITE_LLM_ENDPOINT, champ task), sans nom de fournisseur ni de modèle
     coachAssistant.js assistant de rédaction du rapport : base locale, reformulation, garde-fou coachCompliant, modèle facultatif
     background.js     fond flou ou uni pendant l'échauffement (MediaPipe Image Segmenter)
 public/img/            photos et visuels (voir « Crédits photos » et docs/briefs/chatgpt-images.md)
@@ -210,7 +211,7 @@ Toutes les variables sont facultatives. Sans elles, l'application fonctionne ent
 |---|---|
 | `VITE_STT_ENDPOINT`, `VITE_STT_MODEL` | transcription serveur, format OpenAI `audio/transcriptions` (`verbose_json`, segments), par exemple un proxy vers un modèle hébergé en France |
 | `VITE_WHISPER_MODEL`, `VITE_MODELS_BASE_URL` | modèle Whisper local et hébergement des modèles |
-| `VITE_LLM_ENDPOINT`, `VITE_LLM_MODEL` | reformulation par un modèle de langage via un proxy compatible « chat completions » ; la clé reste côté serveur |
+| `VITE_LLM_ENDPOINT`, `VITE_LLM_MODEL` | reformulation par un modèle de langage via un proxy compatible « chat completions » ; la clé et le choix du fournisseur restent dans le proxy (`AGENTS.md`, section 8). `VITE_LLM_MODEL` est facultatif : sans lui, le proxy choisit le modèle |
 | `VITE_MEDIAPIPE_WASM`, `VITE_FACE_MODEL`, `VITE_SEGMENTER_MODEL` | fichiers MediaPipe auto-hébergés (suivi du visage, détourage pour le fond de l'échauffement) |
 
 ---
@@ -233,6 +234,12 @@ Référentiel UI/UX complet (couleurs, typographie, espacements, composants) : `
 ---
 
 ## Passage en production (travail restant)
+
+### Fournisseur d'IA et clé d'API
+
+Le cœur du site (transcription, analyse, retours, assistants) fonctionne sans serveur. Un modèle de langage est facultatif : le navigateur l'appelle par un point d'accès unique, `VITE_LLM_ENDPOINT` (`src/lib/llm.js`), qui ne dépend d'aucun fournisseur. Le fournisseur, le modèle et la clé se règlent dans un petit proxy sans état (Cloudflare Worker, Netlify Function ou fonction Supabase, au choix) : `LLM_PROVIDER`, `LLM_MODEL_*` et la clé `LLM_API_KEY` (une clé Anthropic pour le moteur actuel). La clé ne va jamais dans le dépôt ni dans une variable `VITE_*` : en local dans le fichier de secrets du proxy ignoré par git, en production dans les secrets de son hébergeur ; rotation : nouvelle clé chez le fournisseur, remplacement dans les secrets, révocation de l'ancienne. Changer de fournisseur ne touche que le proxy, la réponse garde le même format. Détail : `AGENTS.md`, section 8 ; modèle de proxy : `serveur/` ; état des lieux : `docs/etat-fonctionnel.md`.
+
+### Travail restant
 
 Par ordre de priorité :
 

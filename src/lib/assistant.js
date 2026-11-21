@@ -15,6 +15,7 @@
 import { textCompliant } from "./compliance.js";
 import { fillPoste } from "./text.js";
 import { stripAccents } from "./text.js";
+import { llmEnabled, llmComplete } from "./llm.js";
 
 /* Garde-fou de l'assistant : il peut parler du trac quand la personne en parle, jamais qualifier la personne ni noter. */
 export const assistantCompliant = t => textCompliant(t, "assistant") && !/\u2014/.test(t);
@@ -645,27 +646,19 @@ Règles strictes :
 export async function askAssistant(history, { context = "warmup", poste, memory } = {}) {
   const lastUser = [...history].reverse().find(m => m.role === "user")?.content || "";
   const local = localReply(lastUser, memory, { context, poste });
-  const endpoint = import.meta.env.VITE_LLM_ENDPOINT;
-  if (!endpoint) return { ...local, source: "local" };
+  if (!llmEnabled()) return { ...local, source: "local" };
 
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), 15000);
   try {
-    const res = await fetch(endpoint, {
-      method: "POST", signal: ctrl.signal,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: import.meta.env.VITE_LLM_MODEL || "mistral-small-latest",
+    const content = await llmComplete("chat", {
         messages: [
           { role: "system", content: `${SYSTEM_PROMPT}\nContexte de l'écran : ${context === "feedback" ? "retour de l'assistant après une réponse enregistrée" : context === "debrief" ? "questionnaire de fin d'échauffement" : "échauffement"}. Métier visé : ${poste || "non précisé"}.` },
           ...history.slice(-16).map(m => ({ role: m.role === "assistant" ? "assistant" : "user", content: String(m.content).slice(0, 2000) })),
         ],
         max_tokens: 400,
-      }),
-    });
-    if (!res.ok) throw new Error(res.status);
-    const data = await res.json();
-    const text = (data.choices?.[0]?.message?.content ?? "").replace(/\u2014/g, ",").trim();
+    }, { signal: ctrl.signal });
+    const text = content.replace(/\u2014/g, ",").trim();
     if (!text || text.length > 1800 || !assistantCompliant(text)) throw new Error("réponse non conforme");
     return { ...local, text, source: "llm", fallback: false };
   } catch (e) {

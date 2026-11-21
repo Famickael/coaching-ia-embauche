@@ -83,6 +83,14 @@ const walk = d => readdirSync(d, { withFileTypes: true }).flatMap(e => e.isDirec
 for (const f of walk(new URL("../src", import.meta.url).pathname).filter(f => /\.(jsx?|md)$/.test(f))) {
   assert.ok(!/\bClaude\b|Anthropic/.test(readFileSync(f, "utf8")), `${f} nomme le fournisseur du modèle d'IA`);
 }
+/* Code client agnostique (AGENTS.md, section 8) : aucun nom de fournisseur ni de modèle dans src/lib ; la tâche est
+   envoyée au proxy, le modèle seulement si VITE_LLM_MODEL est défini. */
+for (const f of walk(new URL("../src/lib", import.meta.url).pathname)) {
+  assert.ok(!/mistral|claude-|gpt-|anthropic/i.test(readFileSync(f, "utf8")), `${f} nomme un fournisseur ou un modèle d'IA`);
+}
+const { llmBody, llmEnabled } = await import("../src/lib/llm.js");
+assert.equal(llmEnabled(), false);
+assert.deepEqual(llmBody("feedback", { messages: [] }), { task: "feedback", messages: [] });
 console.log("content.test : types d'entretien et fournisseur d'IA OK");
 
 /* RED-11 : typographie française des textes visibles (docs/redaction.md, 1.3). Aucune espace ordinaire avant
