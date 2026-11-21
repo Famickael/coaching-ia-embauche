@@ -15,6 +15,15 @@ export default function Counselor() {
   const s = useStore();
   const [view, setView] = useState({ name: "list" });
   const [modal, setModal] = useState(null); // null | { step: "create" } | { step: "created", code }
+  const [gone, setGone] = useState("");
+  /* Parcours ou réponse supprimés ailleurs (autre onglet, retrait de l'accord) : retour à la liste avec un message (BUG-09). */
+  const missing = (view.name === "parcours" && !s.parcours[view.code]) || (view.name === "review" && (!s.parcours[view.code] || !s.takes[view.takeId]));
+  useEffect(() => {
+    if (!missing) return;
+    if (view.name === "review" && s.parcours[view.code]) { setGone("Cette réponse n'existe plus."); setView({ name: "parcours", code: view.code }); }
+    else { setGone("Ce parcours n'existe plus."); setView({ name: "list" }); }
+  }, [missing]); // eslint-disable-line
+  useEffect(() => { if (!missing && gone) { const t = setTimeout(() => setGone(""), 8000); return () => clearTimeout(t); } }, [view]); // eslint-disable-line
   if (!s.counselor) return null; // sans connexion, App affiche « Mon espace » (connexion intégrée)
 
   return (
@@ -29,6 +38,7 @@ export default function Counselor() {
           <Btn kind="secondary" size="sm" onClick={() => setModal({ step: "create" })} icon={I.plus}>Créer un parcours</Btn>
         </div>
       </div>
+      {gone && <Notice tone="info" role="status">{gone}</Notice>}
       <div key={view.name + (view.code || "") + (view.takeId || "")} className="up">
         {view.name === "list" && <List s={s} open={code => setView({ name: "parcours", code })} create={() => setModal({ step: "create" })} />}
         {view.name === "parcours" && s.parcours[view.code] && <Parcours s={s} p={s.parcours[view.code]} back={() => setView({ name: "list" })} review={takeId => setView({ name: "review", code: view.code, takeId })} />}

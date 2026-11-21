@@ -3,6 +3,7 @@ import { T, FIX, ON, TY, RAD, W, GAP, GRAD_NIGHT, Btn, Back, Icon, I, BrandLoade
 import { startGaze } from "./lib/gaze.js";
 import { PHRASES } from "./content/legal.js";
 import { setRecording, nudgeAssistant } from "./Assistant.jsx";
+import { useLeaveGuard } from "./lib/hooks.js";
 
 const MAX_SEC = 180;
 
@@ -23,6 +24,7 @@ export default function Recorder({ question, onDone, onCancel, trackGaze = true,
   const [sec, setSec] = useState(0);
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
+  useLeaveGuard(phase === "recording" || phase === "stopping" || phase === "done");
 
   useEffect(() => () => { stopStream(); setRecording(false); if (result?.url) URL.revokeObjectURL(result.url); }, []); // eslint-disable-line
 

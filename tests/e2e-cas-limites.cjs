@@ -3,7 +3,7 @@
 const { chromium } = require("playwright");
 const SC = process.argv[2] || "tests/screenshots/cas-limites";
 require("fs").mkdirSync(SC, { recursive: true });
-const BASE = "http://localhost:5098/";
+const BASE = process.env.E2E_BASE || "http://localhost:5098/";
 const KEY = "larepet.v1";
 const now = () => new Date().toISOString();
 
@@ -31,7 +31,7 @@ const take = (id, code, extra = {}) => ({ id, code, question: "Pouvez-vous vous 
   /* Nouveau contexte (stockage vierge), état préparé avant le premier script de la page. */
   async function fresh(state, perms = ["camera", "microphone"]) {
     const ctx = await b.newContext({ viewport: { width: vw, height: vh }, isMobile: mobile, hasTouch: mobile, permissions: perms });
-    if (state) await ctx.addInitScript(([k, v]) => { if (!sessionStorage.getItem("seeded")) { localStorage.setItem(k, v); sessionStorage.setItem("seeded", "1"); } }, [KEY, JSON.stringify(state)]);
+    if (state) await ctx.addInitScript(([k, v]) => { try { if (!localStorage.getItem("e2e.seeded")) { localStorage.setItem(k, v); localStorage.setItem("e2e.seeded", "1"); } } catch { /* about:blank */ } }, [KEY, JSON.stringify(state)]);
     const watch = p => { p.on("pageerror", e => errors.push(`${p.url()} : ${e.message}`)); p.on("console", m => { if (m.type() === "error" && !/Failed to load resource|ERR_|jsdelivr|googleapis|huggingface/.test(m.text())) errors.push(`${p.url()} : ${m.text().slice(0, 160)}`); }); };
     ctx.on("page", watch);
     const p = await ctx.newPage();
@@ -82,6 +82,65 @@ const take = (id, code, extra = {}) => ({ id, code, question: "Pouvez-vous vous 
     await p.goto(BASE + "#/coach");
     await p.getByRole("button", { name: "Ouvrir" }).first().click();
     await p.getByText(/accord retiré le/).waitFor({ timeout: 5000 });
+    await ctx.close();
+  });
+
+  /* BUG-03 : retrait de l'accord depuis un retour ouvert, puis nouvel accord : accueil de l'espace, pas d'écran vide. */
+  await scenario("retrait de l'accord puis nouvel accord", async () => {
+    const { ctx, p } = await fresh(seed({ takes: { t1: take("t1", "CASAAA") } }));
+    await p.goto(BASE + "#/s/CASAAA");
+    await p.getByRole("button", { name: "Ouvrir", exact: true }).first().click();
+    await p.getByRole("button", { name: "Mon compte" }).click();
+    await p.getByRole("dialog", { name: "Mon compte" }).getByRole("button", { name: /Retirer mon/ }).click();
+    await p.getByRole("button", { name: "Tout supprimer" }).click();
+    await p.getByRole("heading", { name: "Avant de commencer" }).waitFor({ timeout: 5000 });
+    await p.getByRole("checkbox").first().click();
+    await p.getByRole("button", { name: "Je suis d'accord, je commence" }).click();
+    await p.getByRole("heading", { name: /Bonjour Lou/ }).waitFor({ timeout: 5000 });
+    await shot(p, "02-nouvel-accord");
+    await ctx.close();
+  });
+
+  /* BUG-04 : arrivée par lien, « Retour » depuis l'accord : pas de message d'erreur sur un code valide. */
+  await scenario("retour depuis l'accord sans erreur", async () => {
+    const { ctx, p } = await fresh(seed({ consent: false }));
+    await p.goto(BASE + "#/s/CASAAA");
+    await p.getByRole("heading", { name: "Avant de commencer" }).waitFor({ timeout: 5000 });
+    await p.getByRole("button", { name: "Retour" }).click();
+    await p.getByRole("heading", { name: "Bienvenue sur La Répét'" }).waitFor({ timeout: 5000 });
+    check(await p.getByText("Ce code ne fonctionne pas").count() === 0, "BUG-04 : erreur affichée à tort après « Retour »");
+    await ctx.close();
+  });
+
+  /* BUG-14 et BUG-16 : lien avec un code inconnu, ancre inconnue. */
+  await scenario("code inconnu et ancre inconnue", async () => {
+    const st = seed(); st.lastSpace = { role: "benef", code: "CASAAA" };
+    const { ctx, p } = await fresh(st);
+    await p.goto(BASE + "#/s/ZZZZZZ");
+    await p.getByText("Ce code ne fonctionne pas").first().waitFor({ timeout: 5000 });
+    const ls = await p.evaluate(k => JSON.parse(localStorage.getItem(k)).lastSpace, KEY);
+    check(ls && ls.code === "CASAAA", "BUG-14 : un code inconnu efface la session d'un autre espace");
+    await p.goto(BASE + "#/page-qui-n-existe-pas");
+    await p.getByRole("heading", { name: "Cette page n'existe pas" }).waitFor({ timeout: 5000 });
+    await p.goto(BASE + "#/s/CASAAAXX");
+    await p.getByRole("heading", { name: "Cette page n'existe pas" }).waitFor({ timeout: 5000 });
+    /* BUG-11 : deux navigations rapprochées, aucune erreur JavaScript (vérifiée à la fin). */
+    await p.goto(BASE + "#/");
+    await p.evaluate(() => { location.hash = "#/a-propos"; location.hash = "#/solutions"; location.hash = "#/ressources"; });
+    await p.waitForTimeout(800);
+    await ctx.close();
+  });
+
+  /* BUG-09 : la réponse relue disparaît (retrait de l'accord dans un autre onglet) : message, pas de vue vide. */
+  await scenario("réponse disparue pendant la relecture", async () => {
+    const { ctx, p } = await fresh(seed({ takes: { t1: take("t1", "CASAAA", { shared: true, sharedAt: now() }) } }));
+    await p.goto(BASE + "#/coach");
+    await p.getByRole("button", { name: "Relire" }).first().click();
+    await p.getByRole("button", { name: "Relire et annoter" }).click();
+    await p.evaluate(k => { const st = JSON.parse(localStorage.getItem(k)); delete st.takes.t1; st.parcours.CASAAA.consent = null; localStorage.setItem(k, JSON.stringify(st)); }, KEY);
+    const q = await ctx.newPage(); await q.goto(BASE + "#/"); // un autre onglet écrit : l'événement « storage » parvient au premier
+    await q.evaluate(k => { const st = JSON.parse(localStorage.getItem(k)); st.touched = Date.now(); localStorage.setItem(k, JSON.stringify(st)); }, KEY);
+    await p.getByText("Cette réponse n'existe plus.").waitFor({ timeout: 5000 });
     await ctx.close();
   });
 

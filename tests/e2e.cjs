@@ -1,5 +1,6 @@
 const { chromium } = require("playwright");
 const SC = process.argv[2] || "tests/screenshots";
+const BASE = process.env.E2E_BASE || "http://localhost:5098/";
 require("fs").mkdirSync(SC, { recursive: true });
 (async () => {
   const b = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || undefined, args: ["--use-fake-device-for-media-stream", "--use-fake-ui-for-media-stream", "--autoplay-policy=no-user-gesture-required"] });
@@ -23,10 +24,10 @@ require("fs").mkdirSync(SC, { recursive: true });
     catch (e) { await p.screenshot({ path: `${SC}/echec.png`, fullPage: true }).catch(() => {}); throw new Error(`bouton « ${t} » : ${e.message.split("\n")[0]}`); }
   };
 
-  await p.goto("http://localhost:5098/"); await shot("01-accueil");
+  await p.goto(BASE); await shot("01-accueil");
   await p.evaluate(() => window.scrollTo(0, document.body.scrollHeight / 3)); await p.waitForTimeout(900); await shot("01b-accueil-defilement");
-  await p.goto("http://localhost:5098/#/fonctionnement"); await p.waitForTimeout(400); await shot("01c-fonctionnement");
-  await p.goto("http://localhost:5098/#/"); await click("Mon compte"); await shot("01d-mon-espace");
+  await p.goto(BASE + "#/fonctionnement"); await p.waitForTimeout(400); await shot("01c-fonctionnement");
+  await p.goto(BASE + "#/"); await click("Mon compte"); await shot("01d-mon-espace");
   await shot("01e-connexion-coach"); await click("Se connecter");
   await click("Créer un parcours");
   await p.getByPlaceholder("Prénom et initiale").fill("Alex D."); await p.getByPlaceholder(/agent d'accueil/).fill("agent d'accueil");
@@ -157,12 +158,12 @@ require("fs").mkdirSync(SC, { recursive: true });
   await p.keyboard.press("Escape");
   if (await coachAsst.isVisible()) throw new Error("Échap ne ferme pas l'assistant de rédaction");
   await click("Envoyer le rapport"); await shot("11-rapport-envoye");
-  await p.goto(`http://localhost:5098/#/s/${code}`); await p.waitForTimeout(500); await shot("12-espace-benef");
+  await p.goto(BASE + `#/s/${code}`); await p.waitForTimeout(500); await shot("12-espace-benef");
   await p.getByRole("button", { name: "Ouvrir", exact: true }).first().click(); await p.getByText("Lire mon retour").first().click(); await p.waitForTimeout(500); await shot("13-rapport-final");
   if (!(await p.locator("main").innerText()).includes(suggText.slice(0, 40))) throw new Error("la proposition insérée n'apparaît pas dans le rapport final");
   if (!(await p.locator("main").innerText()).includes("Vous pouvez ralentir.")) throw new Error("la note reformulée n'apparaît pas dans le rapport final");
   // Entraînement complet : 7 questions dans l'ordre réel, contextualisées par le métier, recruteur oral, récapitulatif sans score
-  await p.goto(`http://localhost:5098/?complet=1#/s/${code}`); await p.waitForTimeout(800);
+  await p.goto(BASE + `?complet=1#/s/${code}`); await p.waitForTimeout(800);
   await click("Commencer l'entraînement");
   await click("Faire un entraînement complet");
   await see("Entraînement complet · question 1 sur 7"); await see(/Le recruteur · Accueil/i);

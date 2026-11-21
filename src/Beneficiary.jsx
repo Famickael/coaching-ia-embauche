@@ -16,6 +16,7 @@ import { QUESTIONS, fill, WARMUP_PHRASES, WARMUP_PROMPTS, fillPhrase, randomPhra
 import RecruiterVoice from "./RecruiterVoice.jsx";
 import { searchJobs, norm } from "./lib/jobs.js";
 import { FEELINGS, feelingAck } from "./lib/assistant.js";
+import { useLeaveGuard } from "./lib/hooks.js";
 
 const CODE_ERR = "Ce code ne fonctionne pas. Vérifiez les 6 caractères, ou demandez-le à votre coach.";
 const wrap = w => ({ maxWidth: w, margin: "0 auto", width: "100%" });
@@ -37,18 +38,28 @@ export default function Beneficiary({ initialCode, setModal, onCode }) {
 
   useEffect(() => { if (p && !p.openedAt) updateParcours(p.code, { openedAt: new Date().toISOString() }); }, [p?.code]);
   useEffect(() => { if (code && !p && !findParcours(code)) setCode(null); }, [p, code]); // parcours supprimé par le coach
-  useEffect(() => { onCode && onCode(code); }, [code]); // mémorise l'espace ouvert (bouton « Mon espace »)
+  /* Mémorise l'espace ouvert (bouton « Mon espace »). L'oubli (onCode(null)) n'a lieu que sur une sortie explicite,
+     pas à l'ouverture d'un lien avec un code inconnu (BUG-14) : la session d'un autre espace reste mémorisée. */
+  const prevCode = useRef(code);
+  useEffect(() => { if (code || prevCode.current) onCode && onCode(code); prevCode.current = code; }, [code]);
+  /* Accord retiré (ici ou dans un autre onglet) : retour à l'accueil de l'espace, contexte vidé (BUG-03). */
+  useEffect(() => { if (p && !p.consent) { setView("home"); setCtx({}); } }, [p?.consent]); // eslint-disable-line
+  const take = ctx.takeId ? s.takes[ctx.takeId] : null;
+  /* Réponse supprimée (autre onglet, retrait de l'accord) alors qu'un écran l'affichait : retour à l'accueil (BUG-03). */
+  const orphan = ["choose", "report", "share"].includes(view) && !take;
+  useEffect(() => { if (orphan) { setView("home"); setCtx(c => ({ ...c, takeId: null })); } }, [orphan]);
 
-  if (!p) return <main className="rp-page" style={PAGE}><CodeEntry initial={initialCode} onOk={c => { setCode(c); setView("home"); }} /></main>;
+  if (!p) return <main className="rp-page" style={PAGE}><CodeEntry initial={initialCode} invalid={!!initialCode && !findParcours(initialCode)} onOk={c => { setCode(c); setView("home"); }} /></main>;
   if (!p.consent) return <main className="rp-page" style={PAGE}><Consent p={p} onBack={() => setCode(null)} /></main>;
 
   const go = (v, patch) => { if (patch) setCtx(c => ({ ...c, ...patch })); setView(v); window.scrollTo({ top: 0 }); };
   const flowSteps = ["Questions", "Réponse", "Préparation", "Retour"];
   const flowIdx = { pick: 0, record: 1, processing: 2, choose: 3, report: 3 }[view];
-  const take = ctx.takeId ? s.takes[ctx.takeId] : null;
-  const total = ctx.queue?.length || 0;
+  const total = ctx.from === "recap" ? 0 : ctx.queue?.length || 0; // réponse rouverte depuis le récapitulatif : pas de suite de série
   const series = total ? { i: ctx.qi || 0, n: total, hasNext: (ctx.qi || 0) < total - 1, full: !!ctx.full, step: ctx.steps?.[ctx.qi || 0] } : null;
   const nextQuestion = () => go("record", { qi: series.i + 1, question: ctx.queue[series.i + 1], takeId: null, recording: null });
+  /* « Retour » depuis une réponse rouverte du récapitulatif : retour au récapitulatif, série conservée (BUG-22). */
+  const back = () => (ctx.from === "recap" ? go("recap", { takeId: null }) : go("home", { queue: null }));
   const stopSeries = () => (series?.full ? go("recap") : go("home", { queue: null, qi: 0 }));
 
   const asstCtx = { warmup: "warmup", record: "record", processing: "record", choose: "feedback", report: "feedback", share: "feedback" }[view] || "general";
@@ -75,8 +86,8 @@ export default function Beneficiary({ initialCode, setModal, onCode }) {
           </Card>
         )}
         {view === "processing" && <Processing p={p} ctx={ctx} go={go} />}
-        {view === "choose" && take && <Choose take={take} go={go} series={series} />}
-        {view === "report" && take && <TakeReport p={p} take={take} mode={ctx.mode} go={go} series={series} nextQuestion={nextQuestion} stopSeries={stopSeries} />}
+        {view === "choose" && take && <Choose take={take} go={go} series={series} back={back} />}
+        {view === "report" && take && <TakeReport p={p} take={take} mode={ctx.mode} go={go} series={series} nextQuestion={nextQuestion} stopSeries={stopSeries} back={back} />}
         {view === "share" && take && <Share p={p} take={take} go={go} setModal={setModal} />}
         {view === "sent" && <Sent p={p} go={go} series={series} nextQuestion={nextQuestion} />}
         {view === "recap" && <Recap p={p} ctx={ctx} s={s} go={go} />}
@@ -86,9 +97,10 @@ export default function Beneficiary({ initialCode, setModal, onCode }) {
 }
 
 /* ─── Saisie du code ─── */
-function CodeEntry({ initial, onOk }) {
+function CodeEntry({ initial, invalid, onOk }) {
   const [code, setCode] = useState((initial || TRIAL_CODE).toUpperCase());
-  const [err, setErr] = useState(initial ? CODE_ERR : "");
+  /* Erreur posée seulement si le code reçu par le lien est inconnu (BUG-04), pas après « Retour » depuis l'accord. */
+  const [err, setErr] = useState(invalid ? CODE_ERR : "");
   const submit = e => {
     e?.preventDefault();
     const p = findParcours(code);
@@ -211,7 +223,7 @@ function Home({ p, takes, go, counselor }) {
                     <div style={{ ...TY.caption, color: T.muted }}>{dateFr(t.createdAt)} · {dur(t.duration)}</div>
                   </div>
                   <Tag tone={st[1]}>{st[0]}</Tag>
-                  <Btn kind="secondary" size="sm" onClick={() => go(t.hasVideo ? "choose" : "report", { takeId: t.id, mode: "simple", queue: null })}>Ouvrir</Btn>
+                  <Btn kind="secondary" size="sm" onClick={() => go(t.hasVideo ? "choose" : "report", { takeId: t.id, mode: "simple", queue: null, from: null })}>Ouvrir</Btn>
                 </Card>
               );
             })}
@@ -410,12 +422,16 @@ const OPINIONS = ["Utile", "Rassurant", "Trop court", "Pas assez guidé", "Je ne
 
 /* Questionnaire de fin d'échauffement : réponses gardées sur l'appareil, jamais envoyées au coach. */
 function WarmupDebrief({ p, go, again }) {
-  const prev = loadWarmupDebrief(p.code);
-  const [feeling, setFeeling] = useState(null);
-  const [opinion, setOpinion] = useState(null);
-  const [comment, setComment] = useState("");
-  const [work, setWork] = useState(() => prev?.work || []);
-  useEffect(() => { saveWarmupDebrief(p.code, { feeling, opinion, comment: comment.trim(), work }); }, [feeling, opinion, comment, work]); // eslint-disable-line
+  /* Réponses précédentes rechargées en entier (BUG-13) ; écriture seulement après un changement de la personne :
+     au clic d'une puce, et à la sortie du champ de commentaire (pas à chaque frappe, pas à l'ouverture). */
+  const [prev] = useState(() => loadWarmupDebrief(p.code) || {});
+  const [feeling, setFeeling] = useState(prev.feeling ?? null);
+  const [opinion, setOpinion] = useState(prev.opinion ?? null);
+  const [comment, setComment] = useState(prev.comment || "");
+  const [work, setWork] = useState(prev.work || []);
+  const first = useRef(true);
+  const save = () => saveWarmupDebrief(p.code, { feeling, opinion, comment: comment.trim(), work });
+  useEffect(() => { if (first.current) { first.current = false; return; } save(); }, [feeling, opinion, work]); // eslint-disable-line
   const toggleWork = id => setWork(w => (w.includes(id) ? w.filter(x => x !== id) : [...w, id]));
   const q = (n, t, id) => <h2 id={id} style={{ ...TY.h3, color: T.navy, margin: 0 }}>{n}. {t}</h2>;
   const pre = questionsForTopics(work);
@@ -446,7 +462,7 @@ function WarmupDebrief({ p, go, again }) {
             {OPINIONS.map(o => <Chip key={o} role="radio" on={opinion === o} onClick={() => setOpinion(v => (v === o ? null : o))}>{o}</Chip>)}
           </div>
           <label htmlFor="dq2-text" className="rp-sr">Un commentaire sur l'échauffement (facultatif)</label>
-          <Input id="dq2-text" value={comment} onChange={e => setComment(e.target.value)} maxLength={300} placeholder="Un commentaire, si vous le souhaitez (facultatif)" />
+          <Input id="dq2-text" value={comment} onChange={e => setComment(e.target.value)} onBlur={save} maxLength={300} placeholder="Un commentaire, si vous le souhaitez (facultatif)" />
         </section>
 
         <section style={stack(12)}>
@@ -498,11 +514,11 @@ function Pick({ p, ctx, go }) {
   const n = sel.length;
   const start = () => {
     const queue = sel.map(k => all.find(x => x.key === k)?.text).filter(Boolean);
-    if (queue.length) go("record", { queue, qi: 0, question: queue[0], selection: { sel, custom }, takeId: null, preselect: null, full: false, steps: null, seriesTakes: {} });
+    if (queue.length) go("record", { queue, qi: 0, question: queue[0], selection: { sel, custom }, takeId: null, preselect: null, full: false, steps: null, seriesTakes: {}, from: null });
   };
   const startFull = () => {
     const plan = fullInterview(p.poste);
-    go("record", { queue: plan.map(x => x.text), steps: plan.map(x => x.step), full: true, qi: 0, question: plan[0].text, selection: null, takeId: null, preselect: null, seriesTakes: {} });
+    go("record", { queue: plan.map(x => x.text), steps: plan.map(x => x.step), full: true, qi: 0, question: plan[0].text, selection: null, takeId: null, preselect: null, seriesTakes: {}, from: null });
   };
 
   const qcard = (q, removable) => {
@@ -576,6 +592,7 @@ function Processing({ p, ctx, go }) {
   const [err, setErr] = useState(null);
   const [attempt, setAttempt] = useState(0);
   const rec = ctx.recording;
+  useLeaveGuard(!err);
 
   useEffect(() => {
     let alive = true;
@@ -628,7 +645,7 @@ function Processing({ p, ctx, go }) {
 }
 
 /* ─── Choix du mode de restitution ─── */
-function Choose({ take, go, series }) {
+function Choose({ take, go, series, back }) {
   const opt = (mode, title, sub, body, btn, ai) => (
     <Card hover onClick={() => go("report", { mode })} style={{ display: "flex", flexDirection: "column", gap: 8 }}>
       <span style={{ ...TY.h2, color: T.navy }}>{title}</span>
@@ -648,13 +665,13 @@ function Choose({ take, go, series }) {
         {opt("simple", "Lire mon retour", "Sans me revoir", "Vous lisez ce que l'assistant a remarqué. Pratique si vous n'aimez pas vous revoir.", "Lire")}
         {opt("video", "Me revoir en vidéo", "Avec les repères au bon moment", "Vous revoyez votre réponse. Chaque repère est placé au bon moment : touchez-le pour y aller.", "Me revoir", true)}
       </div>
-      <div><Back onClick={() => go("home")} /></div>
+      <div><Back onClick={back} /></div>
     </div>
   );
 }
 
 /* ─── Rapport + actions ─── */
-function TakeReport({ p, take, mode, go, series, nextQuestion, stopSeries }) {
+function TakeReport({ p, take, mode, go, series, nextQuestion, stopSeries, back }) {
   useEffect(() => { if (series && !series.hasNext && !series.full) nudgeAssistant("training"); }, []); // eslint-disable-line
   const del = async () => {
     if (!window.confirm("Supprimer définitivement cette réponse et son retour ?")) return;
@@ -704,7 +721,7 @@ function TakeReport({ p, take, mode, go, series, nextQuestion, stopSeries }) {
       <div className="noprint">
         <Chip tone="ai" check={false} onClick={() => openAssistant("feedback")}><Icon d={I.chat} s={16} /> Une question sur ce retour ? Demandez à l'assistant</Chip>
       </div>
-      <div className="noprint"><Back onClick={() => go("home", { queue: null })} /></div>
+      <div className="noprint"><Back onClick={back} /></div>
     </div>
   );
 }
@@ -778,7 +795,7 @@ function Recap({ p, ctx, s, go }) {
                   <div style={{ ...TY.h4, color: T.navy }}>{q}</div>
                   <div style={{ ...TY.caption, color: T.muted }}>{t ? `${dur(t.duration)} · ${t.shared ? "envoyée à votre coach" : "gardée sur cet appareil"}` : "Pas de réponse enregistrée"}</div>
                 </div>
-                {t && <Btn kind="secondary" size="sm" onClick={() => go(t.hasVideo ? "choose" : "report", { takeId: t.id, mode: "simple", queue: null })}>Ouvrir mon retour</Btn>}
+                {t && <Btn kind="secondary" size="sm" onClick={() => go(t.hasVideo ? "choose" : "report", { takeId: t.id, mode: "simple", from: "recap" })}>Ouvrir mon retour</Btn>}
               </Card>
             </li>
           );

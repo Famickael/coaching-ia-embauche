@@ -36,7 +36,7 @@ import { useStore, getState, setLastSpace, setCounselor, logoutCounselor, findPa
 
 function routeFromHash() {
   const h = location.hash;
-  const m = h.match(/^#\/s\/([A-Za-z0-9]{6})/);
+  const m = h.match(/^#\/s\/([A-Za-z0-9]{6})$/);
   if (m) return { role: "benef", code: m[1].toUpperCase() };
   if (h === "#/beneficiaire") return { role: "benef", code: null };
   if (h === "#/coach") return { role: "coach" };
@@ -57,11 +57,12 @@ function routeFromHash() {
   if (h === "#/accessibilite") return { role: "legal", page: "accessibilite" };
   if (h === "#/demo") return { role: "demo" };
   if (h === "#/espace") return { role: "espace" };
-  return { role: "home" };
+  if (h === "" || h === "#" || h === "#/") return { role: "home" };
+  return { role: "notfound" }; // ancre inconnue (BUG-16)
 }
 
 /* Titre du document à chaque route (RGAA 8.6). */
-const TITLES = { research: "L'IA et la recherche", home: "S'entraîner à l'entretien d'embauche", about: "À propos", solutions: "Solutions", resources: "Ressources", demo: "Demander une prise en main", espace: "Mon espace", benef: "Mon espace", coach: "Espace coach" };
+const TITLES = { notfound: "Page introuvable", research: "L'IA et la recherche", home: "S'entraîner à l'entretien d'embauche", about: "À propos", solutions: "Solutions", resources: "Ressources", demo: "Demander une prise en main", espace: "Mon espace", benef: "Mon espace", coach: "Espace coach" };
 const titleOf = (route, counselor) => route.role === "legal" ? PAGES[route.page].title : route.role === "coach" && !counselor ? TITLES.espace : TITLES[route.role] || TITLES.home;
 
 const reducedMotion = () => window.matchMedia?.("(prefers-reduced-motion: reduce)").matches || document.documentElement.dataset.motion === "reduce";
@@ -75,7 +76,7 @@ function openSpace() {
   go("#/espace");
 }
 
-const PUBLIC = ["home", "research", "about", "solutions", "resources", "demo", "legal"];
+const PUBLIC = ["notfound", "home", "research", "about", "solutions", "resources", "demo", "legal"];
 
 export default function App() {
   const s = useStore();
@@ -121,6 +122,7 @@ export default function App() {
       <div key={enter} className={`rp-view${leaving ? " rp-leave" : ""}${enter ? " rp-enter" : ""}`} style={{ flex: 1, display: "flex", flexDirection: "column" }}>
         <div style={{ flex: 1 }}>
         {route.role === "home" && <Home go={go} openSpace={openSpace} />}
+        {route.role === "notfound" && <NotFound />}
         {route.role === "research" && <Research go={go} openSpace={openSpace} />}
         {route.role === "about" && <About go={go} openSpace={openSpace} section={route.section} />}
         {route.role === "solutions" && <Solutions go={go} openSpace={openSpace} section={route.section} />}
@@ -402,6 +404,19 @@ function Espace() {
             </form>
           </Card>
         </div>
+      </div>
+    </main>
+  );
+}
+
+/* ─── Ancre inconnue (BUG-16) ─── */
+function NotFound() {
+  return (
+    <main>
+      <PageHero eyebrow="Page introuvable" title="Cette page n'existe pas" lead="L'adresse est peut-être incomplète, ou la page a changé de place." />
+      <div className="rs-pad" style={{ maxWidth: W.page, margin: "0 auto", padding: "32px 24px 0", display: "flex", gap: GAP.actions, flexWrap: "wrap" }}>
+        <Btn kind="primary" onClick={() => go("#/")}>Revenir à l'accueil</Btn>
+        <Btn kind="secondary" onClick={openSpace}>Mon espace</Btn>
       </div>
     </main>
   );
