@@ -75,7 +75,7 @@ function Stat({ n, l, c = T.primary }) {
 }
 
 function List({ s, open, create }) {
-  const rows = Object.values(s.parcours).sort((a, b) => b.createdAt.localeCompare(a.createdAt)).map(p => ({ p, st: parcoursStatus(p, s), takes: takesOf(p.code, s) }));
+  const rows = Object.values(s.parcours).sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || "")).map(p => ({ p, st: parcoursStatus(p, s), takes: takesOf(p.code, s) }));
   const all = Object.values(s.takes);
   const shared = all.filter(t => t.shared);
   const reviewed = shared.filter(t => t.report);
@@ -104,7 +104,7 @@ function List({ s, open, create }) {
         <Card pad="none" level={2}>
           {rows.map(({ p, st, takes }, i) => (
             <div key={p.code} className="rp-row" style={{ display: "flex", alignItems: "center", gap: 16, padding: PAD.row, borderTop: i ? `1px solid ${T.lineLt}` : "none", background: st.key === "toreview" ? T.accentBg : T.surface, flexWrap: "wrap" }}>
-              <div aria-hidden style={{ width: 40, height: 40, borderRadius: "50%", background: T.primaryBg, display: "grid", placeItems: "center", ...TY.h4, color: T.primary, flexShrink: 0 }}>{p.prenom[0]?.toUpperCase()}</div>
+              <div aria-hidden style={{ width: 40, height: 40, borderRadius: "50%", background: T.primaryBg, display: "grid", placeItems: "center", ...TY.h4, color: T.primary, flexShrink: 0 }}>{(p.prenom || "?")[0]?.toUpperCase()}</div>
               <div style={{ flex: 1, minWidth: 200, ...stack(4) }}>
                 <div style={{ display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}><span style={{ ...TY.h4, color: T.navy }}>{p.prenom}</span><span style={{ ...TY.mono, color: T.muted }}>{p.code}</span></div>
                 <div style={{ ...TY.small, color: T.body }}>{p.poste || "Poste non précisé"} · {takes.length} entretien{takes.length > 1 ? "s" : ""} · créé le {dateFr(p.createdAt)}</div>
@@ -150,9 +150,24 @@ function Create({ done, cancel }) {
   );
 }
 
+/* Copie dans le presse-papiers (BUG-26) : résultat annoncé aux lecteurs d'écran, repli si la copie est refusée. */
 function CopyBtn({ text, label }) {
-  const [ok, setOk] = useState(false);
-  return <Btn kind="secondary" size="sm" onClick={() => navigator.clipboard?.writeText(text).then(() => { setOk(true); setTimeout(() => setOk(false), 1600); })} icon={ok ? I.check : I.copy}>{ok ? "Copié" : label}</Btn>;
+  const [st, setSt] = useState(""); // "" | "ok" | "fail"
+  const t = useRef(0);
+  useEffect(() => () => clearTimeout(t.current), []);
+  const copy = async () => {
+    clearTimeout(t.current);
+    try { await navigator.clipboard.writeText(text); setSt("ok"); t.current = setTimeout(() => setSt(""), 1600); }
+    catch { setSt("fail"); }
+  };
+  return (
+    <span style={{ display: "inline-grid", gap: 4, justifyItems: "center" }}>
+      <Btn kind="secondary" size="sm" onClick={copy} icon={st === "ok" ? I.check : I.copy}>{st === "ok" ? "Copié" : label}</Btn>
+      <span role="status" className={st === "fail" ? undefined : "rp-sr"} style={{ ...TY.caption, color: T.body }}>
+        {st === "ok" ? "Copié dans le presse-papiers." : st === "fail" ? `La copie automatique n'a pas fonctionné. Sélectionnez puis copiez : ${text}` : ""}
+      </span>
+    </span>
+  );
 }
 
 function Created({ p, back, openAsBenef }) {

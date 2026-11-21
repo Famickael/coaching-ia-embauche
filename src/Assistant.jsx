@@ -124,14 +124,21 @@ function Conversation({ poste, context, ctxKey }) {
     const history = [...msgs.map(({ role, content }) => ({ role, content })), { role: "user", content: question }];
     setMsgs(m => [...m, { role: "user", content: question }]);
     setTyping(true);
-    const t0 = performance.now();
-    const r = await askAssistant(history, { context, poste, memory: memory.current });
-    const wait = Math.max(0, 450 - (performance.now() - t0)); // laisse le temps de voir l'indicateur
-    await new Promise(res => setTimeout(res, wait));
-    if (!alive.current) return;
-    memory.current = r.memory || memory.current;
-    setMsgs(m => [...m, { role: "assistant", content: r.text, suggestions: r.suggestions || [] }]);
-    setTyping(false);
+    /* Le champ n'est jamais bloqué, même si la réponse échoue (ARC-17). */
+    try {
+      const t0 = performance.now();
+      const r = await askAssistant(history, { context, poste, memory: memory.current });
+      const wait = Math.max(0, 450 - (performance.now() - t0)); // laisse le temps de voir l'indicateur
+      await new Promise(res => setTimeout(res, wait));
+      if (!alive.current) return;
+      memory.current = r.memory || memory.current;
+      setMsgs(m => [...m, { role: "assistant", content: r.text, suggestions: r.suggestions || [] }]);
+    } catch (e) {
+      console.error("[assistant]", e);
+      if (alive.current) setMsgs(m => [...m, { role: "assistant", content: "Je n'ai pas pu répondre. Vous pouvez reposer votre question.", suggestions: [] }]);
+    } finally {
+      if (alive.current) setTyping(false);
+    }
   }
 
   const last = msgs[msgs.length - 1];

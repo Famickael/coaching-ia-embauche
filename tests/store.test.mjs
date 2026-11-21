@@ -51,4 +51,38 @@ S.updateTake(id, { shared: true, sharedAt: new Date().toISOString() });
 assert.equal(S.sendReport(id, { intro: "Bonjour", notes: [], comments: {} }), true);
 assert.equal(S.getState().takes[id].report.intro, "Bonjour");
 
+
+// Retrait de l'accord : réponses, vidéos et questionnaire d'échauffement supprimés, historique gardé (BUG-20)
+const id2 = await S.createTake({ code, question: "Q2 ?", duration: 5, blob: { type: "audio/webm" }, transcript: "", segments: [], gaze: null, analysis: { synthese: "", dimensions: [] } });
+assert.equal(S.getState().takes[id2].hasMedia, true, "hasMedia enregistré");
+S.saveWarmupDebrief(code, { feeling: "bien" });
+assert.ok(mem.has(`larepet.warmup.${code}`));
+await S.withdrawConsent(code);
+assert.equal(S.takesOf(code).length, 0, "réponses supprimées");
+assert.ok(!blobs.has(id2), "vidéo supprimée");
+assert.ok(!mem.has(`larepet.warmup.${code}`), "questionnaire d'échauffement supprimé avec l'accord");
+const p = S.getState().parcours[code];
+assert.equal(p.consent, null); assert.ok(p.consentWithdrawnAt); assert.equal(p.consentHistory.length, 1);
+
+// BUG-21 : pas de parcours fantôme
+await S.withdrawConsent("ZZZZZZ");
+assert.ok(!S.getState().parcours.ZZZZZZ, "aucun parcours fantôme créé");
+
+// Suppression du parcours : clés nettoyées (BUG-20)
+S.saveWarmupDebrief(code, { feeling: "bien" });
+await S.deleteParcours(code);
+assert.ok(!S.getState().parcours[code]);
+assert.ok(!mem.has(`larepet.warmup.${code}`), "questionnaire d'échauffement supprimé avec le parcours");
+
+// ARC-01 : écriture qui échoue, la création rejette et la vidéo posée est retirée
+const code2 = S.createParcours({ prenom: "Lou", poste: "", warmup: false });
+failWrites = true;
+await assert.rejects(S.createTake({ code: code2, question: "Q ?", duration: 3, blob: { type: "video/webm" }, transcript: "", segments: [], gaze: null, analysis: { synthese: "", dimensions: [] } }), /Stockage/);
+assert.equal(S.getStorageError(), true, "erreur de stockage signalée");
+assert.equal(S.takesOf(code2).length, 0, "aucune réponse fantôme en mémoire");
+assert.equal(blobs.size, 0, "vidéo retirée après l'échec");
+failWrites = false;
+S.updateParcours(code2, { poste: "x" });
+assert.equal(S.getStorageError(), false, "l'erreur disparaît quand l'écriture refonctionne");
+
 console.log("store.test : OK");

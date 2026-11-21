@@ -185,6 +185,21 @@ const take = (id, code, extra = {}) => ({ id, code, question: "Pouvez-vous vous 
     await ctx.close();
   });
 
+  /* BUG-24 : accès à la caméra refusé : message adapté, voix seule proposée. */
+  await scenario("caméra refusée", async () => {
+    const { ctx, p } = await fresh(seed({ ai: false }));
+    await ctx.addInitScript(() => { navigator.mediaDevices.getUserMedia = () => Promise.reject(Object.assign(new Error("refus"), { name: "NotAllowedError" })); });
+    await p.goto(BASE + "#/s/CASAAA");
+    await p.getByRole("button", { name: "Commencer l'entraînement" }).click();
+    await p.getByRole("checkbox", { name: /Pouvez-vous vous présenter/ }).click();
+    await p.getByRole("button", { name: "Commencer (1 question)" }).click();
+    await p.getByRole("button", { name: "Activer la caméra" }).click();
+    await p.getByText("Accès refusé").waitFor({ timeout: 5000 });
+    check(await p.getByText("Caméra ou micro introuvable").count() === 0, "BUG-24 : titre « introuvable » pour un accès refusé");
+    await shot(p, "05-camera-refusee");
+    await ctx.close();
+  });
+
   await b.close();
   if (errors.length) fails.push("erreurs JavaScript : " + errors.join(" | "));
   if (fails.length) { console.error("ECHEC\n- " + fails.join("\n- ")); process.exit(1); }

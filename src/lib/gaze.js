@@ -20,7 +20,7 @@ function getLandmarker() {
       FaceLandmarker.createFromOptions(fs, {
         baseOptions: { modelAssetPath: MODEL, delegate: "GPU" },
         runningMode: "VIDEO", numFaces: 1, outputFaceBlendshapes: true,
-      }));
+      })).catch(e => { landmarkerPromise = null; throw e; }); // nouvel essai possible après un échec réseau (ARC-09)
   }
   return landmarkerPromise;
 }

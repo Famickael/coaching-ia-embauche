@@ -15,7 +15,7 @@ import Beneficiary from "./Beneficiary.jsx";
 import Counselor from "./Counselor.jsx";
 import A11yLayer, { openA11y } from "./A11y.jsx";
 import { closeAssistant } from "./Assistant.jsx";
-import { useStore, getState, setLastSpace, setCounselor, logoutCounselor, findParcours, withdrawConsent, clearWarmupDebrief, TRIAL_CODE, TRIAL_LOGIN } from "./lib/store.js";
+import { useStore, getState, setLastSpace, setCounselor, logoutCounselor, findParcours, withdrawConsent, getStorageError, TRIAL_CODE, TRIAL_LOGIN } from "./lib/store.js";
 
 /* La Répét' : entraînement à l'entretien d'embauche, avec un assistant IA et votre coach.
    Routes (dans l'ancre de l'adresse, pour que le bouton Retour du navigateur fonctionne) :
@@ -118,6 +118,12 @@ export default function App() {
     <div className="rp-app" style={{ background: T.bg, ...TY.body, color: T.navy, display: "flex", flexDirection: "column" }}>
       <GStyle />
       <Nav route={route} s={s} />
+      {/* Stockage plein ou indisponible (ARC-01) : jamais de perte silencieuse */}
+      {getStorageError() && (
+        <div className="noprint" style={{ maxWidth: W.page, margin: "16px auto 0", padding: "0 24px", width: "100%" }}>
+          <Notice tone="error">Cet appareil ne peut plus enregistrer. Libérez de la place ou téléchargez vos réponses, puis réessayez.</Notice>
+        </div>
+      )}
       {/* Contenu et pied de page changent ensemble (un seul groupe de transition) : le pied ne passe jamais sur l'ancienne page */}
       <div key={enter} className={`rp-view${leaving ? " rp-leave" : ""}${enter ? " rp-enter" : ""}`} style={{ flex: 1, display: "flex", flexDirection: "column" }}>
         <div style={{ flex: 1 }}>
@@ -321,7 +327,7 @@ function AccountMenu({ route, s }) {
         <Modal close={() => { setConfirm(false); btn.current?.focus(); }} title="Retirer mon accord et tout supprimer ?" footer={
           <div className="rp-actions" style={{ display: "flex", justifyContent: "flex-end", gap: GAP.actions, flexWrap: "wrap" }}>
             <Btn kind="secondary" onClick={() => { setConfirm(false); btn.current?.focus(); }}>Annuler</Btn>
-            <Btn kind="danger" style={{ background: T.errorDk, color: T.surface }} icon={I.trash} onClick={async () => { clearWarmupDebrief(code); await withdrawConsent(code); setConfirm(false); }}>Tout supprimer</Btn>
+            <Btn kind="danger" style={{ background: T.errorDk, color: T.surface }} icon={I.trash} onClick={async () => { await withdrawConsent(code); setConfirm(false); }}>Tout supprimer</Btn>
           </div>}>
           <div style={{ display: "grid", gap: 12 }}>
             <Txt v="bodyLg" color={T.body}>Si vous retirez votre accord, vos réponses et les rapports de votre coach sont effacés de cet appareil. C'est définitif.</Txt>

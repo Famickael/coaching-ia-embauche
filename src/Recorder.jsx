@@ -1,9 +1,11 @@
 import React, { useEffect, useRef, useState } from "react";
-import { T, FIX, ON, TY, RAD, W, GAP, GRAD_NIGHT, Btn, Back, Icon, I, BrandLoader } from "./ui.jsx";
+import { T, FIX, ON, TY, RAD, W, GAP, GRAD_NIGHT, Btn, Back, Icon, I, BrandLoader, Notice } from "./ui.jsx";
 import { startGaze } from "./lib/gaze.js";
 import { PHRASES } from "./content/legal.js";
 import { setRecording, nudgeAssistant } from "./Assistant.jsx";
 import { useLeaveGuard } from "./lib/hooks.js";
+import { openStream, mediaError, watchEnded } from "./lib/media.js";
+import { freeSpace } from "./lib/store.js";
 
 const MAX_SEC = 180;
 
@@ -15,56 +17,80 @@ function pickMime(audioOnly) {
 }
 
 /* Enregistreur : caméra + micro, ou micro seul.
-   onDone({ blob, duration, gaze, audioOnly }) est appelé quand la personne valide sa prise. */
-export default function Recorder({ question, onDone, onCancel, trackGaze = true, setModal, validateLabel = "Garder cette réponse", holdStart = false }) {
+   onDone({ blob, duration, gaze, audioOnly }) est appelé quand la personne valide sa prise.
+   beforeStart : appelé au démarrage (le recruteur oral se tait, BUG-10) ; speaking : la question est en cours de lecture. */
+export default function Recorder({ question, onDone, onCancel, trackGaze = true, setModal, validateLabel = "Garder cette réponse", speaking = false, beforeStart }) {
   const liveRef = useRef(null), streamRef = useRef(null), recRef = useRef(null), chunks = useRef([]);
-  const gazeRef = useRef(null), t0 = useRef(0);
-  const [phase, setPhase] = useState("idle"); // idle | live | recording | done | error
+  const gazeRef = useRef(null), t0 = useRef(0), urlRef = useRef(null), alive = useRef(true), unwatch = useRef(null);
+  const [phase, setPhase] = useState("idle"); // idle | live | recording | stopping | done | error
   const [audioOnly, setAudioOnly] = useState(false);
   const [sec, setSec] = useState(0);
   const [result, setResult] = useState(null);
-  const [error, setError] = useState("");
+  const [error, setError] = useState(null); // { title, text }
+  const [lowSpace, setLowSpace] = useState(false);
   useLeaveGuard(phase === "recording" || phase === "stopping" || phase === "done");
 
-  useEffect(() => () => { stopStream(); setRecording(false); if (result?.url) URL.revokeObjectURL(result.url); }, []); // eslint-disable-line
+  /* Démontage (ARC-05) : enregistrement interrompu sans rappel, URL de la vidéo libérée, suivi du regard arrêté. */
+  useEffect(() => {
+    alive.current = true;
+    return () => {
+      alive.current = false;
+      const rec = recRef.current;
+      if (rec) { rec.ondataavailable = null; rec.onstop = null; if (rec.state === "recording") try { rec.stop(); } catch { /* déjà arrêté */ } }
+      gazeRef.current?.stop(); gazeRef.current = null;
+      stopStream(); setRecording(false);
+      if (urlRef.current) URL.revokeObjectURL(urlRef.current);
+    };
+  }, []); // eslint-disable-line
 
-  function stopStream() { streamRef.current?.getTracks().forEach(t => t.stop()); streamRef.current = null; }
+  function stopStream() { unwatch.current?.(); unwatch.current = null; streamRef.current?.getTracks().forEach(t => t.stop()); streamRef.current = null; }
+  function fail(e) { setError(mediaError(e)); setPhase("error"); }
 
   async function open(audio) {
-    setError("");
+    setError(null);
     try {
-      const stream = await navigator.mediaDevices.getUserMedia(audio
-        ? { audio: { echoCancellation: true, noiseSuppression: true } }
-        : { audio: { echoCancellation: true, noiseSuppression: true }, video: { width: { ideal: 640 }, height: { ideal: 360 }, facingMode: "user" } });
+      const stream = await openStream(audio);
+      if (!alive.current) { stream.getTracks().forEach(t => t.stop()); return; }
       streamRef.current = stream;
+      /* Piste arrêtée en cours de route (autorisation retirée, appareil débranché) : arrêt propre (BUG-24). */
+      unwatch.current = watchEnded(stream, () => { if (recRef.current?.state === "recording") stop(); else { stopStream(); fail({ name: "ended" }); } });
       setAudioOnly(audio);
       setPhase("live");
       setRecording(true); // bouton flottant masqué tant que la caméra ou le micro est ouvert : il ne couvre aucune commande
       setTimeout(() => { if (liveRef.current && !audio) { liveRef.current.srcObject = stream; liveRef.current.play().catch(() => {}); } }, 0);
+      /* Moins de 50 Mo libres (ARC-02) : prévenir, une vidéo de 3 minutes pèse environ 15 Mo. */
+      const free = await freeSpace();
+      if (alive.current) setLowSpace(free != null && free < 50e6 && !audio);
     } catch (e) {
-      setError(e?.name === "NotAllowedError"
-        ? "L'accès a été refusé. Autorisez la caméra ou le micro dans les réglages du navigateur, ou choisissez « Voix seule »."
-        : "Aucune caméra ou aucun micro n'est disponible sur cet appareil.");
-      setPhase("error");
+      fail(e);
     }
   }
 
   function start() {
+    beforeStart?.();
     chunks.current = [];
     const mimeType = pickMime(audioOnly);
-    const rec = new MediaRecorder(streamRef.current, { mimeType: mimeType || undefined, videoBitsPerSecond: 600_000, audioBitsPerSecond: 64_000 });
+    let rec;
+    try {
+      rec = new MediaRecorder(streamRef.current, { mimeType: mimeType || undefined, videoBitsPerSecond: 600_000, audioBitsPerSecond: 64_000 });
+    } catch (e) {
+      console.error(e); stopStream(); fail({ name: "NotSupportedError" }); return;
+    }
     rec.ondataavailable = e => e.data.size && chunks.current.push(e.data);
     rec.onstop = () => {
+      if (!alive.current) return;
       const duration = (performance.now() - t0.current) / 1000;
       const blob = new Blob(chunks.current, { type: rec.mimeType || mimeType || (audioOnly ? "audio/webm" : "video/webm") });
       const gaze = gazeRef.current ? gazeRef.current.stop() : null;
       gazeRef.current = null;
-      setResult({ blob, duration, gaze, url: URL.createObjectURL(blob) });
+      if (urlRef.current) URL.revokeObjectURL(urlRef.current);
+      urlRef.current = URL.createObjectURL(blob);
+      setResult({ blob, duration, gaze, url: urlRef.current });
       setPhase("done");
       stopStream();
       nudgeAssistant("record"); // la bulle apparaît quand on quitte l'enregistreur
     };
-    rec.start(1000);
+    try { rec.start(1000); } catch (e) { console.error(e); stopStream(); fail({ name: "NotSupportedError" }); return; }
     recRef.current = rec;
     t0.current = performance.now();
     setSec(0);
@@ -75,14 +101,19 @@ export default function Recorder({ question, onDone, onCancel, trackGaze = true,
 
   function stop() { if (recRef.current?.state === "recording") { setPhase("stopping"); recRef.current.stop(); } }
 
+  /* Minuterie fondée sur l'horloge (BUG-23) : juste même si l'onglet passe en arrière-plan ; arrêt à 3 minutes. */
   useEffect(() => {
     if (phase !== "recording") return;
-    const i = setInterval(() => setSec(s => { if (s + 1 >= MAX_SEC) stop(); return s + 1; }), 1000);
+    const i = setInterval(() => {
+      const n = Math.floor((performance.now() - t0.current) / 1000);
+      setSec(Math.min(n, MAX_SEC));
+      if (n >= MAX_SEC) stop();
+    }, 500);
     return () => clearInterval(i);
-  }, [phase]);
+  }, [phase]); // eslint-disable-line
 
   function redo() {
-    if (result?.url) URL.revokeObjectURL(result.url);
+    if (urlRef.current) { URL.revokeObjectURL(urlRef.current); urlRef.current = null; }
     setResult(null);
     open(audioOnly);
   }
@@ -114,8 +145,8 @@ export default function Recorder({ question, onDone, onCancel, trackGaze = true,
         {(phase === "idle" || phase === "error") && (
           <div className="rs-on-dark" style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", padding: 24 }}>
             <div style={{ textAlign: "center", color: ON.text, maxWidth: W.narrow, display: "grid", gap: 8 }}>
-              <div style={{ ...TY.h3, color: ON.text }}>{phase === "error" ? "Caméra ou micro introuvable" : "Quand vous voulez"}</div>
-              <div style={{ ...TY.small, color: ON.text }}>{phase === "error" ? error : "L'image reste sur votre appareil. Vous pouvez aussi répondre en voix seule."}</div>
+              <div style={{ ...TY.h3, color: ON.text }}>{phase === "error" ? error?.title : "Quand vous voulez"}</div>
+              <div style={{ ...TY.small, color: ON.text }}>{phase === "error" ? error?.text : "L'image reste sur votre appareil. Vous pouvez aussi répondre en voix seule."}</div>
               <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap", marginTop: 8 }}>
                 <Btn kind="objective" onClick={() => open(false)} icon={I.video}>Activer la caméra</Btn>
                 <Btn kind="ghostDark" onClick={() => open(true)} icon={I.mic}>Voix seule</Btn>
@@ -144,6 +175,9 @@ export default function Recorder({ question, onDone, onCancel, trackGaze = true,
         )}
       </div>
 
+      {lowSpace && phase === "live" && (
+        <Notice tone="warning">Il reste peu de place sur cet appareil. Une vidéo de 3 minutes pèse environ 15 Mo : vous pouvez choisir « Voix seule », plus légère.</Notice>
+      )}
       {setModal && (
         <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 8, flexWrap: "wrap", ...TY.caption, color: T.muted }}>
           <Icon d={I.lock} s={16} /> {PHRASES.camera}
@@ -155,8 +189,8 @@ export default function Recorder({ question, onDone, onCancel, trackGaze = true,
         {onCancel ? <Back onClick={() => { stop(); stopStream(); onCancel(); }} /> : <span />}
         {phase === "live" && (
           <div style={{ display: "grid", gap: 4, justifyItems: "end" }}>
-            <Btn kind="objective" onClick={start} icon={I.rec} disabled={holdStart}>Démarrer l'enregistrement</Btn>
-            {holdStart && <span role="status" style={{ ...TY.caption, color: T.muted }}>Vous pourrez démarrer quand la question aura été lue.</span>}
+            <Btn kind="objective" onClick={start} icon={I.rec}>Démarrer l'enregistrement</Btn>
+            {speaking && <span role="status" style={{ ...TY.caption, color: T.muted }}>La question est en cours de lecture. Démarrer arrête la voix.</span>}
           </div>
         )}
         {phase === "recording" && <Btn kind="secondary" onClick={stop} icon={I.stop}>Arrêter l'enregistrement</Btn>}

@@ -14,19 +14,27 @@ if (import.meta.env.VITE_MODELS_BASE_URL) {
 
 let asr = null;
 
+/* WebGPU seulement si un adaptateur est vraiment disponible (ARC-04) ; en cas d'échec, second essai en WebAssembly. */
+async function load(post) {
+  const opts = device => ({
+    revision: REVISION,
+    dtype: { encoder_model: "fp32", decoder_model_merged: "q8" },
+    device,
+    progress_callback: p => { if (p.status === "progress") post({ type: "progress", stage: "model", value: Math.round(p.progress || 0) }); },
+  });
+  const gpu = navigator.gpu ? await navigator.gpu.requestAdapter().catch(() => null) : null;
+  if (gpu) {
+    try { return await pipeline("automatic-speech-recognition", MODEL, opts("webgpu")); }
+    catch (e) { console.warn("[whisper] WebGPU indisponible, repli sur WebAssembly", e); }
+  }
+  return pipeline("automatic-speech-recognition", MODEL, opts("wasm"));
+}
+
 self.onmessage = async ({ data }) => {
+  const post = m => self.postMessage({ ...m, id: data.id });
   try {
-    if (!asr) {
-      asr = await pipeline("automatic-speech-recognition", MODEL, {
-        revision: REVISION,
-        dtype: { encoder_model: "fp32", decoder_model_merged: "q8" },
-        device: navigator.gpu ? "webgpu" : "wasm",
-        progress_callback: p => {
-          if (p.status === "progress") self.postMessage({ type: "progress", stage: "model", value: Math.round(p.progress || 0) });
-        },
-      });
-    }
-    self.postMessage({ type: "progress", stage: "transcribe", value: 0 });
+    if (!asr) asr = await load(post);
+    post({ type: "progress", stage: "transcribe", value: 0 });
     const out = await asr(data.audio, {
       language: "french", task: "transcribe",
       return_timestamps: true, chunk_length_s: 30, stride_length_s: 5,
@@ -36,8 +44,9 @@ self.onmessage = async ({ data }) => {
       end: c.timestamp?.[1] ?? c.timestamp?.[0] ?? 0,
       text: (c.text || "").trim(),
     })).filter(s => s.text);
-    self.postMessage({ type: "done", text: out.text.trim(), segments });
+    post({ type: "done", text: out.text.trim(), segments });
   } catch (e) {
-    self.postMessage({ type: "error", message: String(e?.message || e) });
+    asr = null;
+    post({ type: "error", message: String(e?.message || e) });
   }
 };

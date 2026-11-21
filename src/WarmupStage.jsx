@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { T, FIX, ON, TY, RAD, W, MO, GRAD_NIGHT, ringOf, Btn, Chip, Icon, I } from "./ui.jsx";
 import { loadSegmenter, startBackground, BG_COLOR } from "./lib/background.js";
 import { PHRASES } from "./content/legal.js";
+import { openStream, mediaError, watchEnded } from "./lib/media.js";
 
 /* Aperçu en direct pour l'échauffement : caméra ou voix seule.
    Rien n'est enregistré (aucun MediaRecorder) : l'image et le son ne quittent pas cet écran.
@@ -10,7 +11,8 @@ export default function WarmupStage({ setModal }) {
   const videoRef = useRef(null), canvasRef = useRef(null), streamRef = useRef(null);
   const stopBgRef = useRef(null), modeRef = useRef("none"), audioRef = useRef(null);
   const [phase, setPhase] = useState("idle"); // idle | video | audio | error
-  const [error, setError] = useState("");
+  const [error, setError] = useState(null); // { title, text }
+  const unwatch = useRef(null);
   const [bg, setBg] = useState("none"); // none | blur | color
   const [bgState, setBgState] = useState("idle"); // idle | loading | ready | unavailable
   const [hearing, setHearing] = useState(false);
@@ -24,7 +26,7 @@ export default function WarmupStage({ setModal }) {
     setHearing(false);
   }
   function stopAll() {
-    stopBg(); stopAudio();
+    stopBg(); stopAudio(); unwatch.current?.(); unwatch.current = null;
     streamRef.current?.getTracks().forEach(t => t.stop()); streamRef.current = null;
   }
 
@@ -57,13 +59,12 @@ export default function WarmupStage({ setModal }) {
   }
 
   async function open(audioOnly) {
-    setError("");
+    setError(null);
     stopAll();
     try {
-      const stream = await navigator.mediaDevices.getUserMedia(audioOnly
-        ? { audio: { echoCancellation: true, noiseSuppression: true } }
-        : { audio: { echoCancellation: true, noiseSuppression: true }, video: { width: { ideal: 640 }, height: { ideal: 360 }, facingMode: "user" } });
+      const stream = await openStream(audioOnly);
       streamRef.current = stream;
+      unwatch.current = watchEnded(stream, () => { stopAll(); setError(mediaError({ name: "ended" }, { warmup: true })); setPhase("error"); });
       setPhase(audioOnly ? "audio" : "video");
       watchAudio(stream);
       if (!audioOnly) setTimeout(() => {
@@ -72,9 +73,7 @@ export default function WarmupStage({ setModal }) {
         if (modeRef.current !== "none") applyBg(modeRef.current);
       }, 0);
     } catch (e) {
-      setError(e?.name === "NotAllowedError"
-        ? "L'accès a été refusé. Autorisez la caméra ou le micro dans les réglages du navigateur, ou passez en voix seule."
-        : "Aucune caméra ou aucun micro n'est disponible sur cet appareil. Vous pouvez faire l'échauffement sans aperçu.");
+      setError(mediaError(e, { warmup: true }));
       setPhase("error");
     }
   }
@@ -120,8 +119,8 @@ export default function WarmupStage({ setModal }) {
         {(phase === "idle" || phase === "error") && (
           <div className="rs-on-dark" style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", padding: 20 }}>
             <div style={{ textAlign: "center", color: ON.text, maxWidth: W.narrow, display: "grid", gap: 8 }}>
-              <div style={{ ...TY.h3, color: ON.text }}>{phase === "error" ? "Caméra ou micro introuvable" : "Voulez-vous vous voir ?"}</div>
-              <div style={{ ...TY.small, color: ON.text }}>{phase === "error" ? error : "Activez la caméra pour vous voir pendant que vous parlez. Ou restez en voix seule."}</div>
+              <div style={{ ...TY.h3, color: ON.text }}>{phase === "error" ? error?.title : "Voulez-vous vous voir ?"}</div>
+              <div style={{ ...TY.small, color: ON.text }}>{phase === "error" ? error?.text : "Activez la caméra pour vous voir pendant que vous parlez. Ou restez en voix seule."}</div>
               <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap", marginTop: 8 }}>
                 <Btn kind="white" onClick={() => open(false)} icon={I.video}>Activer la caméra</Btn>
                 <Btn kind="ghostDark" onClick={() => open(true)} icon={I.mic}>Rester en voix seule</Btn>
