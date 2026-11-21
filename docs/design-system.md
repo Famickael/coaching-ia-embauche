@@ -91,12 +91,12 @@ Demande du propriétaire : plus de profondeur et de présence de la marque sur l
 | `GRAD_SECTION` | `bg`, `primaryBg` au milieu, `bg` | Fond de la strate épinglée (section clé) |
 | `GRAD_PAGE` | `primaryBg` vers `bg` | Fond de `PageHero` (pages secondaires) |
 | `GLOW.blue`, `GLOW.violet` | bleu clair 22 %, violet 20 % | Halos (`Halo`) derrière les photos et le héros : décor, jamais sous du texte |
-| `FADE_FOOT` | masque opaque puis transparent sur 160 px avant le pied de page | Fond de l'accueil qui suit la souris : il s'efface avant le pied de page |
+| `FADE_FOOT` | masque opaque puis transparent sur 160 px avant le pied de page | Fond de l'accueil (repoussé par la souris) : il s'efface avant le pied de page |
 | `HL.appui`, `HL.ai`, `HL.primary` | teintes de fond des rôles | Surlignage progressif d'un passage (cartes animées, strate) |
 
 Début du titre d'accroche (« Répétez votre entretien d'embauche, ») : couleur pleine `navy` dans les deux thèmes (presque blanc en sombre), sans dégradé ; seule la fin d'accroche qui change garde `GRAD_ACCROCHE`.
 
-**Fond de l'accueil.** Un seul calque fixe (`.rs-glow`) derrière toutes les sections de l'accueil, qui n'ont aucun fond propre (ni halo de section, ni `GRAD_HERO`, ni `GRAD_SECTION`) : aucune rupture entre le héros, la phrase et la strate. Il suit la souris ; sur tactile, il dérive lentement seul (`rsDrift`, 26 s, aller-retour, `transform` seulement) et glisse un peu au défilement et au doigt (`touchmove`), avec lissage, sans capteur d'orientation. Il s'efface avant le pied de page (`FADE_FOOT`, variable `--fy`), et le pied de page garde son fond opaque au-dessus. Fixe en mouvement réduit, masqué en mode concentration.
+**Fond de l'accueil.** Un seul calque fixe (`.rs-glow`) derrière toutes les sections de l'accueil, qui n'ont aucun fond propre (ni halo de section, ni `GRAD_HERO`, ni `GRAD_SECTION`) : aucune rupture entre le héros, la phrase et la strate. Souris : le pointeur **repousse** le violet et le bleu, chacun de son côté (`pushed`, `src/home/index.jsx` : poussée qui décroît avec la distance, depuis leurs positions de repos), et dégage sous lui une zone claire au fond du thème (`.rs-glow>b`, `T.bg`), pour que le texte pointé reste lisible dans les quatre thèmes ; la zone s'efface quand la souris quitte la fenêtre. Sur tactile, il dérive lentement seul (`rsDrift`, 26 s, aller-retour, `transform` seulement) et glisse un peu au défilement et au doigt (`touchmove`), avec lissage, sans capteur d'orientation. Il s'efface avant le pied de page (`FADE_FOOT`, variable `--fy`), et le pied de page garde son fond opaque au-dessus. Fixe en mouvement réduit, masqué en mode concentration.
 
 Le bleu et le violet de ces dégradés et halos relèvent de l'exception « dégradé de la marque » ci-dessous : ils ne signalent ni l'assistant ni une action.
 
@@ -753,5 +753,7 @@ Dégradés : `GRAD` et `GRAD_AI` recomposés selon 1.3, `GRAD_NIGHT` ajouté, `G
 
 | 2026-11-21 | Titres en **Outfit** (police du logo) à la place de Manrope : `FONT_STACKS.display`, donc `FD` et tous les styles de titre de `TY` ; Outfit 700 et 800 auto-hébergées (`public/fonts/outfit-latin-{700,800}-normal.woff2`, sous-ensemble latin, Fontsource 5.3.0, licence OFL), Manrope retirée ; préchargement d'Outfit 800 dans `index.html` | Demande du propriétaire : titres dans la police du logo |
 | 2026-11-21 | Typographie française : espace fine insécable (U+202F) avant `;` `?` `!` et à l'intérieur des guillemets, espace insécable (U+00A0) avant `:` et `%` et entre un nombre et son unité ; contrôlée par `npm run test:content` (`tests/lib/typo-fr.mjs`) | Audit RED-11, demande du propriétaire |
+
+| 2026-11-21 | Fond de l'accueil inversé : le violet et le bleu s'écartent du pointeur au lieu de le suivre, zone claire au fond du thème sous la souris ; tactile inchangé (dérive), rien ne bouge en mouvement réduit ; contrôlé par `test:site` | Demande du propriétaire : la zone pointée devenait illisible |
 
 Ajouter une ligne à chaque évolution d'une règle ou d'une échelle.
