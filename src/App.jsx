@@ -392,7 +392,7 @@ function Footer() {
   ];
   const lk = { ...TY.caption, ...TY.link, minHeight: 44, display: "inline-flex", alignItems: "center" };
   return (
-    <footer className="noprint" style={{ borderTop: `1px solid ${T.line}`, background: T.surface, marginTop: GAP.section / 2 }}>
+    <footer className="noprint" style={{ position: "relative", zIndex: 1, borderTop: `1px solid ${T.line}`, background: T.surface, marginTop: GAP.section / 2 }}>
       <div className="rp-pad" style={{ maxWidth: W.page, margin: "0 auto", padding: "24px 24px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 20 }}>
         <div style={{ display: "grid", gap: 12, maxWidth: 360 }}>
           <RepetLogo s={14} tagline={false} />
