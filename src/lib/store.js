@@ -10,13 +10,36 @@ const KEY = "larepet.v1";
 const EMPTY = { counselor: null, parcours: {}, takes: {}, lastSpace: null }; // lastSpace : { role: "benef", code } | { role: "coach" }
 const listeners = new Set();
 
+/* Version du schéma (ARC-08) : migrate() met à niveau les données d'une version antérieure à la lecture. */
+const SCHEMA = 1;
+function migrate(d) {
+  // version 0 (sans « v ») → 1 : aucun changement de forme, la version est seulement ajoutée.
+  return { ...d, v: SCHEMA };
+}
 function read() {
   try {
     const raw = localStorage.getItem(KEY);
-    return raw ? { ...EMPTY, ...JSON.parse(raw) } : { ...EMPTY };
+    return migrate(raw ? { ...EMPTY, ...JSON.parse(raw) } : { ...EMPTY });
   } catch {
-    return { ...EMPTY };
+    return migrate({ ...EMPTY });
   }
+}
+
+/* Deux onglets qui écrivent presque en même temps ne s'écrasent plus (ARC-08) : chaque écriture relit le stockage et
+   n'y applique que ce qui a changé ici (par identifiant de parcours et de réponse), au lieu de tout réécrire. */
+function merge(old, next, disk) {
+  const out = { ...disk };
+  for (const k of ["counselor", "lastSpace"]) if (JSON.stringify(old[k] ?? null) !== JSON.stringify(next[k] ?? null)) out[k] = next[k];
+  for (const k of ["parcours", "takes"]) {
+    const o = old[k] || {}, n = next[k] || {}, d = { ...(disk[k] || {}) };
+    for (const id of new Set([...Object.keys(o), ...Object.keys(n)])) {
+      if (!(id in n)) delete d[id];            // supprimé ici
+      else if (o[id] !== n[id]) d[id] = n[id]; // créé ou modifié ici
+    }
+    out[k] = d;
+  }
+  out.v = SCHEMA;
+  return out;
 }
 
 let state = read();
@@ -30,10 +53,12 @@ export const TRIAL_COACH = "Sophie M.";
 export const TRIAL_LOGIN = { email: "sophie.m@exemple.fr", password: "repet-2026", name: TRIAL_COACH };
 function ensureTrial() {
   if (state.parcours[TRIAL_CODE]) return;
+  const old = state;
   state = { ...state, parcours: { ...state.parcours, [TRIAL_CODE]: {
     code: TRIAL_CODE, prenom: "Camille", poste: "agent d'accueil", warmup: true, counselor: "",
     trial: true, createdAt: new Date().toISOString(), openedAt: null, consent: null,
   } } };
+  state = merge(old, state, read());
   persist(state);
   queueMicrotask(notify); // pas de mise à jour pendant un rendu
 }
@@ -47,8 +72,8 @@ function persist(next) {
 }
 const notify = () => listeners.forEach(fn => fn());
 function write(next) {
-  state = next;
-  const ok = persist(next);
+  state = merge(state, next, read());
+  const ok = persist(state);
   notify();
   return ok;
 }
@@ -179,7 +204,7 @@ export function unshareTake(id) {
 /* Rapport du coach (BUG-02) : refusé si la personne a repris son envoi entre-temps (deux onglets, deux appareils).
    Renvoie true si le rapport est enregistré. Production : rpc('envoyer_rapport'), qui refuse de la même façon. */
 export function sendReport(id, report) {
-  const t = state.takes[id];
+  const t = read().takes[id]; // état du stockage, pas la copie en mémoire : la reprise a pu venir d'un autre onglet
   if (!t || !t.shared) return false;
   write({ ...state, takes: { ...state.takes, [id]: { ...t, report, draft: null } } });
   return true;
@@ -187,7 +212,7 @@ export function sendReport(id, report) {
 
 /* Brouillon du coach : ignoré si la réponse n'est plus partagée (le brouillon a été effacé par la reprise). */
 export function saveDraft(id, draft) {
-  const t = state.takes[id];
+  const t = read().takes[id];
   if (!t || !t.shared) return false;
   write({ ...state, takes: { ...state.takes, [id]: { ...t, draft } } });
   return true;

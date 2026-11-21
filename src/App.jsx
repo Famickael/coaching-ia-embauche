@@ -24,25 +24,19 @@ import { ToTop } from "./app/ToTop.jsx";
      #/ressources/SLUG          article
      #/demo                     demande de prise en main accompagnée
      #/espace                   « Mon espace » : code d'accès ou connexion coach
-     #/s/CODE                   espace bénéficiaire
+     #/s/CODE(/écran)           espace de la personne ; l'écran suit l'ancre (src/lib/viewHash.js)
      #/beneficiaire             saisie du code
-     #/coach                    espace coach (sans connexion : « Mon espace »)
+     #/coach(/parcours/CODE|relecture/CODE/ID)   espace coach (sans connexion : « Mon espace »)
      #/vos-donnees(/video|assistant|droits|appareil|notice|coachs)   information sur les données
      #/conditions, #/mentions-legales, #/accessibilite                pages légales */
 
 /* Pages chargées à la demande (PERF-02) : l'accueil ne télécharge ni les espaces, ni les articles, ni MediaPipe. */
 const Solutions = lazy(() => import("./Solutions.jsx"));
-
 const About = lazy(() => import("./About.jsx"));
-
 const Resources = lazy(() => import("./Resources.jsx"));
-
 const Demo = lazy(() => import("./Demo.jsx"));
-
 const Research = lazy(() => import("./Research.jsx"));
-
 const Beneficiary = lazy(() => import("./beneficiary/index.jsx"));
-
 const Counselor = lazy(() => import("./coach/index.jsx"));
 
 export default function App() {
@@ -61,6 +55,8 @@ export default function App() {
     const on = () => {
       const next = routeFromHash(), cur = routeRef.current;
       const inPage = next.role === cur.role && ["about", "solutions"].includes(next.role) && next.section !== cur.section && next.section !== "ia-et-recherche" && cur.section !== "ia-et-recherche";
+      /* Autre écran du même espace (BUG-07) : l'espace reste monté et suit l'ancre, sans fondu de page. */
+      if ((next.role === "benef" && cur.role === "benef" && next.code && next.code === cur.code) || (next.role === "coach" && cur.role === "coach")) { setRoute(next); return; }
       if (inPage) { setRoute(next); if (!next.section) window.scrollTo({ top: 0, behavior: reducedMotion() ? "auto" : "smooth" }); return; }
       const apply = () => { flushSync(() => setRoute(next)); window.scrollTo({ top: 0 }); };
       if (reducedMotion()) return apply();
@@ -74,10 +70,10 @@ export default function App() {
     return () => window.removeEventListener("hashchange", on);
   }, []);
   useEffect(() => { if (route.role === "coach" && s.counselor) setLastSpace({ role: "coach" }); }, [route.role, s.counselor]);
-  /* Titre de la route (effet de mise en page) ; chaque écran l'affine ensuite par useTitle (A11Y-06). */
-  useLayoutEffect(() => { document.title = `${titleOf(route, s.counselor)} · La Répét'`; }, [route, s.counselor]);
-  /* Changement de page (A11Y-02) : focus sur le titre, annonce discrète du titre de la page. */
   const routeKey = `${route.role}/${route.section || ""}/${route.slug || ""}/${route.cat || ""}/${route.page || ""}/${route.code || ""}`;
+  /* Titre de la route (effet de mise en page) ; chaque écran l'affine ensuite par useTitle (A11Y-06). */
+  useLayoutEffect(() => { document.title = `${titleOf(route, s.counselor)} · La Répét'`; }, [routeKey, s.counselor]); // eslint-disable-line
+  /* Changement de page (A11Y-02) : focus sur le titre, annonce discrète du titre de la page. */
   useFocusOnChange(routeKey);
   const [announce, setAnnounce] = useState("");
   const firstRoute = useRef(true);
@@ -88,7 +84,7 @@ export default function App() {
   }, [routeKey]);
 
   const onCode = code => {
-    if (code) { setLastSpace({ role: "benef", code }); if (location.hash !== `#/s/${code}`) history.replaceState(null, "", `#/s/${code}`); }
+    if (code) { setLastSpace({ role: "benef", code }); if (!location.hash.startsWith(`#/s/${code}`)) { history.replaceState(null, "", `#/s/${code}`); window.dispatchEvent(new HashChangeEvent("hashchange")); } }
     else if (getState().lastSpace?.role === "benef") { setLastSpace(null); history.replaceState(null, "", "#/beneficiaire"); }
   };
 
@@ -118,8 +114,8 @@ export default function App() {
         {route.role === "demo" && <Demo go={go} />}
         {route.role === "legal" && <LegalPage key={route.page} page={route.page} />}
         {(route.role === "espace" || (route.role === "coach" && !s.counselor)) && <Espace />}
-        {route.role === "benef" && <Beneficiary key={route.code || "nocode"} initialCode={route.code} setModal={setModal} onCode={onCode} />}
-        {route.role === "coach" && s.counselor && <Counselor />}
+        {route.role === "benef" && <Beneficiary key={route.code || "nocode"} initialCode={route.code} sub={route.sub} setModal={setModal} onCode={onCode} />}
+        {route.role === "coach" && s.counselor && <Counselor sub={route.sub} />}
         </Suspense>
         </div>
         <Footer compact={route.role === "benef" || (route.role === "coach" && !!s.counselor)} />

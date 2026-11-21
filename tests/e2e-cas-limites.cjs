@@ -40,7 +40,7 @@ const take = (id, code, extra = {}) => ({ id, code, question: "Pouvez-vous vous 
   const shot = (p, n) => p.screenshot({ path: `${SC}/${n}.png`, fullPage: true });
   const scenario = async (name, fn) => {
     try { await fn(); console.log(`  ok  ${name}`); }
-    catch (e) { fails.push(`${name} : ${e.message.split("\n")[0]}`); console.log(`  ÉCHEC ${name}`); }
+    catch (e) { fails.push(`${name} : ${e.message.split("\n").slice(0, 3).join(" ")}`); console.log(`  ÉCHEC ${name}`); }
   };
 
   /* BUG-02 : la personne reprend son envoi pendant que le coach relit, dans un autre onglet. */
@@ -226,6 +226,58 @@ const take = (id, code, extra = {}) => ({ id, code, question: "Pouvez-vous vous 
     await shot(p, "06-suppression-confirmee");
     await dlg.getByRole("button", { name: "Supprimer" }).click();
     await p.getByText("Vous n'avez pas encore de réponse enregistrée").waitFor({ timeout: 5000 });
+    await ctx.close();
+  });
+
+  /* BUG-07 : Précédent et Suivant suivent les écrans de l'espace ; un rechargement sur un retour le rouvre. */
+  await scenario("navigation par l'adresse", async () => {
+    const { ctx, p } = await fresh(seed({ takes: { t1: take("t1", "CASAAA") } }));
+    await p.goto(BASE + "#/s/CASAAA");
+    await p.getByRole("button", { name: "Commencer l'entraînement" }).click();
+    await p.getByRole("heading", { name: /Sur quelles questions/ }).waitFor({ timeout: 5000 });
+    check(p.url().endsWith("#/s/CASAAA/questions"), `BUG-07 : adresse du choix des questions (${p.url()})`);
+    await p.goBack();
+    await p.getByRole("heading", { name: /Bonjour Lou/ }).waitFor({ timeout: 5000 });
+    await p.goForward();
+    await p.getByRole("heading", { name: /Sur quelles questions/ }).waitFor({ timeout: 5000 });
+    await p.goBack();
+    await p.getByRole("button", { name: "Ouvrir", exact: true }).first().click();
+    await p.getByText("Lire mon retour").first().click().catch(() => {});
+    await p.getByText("En résumé.").waitFor({ timeout: 5000 });
+    const u = p.url();
+    check(/#\/s\/CASAAA\/retour\/t1/.test(u), `BUG-07 : adresse du retour (${u})`);
+    await p.reload();
+    await p.getByText("En résumé.").waitFor({ timeout: 5000 });
+    /* Rechargement sur un écran qui dépend d'un état en mémoire : retour à l'espace avec un message. */
+    await p.evaluate(() => { history.replaceState(null, "", "#/s/CASAAA/reponse"); location.reload(); });
+    await p.getByText("Cet écran ne peut pas être rouvert").waitFor({ timeout: 8000 });
+    /* Côté coach */
+    const q = await ctx.newPage();
+    await q.goto(BASE + "#/coach");
+    await q.getByRole("button", { name: "Ouvrir" }).first().click();
+    await q.getByRole("heading", { level: 1, name: "Lou" }).waitFor({ timeout: 5000 });
+    check(q.url().endsWith("#/coach/parcours/CASAAA"), `BUG-07 : adresse de la fiche du parcours (${q.url()})`);
+    await q.goBack();
+    await q.getByRole("heading", { name: "Mes parcours" }).waitFor({ timeout: 5000 });
+    await ctx.close();
+  });
+
+  /* ARC-08 : deux onglets écrivent l'un après l'autre sans se relire : rien n'est écrasé. */
+  await scenario("deux onglets qui écrivent", async () => {
+    const { ctx, p } = await fresh(seed());
+    await p.goto(BASE + "#/coach");
+    await p.getByRole("heading", { name: "Mes parcours" }).waitFor({ timeout: 5000 });
+    const q = await ctx.newPage();
+    await q.goto(BASE + "#/s/CASAAA");
+    await q.getByRole("heading", { name: /Bonjour Lou/ }).waitFor({ timeout: 5000 });
+    /* Écriture brute dans le stockage par un troisième acteur, sans événement vers les deux pages */
+    await p.evaluate(k => { const st = JSON.parse(localStorage.getItem(k)); st.parcours.CASBBB = { code: "CASBBB", prenom: "Noa", poste: "", createdAt: new Date().toISOString(), consent: null }; localStorage.setItem(k, JSON.stringify(st)); }, KEY);
+    await q.getByRole("combobox", { name: "Métier visé" }).fill("plombier");
+    await q.getByRole("combobox", { name: "Métier visé" }).press("Enter");
+    await q.waitForTimeout(300);
+    const st = await q.evaluate(k => JSON.parse(localStorage.getItem(k)), KEY);
+    check(!!st.parcours.CASBBB, "ARC-08 : le parcours écrit par un autre onglet a été écrasé");
+    check(st.parcours.CASAAA.poste === "plombier", "ARC-08 : la modification de l'onglet n'est pas écrite");
     await ctx.close();
   });
 

@@ -126,7 +126,7 @@ src/
   app/                router.js (routes par ancre, titres), Nav.jsx (en-tête, sous-menus, menu mobile), AccountMenu.jsx, Espace.jsx
                       (« Mon espace », page introuvable), Footer.jsx, ToTop.jsx
                       routes : #/, #/a-propos(/faq), #/solutions(/beneficiaires|coachs|organismes), #/ressources, #/ressources/c/CATEGORIE,
-                      #/ressources/SLUG, #/demo, #/espace, #/s/CODE, #/coach, #/vos-donnees(/video|assistant|droits|appareil|notice|coachs),
+                      #/ressources/SLUG, #/demo, #/espace, #/s/CODE(/questions|reponse|retour/ID|envoi/ID|recapitulatif…), #/coach(/parcours/CODE|relecture/CODE/ID), #/vos-donnees(/video|assistant|droits|appareil|notice|coachs),
                       #/conditions, #/mentions-legales, #/accessibilite, #/a-propos/ia-et-recherche ; #/fonctionnement redirige vers #/solutions
   Home.jsx            accueil : héros (accroche qui change, scènes photo + interface en boucle), phrase qui se colore au défilement,
                       strate épinglée « un seul dispositif » en quatre temps, cartes animées, parti pris, portes d'entrée, bandeau final

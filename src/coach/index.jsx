@@ -4,23 +4,27 @@ import React, { useEffect, useState } from "react";
 import { T, PAD, GAP, W, Btn, I, Txt, Notice, Modal } from "../ui.jsx";
 import { useStore } from "../lib/store.js";
 import { useTitle, useFocusOnChange } from "../lib/hooks.js";
+import { writeHash, coachSub, parseCoachSub } from "../lib/viewHash.js";
 import { Withdrawn, actions, stack } from "./shared.jsx";
 import { List } from "./List.jsx";
 import { Create, Created } from "./Create.jsx";
 import { Parcours } from "./Parcours.jsx";
 import { Review } from "./Review.jsx";
 
-export default function Counselor() {
+export default function Counselor({ sub = "" }) {
   const s = useStore();
-  const [view, setView] = useState({ name: "list" });
+  /* Vue dans l'ancre (BUG-07) : #/coach, #/coach/parcours/CODE, #/coach/relecture/CODE/RÉPONSE. */
+  const [view, setViewState] = useState(() => parseCoachSub(sub));
+  const setView = (v, replace = false) => { setViewState(v); const sb = coachSub(v); writeHash(`#/coach${sb ? `/${sb}` : ""}`, replace); window.scrollTo({ top: 0 }); };
+  useEffect(() => { const t = parseCoachSub(sub); if (coachSub(t) !== coachSub(view)) setViewState(t); }, [sub]); // eslint-disable-line
   const [modal, setModal] = useState(null); // null | { step: "create" } | { step: "created", code }
   const [gone, setGone] = useState("");
   /* Parcours ou réponse supprimés ailleurs (autre onglet, retrait de l'accord) : retour à la liste avec un message (BUG-09). */
   const missing = (view.name === "parcours" && !s.parcours[view.code]) || (view.name === "review" && (!s.parcours[view.code] || !s.takes[view.takeId]));
   useEffect(() => {
     if (!missing) return;
-    if (view.name === "review" && s.parcours[view.code]) { setGone("Cette réponse n'existe plus."); setView({ name: "parcours", code: view.code }); }
-    else { setGone("Ce parcours n'existe plus."); setView({ name: "list" }); }
+    if (view.name === "review" && s.parcours[view.code]) { setGone("Cette réponse n'existe plus."); setView({ name: "parcours", code: view.code }, true); }
+    else { setGone("Ce parcours n'existe plus."); setView({ name: "list" }, true); }
   }, [missing]); // eslint-disable-line
   useEffect(() => { if (!missing && gone) { const t = setTimeout(() => setGone(""), 8000); return () => clearTimeout(t); } }, [view]); // eslint-disable-line
   /* Un titre de page et un h1 propres à chaque vue (A11Y-06, A11Y-07), focus sur le titre au changement de vue (A11Y-02). */

@@ -4,10 +4,12 @@ import { getState } from "../lib/store.js";
 
 export function routeFromHash() {
   const h = location.hash;
-  const m = h.match(/^#\/s\/([A-Za-z0-9]{6})$/);
-  if (m) return { role: "benef", code: m[1].toUpperCase() };
+  /* Espaces : la vue est dans l'ancre (BUG-07), pour que Précédent et Suivant suivent les écrans. */
+  const m = h.match(/^#\/s\/([A-Za-z0-9]{6})(?:\/([a-z0-9/-]*))?$/);
+  if (m) return { role: "benef", code: m[1].toUpperCase(), sub: m[2] || "" };
   if (h === "#/beneficiaire") return { role: "benef", code: null };
-  if (h === "#/coach") return { role: "coach" };
+  const c = h.match(/^#\/coach(?:\/([A-Za-z0-9/-]*))?$/);
+  if (c) return { role: "coach", sub: c[1] || "" };
   if (h === "#/fonctionnement") { history.replaceState(null, "", "#/solutions"); return { role: "solutions" }; }
   let r = h.match(/^#\/solutions(?:\/([a-z-]+))?$/);
   if (r) return { role: "solutions", section: r[1] };

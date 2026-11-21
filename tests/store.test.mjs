@@ -85,4 +85,21 @@ failWrites = false;
 S.updateParcours(code2, { poste: "x" });
 assert.equal(S.getStorageError(), false, "l'erreur disparaît quand l'écriture refonctionne");
 
+
+// ARC-08 : un autre onglet écrit entre deux écritures de cet onglet, rien n'est écrasé
+const KEY = "larepet.v1";
+const other = JSON.parse(mem.get(KEY));
+other.parcours.AUTRE1 = { code: "AUTRE1", prenom: "Sam", poste: "", createdAt: new Date().toISOString(), consent: null };
+mem.set(KEY, JSON.stringify(other)); // écrit par un autre onglet, sans passer par ce module
+S.updateParcours(code2, { poste: "électricien" });
+const disk = JSON.parse(mem.get(KEY));
+assert.ok(disk.parcours.AUTRE1, "le parcours créé dans l'autre onglet est gardé");
+assert.equal(disk.parcours[code2].poste, "électricien", "la modification de cet onglet est écrite");
+assert.equal(disk.v, 1, "version du schéma enregistrée");
+// BUG-02 renforcé : la reprise faite dans un autre onglet (copie en mémoire périmée) bloque aussi le rapport
+const id3 = await S.createTake({ code: code2, question: "Q3 ?", duration: 4, blob: null, transcript: "", segments: [], gaze: null, analysis: { synthese: "", dimensions: [] } });
+S.updateTake(id3, { shared: true, sharedAt: new Date().toISOString() });
+const d2 = JSON.parse(mem.get(KEY)); d2.takes[id3].shared = false; mem.set(KEY, JSON.stringify(d2));
+assert.equal(S.sendReport(id3, { intro: "x", notes: [], comments: {} }), false, "rapport refusé d'après l'état du stockage");
+
 console.log("store.test : OK");
