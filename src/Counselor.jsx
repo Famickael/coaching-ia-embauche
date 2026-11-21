@@ -4,6 +4,7 @@ import { useStore, createParcours, deleteParcours, takesOf, sendReport, saveDraf
 import { Player, DimCard, markersOf, useVideoUrl } from "./Report.jsx";
 import { fmt } from "./lib/analysis.js";
 import CoachAssistantDock from "./CoachAssistant.jsx";
+import { isAudio, noFeedback } from "./lib/takes.js";
 
 const dateFr = iso => (iso ? new Date(iso).toLocaleString("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "");
 export const linkFor = code => `${location.origin}${location.pathname}#/s/${code}`;
@@ -278,7 +279,7 @@ function Review({ s, p, take, back }) {
     if (target === "note") {
       const t = playerRef.current ? playerRef.current.currentTime : 0;
       const next = [...notes, { id: nid(), t, text }];
-      setNotes(next); saveDraft({ notes: next }); return `en note à ${fmt(t)} de la vidéo`;
+      setNotes(next); saveDraft({ notes: next }); return `en note à ${fmt(t)} de ${isAudio(take) ? "l'enregistrement" : "la vidéo"}`;
     }
     return "";
   };
@@ -305,9 +306,10 @@ function Review({ s, p, take, back }) {
         <div style={stack(GAP.stack)}>
           <Player take={virtualTake} url={url} markers={markersOf(virtualTake)} active={active} onActive={setActive} playerRef={playerRef} />
           <Card style={stack(8)}>
-            <label htmlFor="review-note" style={{ ...TY.h4, color: T.navy }}>Ajouter une remarque à ce moment de la vidéo</label>
+            <label htmlFor="review-note" style={{ ...TY.h4, color: T.navy }}>Ajouter une remarque à ce moment {isAudio(take) ? "de l'enregistrement" : "de la vidéo"}</label>
+            <Txt v="caption" color={T.muted} id="review-note-h">Mettez {isAudio(take) ? "l'enregistrement" : "la vidéo"} en pause au bon moment, puis écrivez votre remarque.</Txt>
             <div style={{ display: "flex", gap: 8 }}>
-              <Input id="review-note" value={noteText} onChange={e => setNoteText(e.target.value)} onKeyDown={e => e.key === "Enter" && addNote()} placeholder="Mettez la vidéo en pause au bon moment, puis écrivez votre remarque" style={{ flex: 1, minWidth: 0 }} />
+              <Input id="review-note" aria-describedby="review-note-h" value={noteText} onChange={e => setNoteText(e.target.value)} onKeyDown={e => e.key === "Enter" && addNote()} placeholder="Votre remarque" style={{ flex: 1, minWidth: 0 }} />
               <Btn kind="primary" onClick={addNote} disabled={!noteText.trim()}>Ajouter</Btn>
             </div>
             {notes.length > 0 && (
@@ -353,7 +355,7 @@ function Review({ s, p, take, back }) {
             <h3 style={{ ...TY.h4, color: T.navy, margin: 0 }}>Repères de l'assistant</h3>
             <Txt v="caption" color={T.muted}>Nuancez, contextualisez ou contredisez : votre lecture prime sur celle de l'assistant.</Txt>
           </div>
-          {A.dimensions.length === 0 && <Card><Txt v="small" color={T.body}>{A.synthese || "L'assistant n'a pas de repère pour cet entretien."}</Txt></Card>}
+          {A.dimensions.length === 0 && <Card><Txt v="small" color={T.body}>{noFeedback(take) ? "La personne a choisi de ne pas recevoir le retour de l'assistant." : A.synthese || "L'assistant n'a pas de repère pour cet entretien."}</Txt></Card>}
           {A.dimensions.map(d => (
             <div key={d.id} style={stack(8)}>
               <DimCard d={d} active={active === d.id} onClick={() => seek(d.t, d.id)} />

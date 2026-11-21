@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { T, ON, TY, RAD, SH, PAD, GAP, MO, TONE, ringOf, Card, Tag, Bare, Notice, Quote, TimeChip, I } from "./ui.jsx";
 import { loadVideoUrl } from "./lib/store.js";
 import { fmt } from "./lib/analysis.js";
+import { hasMedia, isAudio, noFeedback } from "./lib/takes.js";
 
 export const toneOf = d => (d.type === "appui" ? T.accent : T.violet);
 
@@ -10,7 +11,7 @@ export function useVideoUrl(take) {
   const [url, setUrl] = useState(null);
   useEffect(() => {
     let u = null, alive = true;
-    if (take?.hasVideo) loadVideoUrl(take.id).then(x => { if (alive) { u = x; setUrl(x); } else if (x) URL.revokeObjectURL(x); });
+    if (hasMedia(take)) loadVideoUrl(take.id).then(x => { if (alive) { u = x; setUrl(x); } else if (x) URL.revokeObjectURL(x); });
     return () => { alive = false; if (u) URL.revokeObjectURL(u); };
   }, [take?.id]);
   return url;
@@ -60,19 +61,19 @@ export function Player({ take, url, markers, active, onActive, playerRef }) {
     v.play().catch(() => {});
   };
 
-  const isAudio = take.mime?.startsWith("audio");
+  const audio = isAudio(take);
   return (
     <Card pad="none">
-      <div style={{ background: T.videoBg, aspectRatio: isAudio ? "auto" : "16/9", display: "grid", placeItems: "center", padding: isAudio ? 24 : 0 }}>
+      <div style={{ background: T.videoBg, aspectRatio: audio ? "auto" : "16/9", display: "grid", placeItems: "center", padding: audio ? 24 : 0 }}>
         {url
-          ? (isAudio
+          ? (audio
             ? <audio ref={ref} src={url} controls style={{ width: "90%" }} />
             : <video ref={ref} src={url} controls playsInline style={{ width: "100%", height: "100%", objectFit: "contain" }} />)
-          : <div style={{ ...TY.small, color: ON.text, padding: 32 }}>Vidéo non disponible sur cet appareil.</div>}
+          : <div style={{ ...TY.small, color: ON.text, padding: 32 }}>{audio ? "Enregistrement non disponible sur cet appareil." : "Vidéo non disponible sur cet appareil."}</div>}
       </div>
       <div style={{ padding: "16px 16px 16px", display: "grid", gap: 8 }}>
         <div style={{ position: "relative", height: 44 }}>
-          <Bare aria-label="Se placer dans la vidéo" onClick={e => { const r = e.currentTarget.getBoundingClientRect(); seek(((e.clientX - r.left) / r.width) * dur); }}
+          <Bare aria-label={`Se placer dans ${audio ? "l'enregistrement" : "la vidéo"}`} onClick={e => { const r = e.currentTarget.getBoundingClientRect(); seek(((e.clientX - r.left) / r.width) * dur); }}
             style={{ position: "absolute", left: 0, right: 0, top: 0, bottom: 0, display: "flex", alignItems: "center" }}>
             <span style={{ position: "relative", display: "block", width: "100%", height: 8, background: T.lineLt, borderRadius: RAD.pill }}>
               <span style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: `${Math.min(100, (cur / dur) * 100)}%`, background: T.primary, borderRadius: RAD.pill }} />
@@ -88,9 +89,12 @@ export function Player({ take, url, markers, active, onActive, playerRef }) {
           ))}
         </div>
         <div style={{ display: "flex", justifyContent: "space-between", ...TY.time, color: T.muted }}><span>{fmt(cur)}</span><span>{fmt(dur)}</span></div>
-        <div style={{ display: "flex", gap: 16, flexWrap: "wrap", ...TY.caption, color: T.body, marginTop: 4 }}>
-          <Legend kind="appui" t="Point d'appui" /><Legend kind="explore" t="À explorer" /><Legend kind="note" t="Remarque du coach" />
-        </div>
+        {/* Légende des seuls repères présents (aucune légende « Point d'appui » sans retour de l'assistant) */}
+        {markers.length > 0 && (
+          <div style={{ display: "flex", gap: 16, flexWrap: "wrap", ...TY.caption, color: T.body, marginTop: 4 }}>
+            {[["appui", "Point d'appui"], ["explore", "À explorer"], ["note", "Remarque du coach"]].filter(([k]) => markers.some(m => kindOf(m) === k) || (k !== "note" && markers.some(m => m.kind === "ia"))).map(([k, t]) => <Legend key={k} kind={k} t={t} />)}
+          </div>
+        )}
       </div>
     </Card>
   );
@@ -149,7 +153,17 @@ export function ReportBody({ take, mode, counselorName }) {
       })}
     </Card>
   );
-  const synth = <Notice tone="info" icon={I.sparkle} style={{ ...TY.bodyLg }}><strong>En résumé.</strong> {A.synthese}</Notice>;
+  /* Sans retour de l'assistant (BUG-05) : ni synthèse ni repères, seulement la réponse et, s'il existe, le rapport du coach. */
+  const synth = noFeedback(take) ? null : <Notice tone="info" icon={I.sparkle} style={{ ...TY.bodyLg }}><strong>En résumé.</strong> {A.synthese}</Notice>;
+  if (mode === "video" && !A.dimensions.length) {
+    return (
+      <div style={{ display: "grid", gap: GAP.stack }}>
+        {intro}
+        <Player take={take} url={url} markers={markers} active={active} onActive={setActive} playerRef={playerRef} />
+        {synth}{notes}
+      </div>
+    );
+  }
 
   if (mode !== "video") {
     return (

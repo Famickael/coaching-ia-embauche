@@ -17,8 +17,11 @@ import RecruiterVoice from "./RecruiterVoice.jsx";
 import { searchJobs, norm } from "./lib/jobs.js";
 import { FEELINGS, feelingAck } from "./lib/assistant.js";
 import { useLeaveGuard } from "./lib/hooks.js";
+import { hasMedia, isAudio, noFeedback } from "./lib/takes.js";
 
 const CODE_ERR = "Ce code ne fonctionne pas. Vérifiez les 6 caractères, ou demandez-le à votre coach.";
+/* Ouvrir une réponse : choix du mode de lecture seulement s'il y a un retour de l'assistant et un enregistrement. */
+const openView = t => (!hasMedia(t) ? ["report", "simple"] : noFeedback(t) ? ["report", "video"] : ["choose", "simple"]);
 const wrap = w => ({ maxWidth: w, margin: "0 auto", width: "100%" });
 const dateFr = iso => new Date(iso).toLocaleString("fr-FR", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" });
 const stack = (gap = GAP.stack) => ({ display: "grid", gap });
@@ -53,8 +56,9 @@ export default function Beneficiary({ initialCode, setModal, onCode }) {
   if (!p.consent) return <main className="rp-page" style={PAGE}><Consent p={p} onBack={() => setCode(null)} /></main>;
 
   const go = (v, patch) => { if (patch) setCtx(c => ({ ...c, ...patch })); setView(v); window.scrollTo({ top: 0 }); };
-  const flowSteps = ["Questions", "Réponse", "Préparation", "Retour"];
-  const flowIdx = { pick: 0, record: 1, processing: 2, choose: 3, report: 3 }[view];
+  /* Sans retour de l'assistant (BUG-05) : trois étapes, pas de « Préparation » ni de « Retour ». */
+  const flowSteps = p.consent.ai ? ["Questions", "Réponse", "Préparation", "Retour"] : ["Questions", "Réponse", "Réponse gardée"];
+  const flowIdx = (p.consent.ai ? { pick: 0, record: 1, processing: 2, choose: 3, report: 3 } : { pick: 0, record: 1, processing: 2, choose: 2, report: 2 })[view];
   const total = ctx.from === "recap" ? 0 : ctx.queue?.length || 0; // réponse rouverte depuis le récapitulatif : pas de suite de série
   const series = total ? { i: ctx.qi || 0, n: total, hasNext: (ctx.qi || 0) < total - 1, full: !!ctx.full, step: ctx.steps?.[ctx.qi || 0] } : null;
   const nextQuestion = () => go("record", { qi: series.i + 1, question: ctx.queue[series.i + 1], takeId: null, recording: null });
@@ -217,13 +221,13 @@ function Home({ p, takes, go, counselor }) {
               const st = t.report ? ["Rapport reçu", "success"] : t.shared ? ["Envoyée à votre coach", "primary"] : ["Gardée sur cet appareil", "muted"];
               return (
                 <Card key={t.id} pad="sm" hover style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
-                  <IconTile icon={t.hasVideo && !t.mime?.startsWith("audio") ? I.play : I.mic} />
+                  <IconTile icon={hasMedia(t) && !isAudio(t) ? I.play : I.mic} />
                   <div style={{ flex: 1, minWidth: 200, ...stack(4) }}>
                     <div style={{ ...TY.h4, color: T.navy }}>{t.question}</div>
                     <div style={{ ...TY.caption, color: T.muted }}>{dateFr(t.createdAt)} · {dur(t.duration)}</div>
                   </div>
                   <Tag tone={st[1]}>{st[0]}</Tag>
-                  <Btn kind="secondary" size="sm" onClick={() => go(t.hasVideo ? "choose" : "report", { takeId: t.id, mode: "simple", queue: null, from: null })}>Ouvrir</Btn>
+                  <Btn kind="secondary" size="sm" onClick={() => { const [v, mode] = openView(t); go(v, { takeId: t.id, mode, queue: null, from: null }); }}>Ouvrir</Btn>
                 </Card>
               );
             })}
@@ -588,7 +592,7 @@ function Pick({ p, ctx, go }) {
 
 /* ─── Transcription + analyse, puis enregistrement de la prise ─── */
 function Processing({ p, ctx, go }) {
-  const [stage, setStage] = useState("Analyse de votre réponse…");
+  const [stage, setStage] = useState(p.consent.ai ? "Préparation de votre retour…" : "Enregistrement de votre réponse sur cet appareil…");
   const [err, setErr] = useState(null);
   const [attempt, setAttempt] = useState(0);
   const rec = ctx.recording;
@@ -615,7 +619,8 @@ function Processing({ p, ctx, go }) {
         }
         if (!alive) return;
         const id = await createTake({ code: p.code, question: ctx.question, duration: rec.duration, blob: rec.blob, transcript, segments, gaze: rec.gaze, analysis });
-        if (alive) go("choose", { takeId: id, recording: null, seriesTakes: ctx.queue ? { ...(ctx.seriesTakes || {}), [ctx.qi || 0]: id } : null });
+        const [v, mode] = openView({ hasMedia: !!rec.blob, analysis });
+        if (alive) go(v, { takeId: id, mode, recording: null, seriesTakes: ctx.queue ? { ...(ctx.seriesTakes || {}), [ctx.qi || 0]: id } : null });
       } catch (e) {
         console.error(e);
         if (alive) setErr(String(e?.message || e));
@@ -627,10 +632,10 @@ function Processing({ p, ctx, go }) {
   return (
     <Card pad="lg" level={2} topbar="ai" style={{ ...wrap(W.form), textAlign: "center", display: "grid", justifyItems: "center", gap: 12 }}>
       {!err ? (<>
-        <h1 className="rp-sr">Analyse de votre réponse</h1>
+        <h1 className="rp-sr">{p.consent.ai ? "Préparation de votre retour" : "Enregistrement de votre réponse"}</h1>
         <BrandLoader label={stage} size={88} />
         <Txt v="body" color={T.body}>Tout se passe sur votre appareil. Cela peut prendre un moment.</Txt>
-        <Txt v="caption" color={T.muted}>{PHRASES.download}</Txt>
+        {p.consent.ai && <Txt v="caption" color={T.muted}>{PHRASES.download}</Txt>}
       </>) : (<>
         <Txt v="h2" as="h1" color={T.navy}>Votre réponse n'a pas pu être mise par écrit</Txt>
         <Txt v="body" color={T.body}>Vérifiez votre connexion à Internet, puis réessayez.</Txt>
@@ -663,7 +668,9 @@ function Choose({ take, go, series, back }) {
       </div>
       <div className="rp-stack" style={{ alignItems: "stretch" }}>
         {opt("simple", "Lire mon retour", "Sans me revoir", "Vous lisez ce que l'assistant a remarqué. Pratique si vous n'aimez pas vous revoir.", "Lire")}
-        {opt("video", "Me revoir en vidéo", "Avec les repères au bon moment", "Vous revoyez votre réponse. Chaque repère est placé au bon moment : touchez-le pour y aller.", "Me revoir", true)}
+        {isAudio(take)
+          ? opt("video", "Me réécouter", "Avec les repères au bon moment", "Vous réécoutez votre réponse. Chaque repère est placé au bon moment : touchez-le pour y aller.", "Me réécouter", true)
+          : opt("video", "Me revoir en vidéo", "Avec les repères au bon moment", "Vous revoyez votre réponse. Chaque repère est placé au bon moment : touchez-le pour y aller.", "Me revoir", true)}
       </div>
       <div><Back onClick={back} /></div>
     </div>
@@ -678,22 +685,23 @@ function TakeReport({ p, take, mode, go, series, nextQuestion, stopSeries, back 
     await deleteTake(take.id);
     if (series?.hasNext) nextQuestion(); else go("home", { queue: null });
   };
+  const nofb = noFeedback(take);
   const head = (t, d) => <div style={stack(4)}><div style={{ ...TY.h3, color: T.navy }}>{t}</div><div style={{ ...TY.small, color: T.body }}>{d}</div></div>;
   return (
     <div style={{ ...wrap(mode === "video" ? W.wide : W.read), ...stack(16) }}>
       <Card pad="none" level={2}>
-        <GradHead tag={take.report ? "Rapport de votre coach" : "Votre retour"} title={take.question}
-          sub={`${dateFr(take.createdAt)} · ${dur(take.duration)}. ${PHRASES.feedback}${take.analysis?.source === "llm" ? ` ${PHRASES.feedbackLlm}` : ""}`}
-          action={take.hasVideo && (
+        <GradHead tag={take.report ? "Rapport de votre coach" : nofb ? "Votre réponse" : "Votre retour"} title={take.question}
+          sub={`${dateFr(take.createdAt)} · ${dur(take.duration)}.${nofb ? " Vous avez choisi de ne pas recevoir le retour de l'assistant." : ` ${PHRASES.feedback}`}${take.analysis?.source === "llm" ? ` ${PHRASES.feedbackLlm}` : ""}`}
+          action={hasMedia(take) && !nofb && (
             <Btn kind="ghostDark" size="sm" className="noprint" onClick={() => go("report", { mode: mode === "video" ? "simple" : "video" })}>
-              {mode === "video" ? "Lire mon retour" : "Me revoir en vidéo"}
+              {mode === "video" ? "Lire mon retour" : isAudio(take) ? "Me réécouter" : "Me revoir en vidéo"}
             </Btn>)} />
       </Card>
       <ReportBody take={take} mode={mode} counselorName={p.counselor} />
       {series && (
         <Card style={{ ...actions, gap: 16 }} className="noprint">
           {head(series.hasNext ? `Question ${series.i + 1} sur ${series.n} terminée` : series.full ? "C'était la dernière question de l'entretien" : series.n > 1 ? "C'était la dernière question de votre sélection" : "Entraînement terminé",
-            series.hasNext ? "Prenez le temps de lire ce retour. Passez à la suite quand vous voulez." : "Vous retrouvez tous vos retours dans votre espace, et vous pouvez recommencer quand vous voulez.")}
+            series.hasNext ? (nofb ? "Prenez le temps de revoir votre réponse. Passez à la suite quand vous voulez." : "Prenez le temps de lire ce retour. Passez à la suite quand vous voulez.") : nofb ? "Vous retrouvez toutes vos réponses dans votre espace, et vous pouvez recommencer quand vous voulez." : "Vous retrouvez tous vos retours dans votre espace, et vous pouvez recommencer quand vous voulez.")}
           <div className="rp-actions" style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
             {series.hasNext && <Btn kind="ghost" size="sm" onClick={stopSeries}>Arrêter ici</Btn>}
             {series.hasNext
@@ -712,14 +720,14 @@ function TakeReport({ p, take, mode, go, series, nextQuestion, stopSeries, back 
         <div className="rp-actions" style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <Btn kind="danger" size="sm" onClick={del} icon={I.trash}>Supprimer cette réponse</Btn>
           {take.shared && !take.report && <Btn kind="ghost" size="sm" onClick={() => unshareTake(take.id)} icon={I.redo}>Reprendre mon envoi</Btn>}
-          {take.hasVideo && <Btn kind="ghost" size="sm" onClick={() => downloadTake(take)} icon={I.arrow}>{take.mime?.startsWith("audio") ? "Télécharger ma voix" : "Télécharger ma vidéo"}</Btn>}
+          {hasMedia(take) && <Btn kind="ghost" size="sm" onClick={() => downloadTake(take)} icon={I.arrow}>{isAudio(take) ? "Télécharger ma voix" : "Télécharger ma vidéo"}</Btn>}
           <Btn kind="ghost" size="sm" onClick={() => window.print()} icon={I.print}>Imprimer</Btn>
           {!series?.hasNext && <Btn kind="secondary" size="sm" onClick={() => go("pick", { queue: null, selection: null, preselect: null })} icon={I.redo}>M'entraîner encore</Btn>}
           {!take.shared && <Btn kind={series?.hasNext || series?.full ? "secondary" : "objective"} size="sm" onClick={() => go("share")} icon={I.send}>Envoyer à mon coach</Btn>}
         </div>
       </Card>
       <div className="noprint">
-        <Chip tone="ai" check={false} onClick={() => openAssistant("feedback")}><Icon d={I.chat} s={16} /> Une question sur ce retour ? Demandez à l'assistant</Chip>
+        <Chip tone="ai" check={false} onClick={() => openAssistant("feedback")}><Icon d={I.chat} s={16} /> {nofb ? "Une question sur l'entretien ? Demandez à l'assistant" : "Une question sur ce retour ? Demandez à l'assistant"}</Chip>
       </div>
       <div className="noprint"><Back onClick={back} /></div>
     </div>
@@ -795,7 +803,7 @@ function Recap({ p, ctx, s, go }) {
                   <div style={{ ...TY.h4, color: T.navy }}>{q}</div>
                   <div style={{ ...TY.caption, color: T.muted }}>{t ? `${dur(t.duration)} · ${t.shared ? "envoyée à votre coach" : "gardée sur cet appareil"}` : "Pas de réponse enregistrée"}</div>
                 </div>
-                {t && <Btn kind="secondary" size="sm" onClick={() => go(t.hasVideo ? "choose" : "report", { takeId: t.id, mode: "simple", from: "recap" })}>Ouvrir mon retour</Btn>}
+                {t && <Btn kind="secondary" size="sm" onClick={() => { const [v, mode] = openView(t); go(v, { takeId: t.id, mode, from: "recap" }); }}>{noFeedback(t) ? "Ouvrir ma réponse" : "Ouvrir mon retour"}</Btn>}
               </Card>
             </li>
           );

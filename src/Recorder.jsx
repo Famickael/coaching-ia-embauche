@@ -163,7 +163,7 @@ export default function Recorder({ question, onDone, onCancel, trackGaze = true,
         {phase === "done" && (
           <div className="rp-actions" style={{ display: "flex", gap: GAP.actions, flexWrap: "wrap" }}>
             <Btn kind="secondary" onClick={redo} icon={I.redo}>Recommencer</Btn>
-            <Btn kind="ai" onClick={() => onDone({ ...result, audioOnly })} iconRight={I.arrow}>{validateLabel}</Btn>
+            <Btn kind={trackGaze ? "ai" : "objective"} onClick={() => onDone({ ...result, audioOnly })} iconRight={I.arrow}>{validateLabel}</Btn>
           </div>
         )}
       </div>

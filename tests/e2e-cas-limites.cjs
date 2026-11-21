@@ -144,6 +144,47 @@ const take = (id, code, extra = {}) => ({ id, code, question: "Pouvez-vous vous 
     await ctx.close();
   });
 
+  /* Enregistre une réponse en voix seule à la première question proposée. */
+  async function recordVoice(p, validate) {
+    await p.getByRole("button", { name: "Commencer l'entraînement" }).click();
+    await p.getByRole("button", { name: "Tout retirer" }).click().catch(() => {});
+    await p.getByRole("checkbox", { name: /Pouvez-vous vous présenter/ }).click();
+    await p.getByRole("button", { name: "Commencer (1 question)" }).click();
+    await p.getByRole("button", { name: "Voix seule" }).click();
+    const start = p.getByRole("button", { name: "Démarrer l'enregistrement" });
+    await start.waitFor(); await p.waitForFunction(() => { const b = [...document.querySelectorAll("button")].find(x => x.textContent.includes("Démarrer l'enregistrement")); return b && !b.disabled; }, null, { timeout: 15000 });
+    await start.click(); await p.waitForTimeout(2500);
+    await p.getByRole("button", { name: "Arrêter l'enregistrement" }).click();
+    await p.getByRole("button", { name: validate }).click();
+  }
+
+  /* BUG-05 et BUG-06 : parcours sans retour de l'assistant, en voix seule : aucun texte du parcours avec assistant ou vidéo. */
+  await scenario("sans assistant, voix seule", async () => {
+    const { ctx, p } = await fresh(seed({ ai: false }));
+    await p.goto(BASE + "#/s/CASAAA");
+    await recordVoice(p, "Garder cette réponse");
+    await p.getByText("Votre réponse", { exact: true }).first().waitFor({ timeout: 15000 });
+    const txt = await p.locator("main").innerText();
+    for (const bad of [/votre retour est prêt/i, /vous lisez ce que l'assistant/i, /retour préparé automatiquement/i, /vidéo/i, /En résumé/]) check(!bad.test(txt), `BUG-05/06 : texte inattendu sans assistant en voix seule : ${bad}`);
+    check(/Réponse gardée/.test(txt), "BUG-05 : rail à trois étapes attendu");
+    check(await p.getByRole("button", { name: "Se placer dans l'enregistrement" }).count() === 1, "BUG-06 : barre de lecture nommée « vidéo » en voix seule");
+    await shot(p, "03-sans-assistant-voix");
+    await ctx.close();
+  });
+
+  /* BUG-06 : voix seule avec le retour de l'assistant : « Me réécouter », jamais « vidéo ». */
+  await scenario("voix seule avec assistant", async () => {
+    const { ctx, p } = await fresh(seed({ ai: true }));
+    await p.goto(BASE + "#/s/CASAAA");
+    await recordVoice(p, "Voir mon retour");
+    await p.getByText("Comment voulez-vous voir votre retour ?").waitFor({ timeout: 30000 });
+    const txt = await p.locator("main").innerText();
+    check(!/vidéo/i.test(txt), "BUG-06 : le choix du mode parle de vidéo en voix seule");
+    check(/Me réécouter/.test(txt), "BUG-06 : option « Me réécouter » absente");
+    await shot(p, "04-voix-avec-assistant");
+    await ctx.close();
+  });
+
   await b.close();
   if (errors.length) fails.push("erreurs JavaScript : " + errors.join(" | "));
   if (fails.length) { console.error("ECHEC\n- " + fails.join("\n- ")); process.exit(1); }

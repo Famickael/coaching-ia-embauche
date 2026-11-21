@@ -141,7 +141,7 @@ export async function createTake({ code, question, duration, blob, transcript, s
   if (blob) await saveVideo(id, blob);
   const t = {
     id, code, question, duration, transcript, segments, gaze, analysis,
-    hasVideo: !!blob, mime: blob?.type || null,
+    hasMedia: !!blob, mime: blob?.type || null, // hasVideo dans les anciennes données (lib/takes.js)
     createdAt: new Date().toISOString(),
     shared: false, sharedAt: null, note: "", report: null,
   };
