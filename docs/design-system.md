@@ -86,19 +86,37 @@ Demande du propriétaire : plus de profondeur et de présence de la marque sur l
 
 | Jeton | Composition | Emploi unique |
 |---|---|---|
-| `GRAD_TITLE` | `navy` vers `primary` | Début du titre d'accroche (texte découpé), contraste AA sur toute la longueur |
 | `GRAD_ACCROCHE` | `blueDk` vers `violet` | Fin d'accroche qui change et mots-clés de la phrase qui se colore (texte de 32 px et plus, seuil 3:1 vérifié par `PAIRS`) |
 | `GRAD_HERO` | `surface` vers `primaryBg` | Fond du héros de l'accueil |
 | `GRAD_SECTION` | `bg`, `primaryBg` au milieu, `bg` | Fond de la strate épinglée (section clé) |
 | `GRAD_PAGE` | `primaryBg` vers `bg` | Fond de `PageHero` (pages secondaires) |
 | `GLOW.blue`, `GLOW.violet` | bleu clair 22 %, violet 20 % | Halos (`Halo`) derrière les photos et le héros : décor, jamais sous du texte |
+| `FADE_FOOT` | masque opaque puis transparent sur 160 px avant le pied de page | Fond de l'accueil qui suit la souris : il s'efface avant le pied de page |
 | `HL.appui`, `HL.ai`, `HL.primary` | teintes de fond des rôles | Surlignage progressif d'un passage (cartes animées, strate) |
+
+Début du titre d'accroche (« Répétez votre entretien d'embauche, ») : couleur pleine `navy` dans les deux thèmes (presque blanc en sombre), sans dégradé ; seule la fin d'accroche qui change garde `GRAD_ACCROCHE`.
+
+**Fond de l'accueil.** Un seul calque fixe (`.rs-glow`) derrière toutes les sections de l'accueil, qui n'ont aucun fond propre (ni halo de section, ni `GRAD_HERO`, ni `GRAD_SECTION`) : aucune rupture entre le héros, la phrase et la strate. Il suit la souris ; sur tactile, il dérive lentement seul (`rsDrift`, 26 s, aller-retour, `transform` seulement) et glisse un peu au défilement et au doigt (`touchmove`), avec lissage, sans capteur d'orientation. Il s'efface avant le pied de page (`FADE_FOOT`, variable `--fy`), et le pied de page garde son fond opaque au-dessus. Fixe en mouvement réduit, masqué en mode concentration.
 
 Le bleu et le violet de ces dégradés et halos relèvent de l'exception « dégradé de la marque » ci-dessous : ils ne signalent ni l'assistant ni une action.
 
 Interdits : dégradé au survol d'un bouton non IA (le bouton `primary` devient `primaryDk` uni), `GRAD_AI` sur un élément sans rapport avec l'assistant (ex. vignette d'une prise), `GRAD_AI_SOFT` (supprimé).
 
 Le violet présent dans `GRAD` et `GRAD_MAIN` est la seule exception à « violet = IA » : c'est le dégradé de la marque (logo).
+
+#### Logo (v3.3)
+
+Le logo s'adapte aux couleurs du site, et non l'inverse. Il est rendu en couches masquées (canal alpha des images officielles : tracé, anticrénelage et barre du « t » redressée conservés), dont la couleur vient des jetons :
+
+| Partie | Jeton | Clair | Sombre |
+|---|---|---|---|
+| Symbole (bulles) | `GRAD_LOGO` (`blue` vers `violet`, 45°) | `#3893CD` vers `#5C4BB9` | `#5AAEE0` vers `#B4A9F5` |
+| Points de la bulle | `T.navy` | `#1B3A66` | `#E8EEF8` |
+| Mot-symbole | `T.navy` | `#1B3A66` | `#E8EEF8` |
+| Accents des « é » | `T.violet` | `#5C4BB9` | `#B4A9F5` |
+| Sur un dégradé de marque sombre (`white`, `dark`) | `ON.text` | blanc | blanc |
+
+Composants : `RepetMark`, `RepetWord`, `RepetLogo` (`src/ui.jsx`). La variante claire du thème sombre vient des mêmes jetons : plus de filtre d'inversion. Le logo animé d'attente (`BrandLoader`), l'écran de chargement d'`index.html` (valeurs recopiées des jetons, clair et sombre) et l'icône du site (`public/favicon.svg`, qui suit le thème du système) prennent les mêmes couleurs.
 
 ### 1.4 Texte sur fond sombre ou dégradé
 
@@ -449,7 +467,7 @@ Les pages publiques (accueil, à propos, solutions, ressources) utilisent les du
 
 - `transition: all` est interdit : on nomme les propriétés (`background-color`, `border-color`, `box-shadow`, `transform`, `opacity`).
 - Amplitudes : bouton 1 px vers le haut, carte cliquable 2 px, apparition 12 px. On n'anime que `transform` et `opacity`.
-- Animations en boucle limitées à trois : point d'enregistrement (`blink`), indicateur de chargement (`spin`) et indicateur du recruteur oral pendant la lecture (`rpVoice`, barres qui pulsent, immobiles dès que la voix se tait).
+- Animations en boucle limitées à quatre : point d'enregistrement (`blink`), indicateur de chargement (`spin`), indicateur du recruteur oral pendant la lecture (`rpVoice`, barres qui pulsent, immobiles dès que la voix se tait) et lente dérive du fond de l'accueil (`rsDrift`, 26 s, pages publiques seulement, demande du propriétaire).
 - `prefers-reduced-motion: reduce` neutralise toutes les animations et transitions (règle globale de `GStyle`, à conserver). Le contenu doit rester complet sans animation : rien n'est révélé uniquement par le mouvement.
 - Aucune animation pendant l'enregistrement autre que le point rouge.
 
@@ -696,5 +714,9 @@ Dégradés : `GRAD` et `GRAD_AI` recomposés selon 1.3, `GRAD_NIGHT` ajouté, `G
 | 2026-11-20 | « Revenir en haut » (44 px, empilé au-dessus du bouton de l'assistant), boutons de l'en-tête sans déplacement au survol | Demande du propriétaire |
 | 2026-11-20 | Logo animé d'attente réutilisable (`BrandLoader`) : connexion à un espace, analyse d'une réponse, fin d'enregistrement ; plein écran ou dans le bloc, `role="status"`, statique en mouvement réduit | Demande du propriétaire |
 | 2026-11-20 | Accueil : fins d'accroche et scènes synchronisées (4 scènes), minuteurs en direct, lignes d'encart du bas vers le haut, fond en dégradé qui suit la souris sur toute la page, strate en pile de cartes | Demande du propriétaire |
+
+| 2026-11-21 | Logo aligné sur les couleurs du site : couches masquées colorées par `GRAD_LOGO`, `T.navy`, `T.violet` ; variante claire automatique en thème sombre ; `LOGO_GRAD` (indigo saturé) supprimé ; chargement et icône du site aux mêmes couleurs | Demande du propriétaire : adapter le logo au site, logo invisible en thème sombre |
+| 2026-11-21 | Titre de l'accueil en couleur pleine `navy` jusqu'à la virgule, dans les deux thèmes ; `GRAD_TITLE` supprimé | Demande du propriétaire (« blanc jusqu'à la virgule » en sombre) |
+| 2026-11-21 | Fond de l'accueil : calque fixe unique, halos du héros retirés, dérive autonome sur tactile, fondu avant le pied de page (`FADE_FOOT`), pied de page opaque au-dessus | Demande du propriétaire : coupure visible sous le héros, fond derrière le pied de page |
 
 Ajouter une ligne à chaque évolution d'une règle ou d'une échelle.

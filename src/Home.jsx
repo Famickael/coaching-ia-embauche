@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { T, FIX, Bare, HL, GRAD_NIGHT, GRAD, GRAD_TITLE, GRAD_ACCROCHE, GRAD_HERO, GRAD_SECTION, GLOW, PACE, RAD, SH, RepetMark, Halo, Tag, Btn, Card, Icon, I, ON, TY, W, MO, SI, img, Eyebrow, Section, IconTile, Link, HEADER_H, HEADER_H_M } from "./ui.jsx";
+import { T, FIX, Bare, HL, GRAD_NIGHT, GRAD, GRAD_ACCROCHE, GRAD_HERO, GRAD_SECTION, GLOW, PACE, RAD, SH, RepetMark, Halo, Tag, Btn, Card, Icon, I, ON, TY, W, MO, SI, img, Eyebrow, Section, IconTile, Link, HEADER_H, HEADER_H_M } from "./ui.jsx";
 import { useReducedMotion, useCount, useInView, Reveal } from "./motion.jsx";
 
 /* Page d'accueil : héros (accroche qui change, scènes en boucle), strate épinglée en quatre étapes,
@@ -34,30 +34,56 @@ function useTicker(n, ms, paused) {
   return [i, setI];
 }
 
-/* Fond de l'accueil : dégradé violet et bleu qui suit la souris (variables CSS, requestAnimationFrame, lissage),
-   présent sur toute la hauteur de la page. Fixe au toucher, en mouvement réduit et en mode concentration. */
+/* Fond de l'accueil : un seul calque fixe derrière toutes les sections (aucun fond de section), donc sans rupture
+   entre le héros, la phrase et la strate. Dégradé violet et bleu qui suit la souris ; sur tactile, lente dérive autonome
+   (CSS), léger déplacement au défilement et au doigt, avec lissage. Il s'efface en douceur avant le pied de page (--fy).
+   Fixe en mouvement réduit, masqué en mode concentration. Aucun capteur d'orientation. */
 function MouseGlow() {
   const ref = useRef(null);
   const reduced = useReducedMotion();
   useEffect(() => {
     const el = ref.current; if (!el) return;
-    el.style.setProperty("--mx", "72%"); el.style.setProperty("--my", "18%");
-    if (reduced) return;
-    let tx = 0.72, ty = 0.18, x = tx, y = ty, raf = 0;
-    const tick = () => {
-      x += (tx - x) * 0.08; y += (ty - y) * 0.08;
-      el.style.setProperty("--mx", `${(x * 100).toFixed(2)}%`); el.style.setProperty("--my", `${(y * 100).toFixed(2)}%`);
-      raf = Math.abs(tx - x) + Math.abs(ty - y) > 0.001 ? requestAnimationFrame(tick) : 0;
+    let px = 0.72, py = 0.18, x = px, y = py, sy = 0, raf = 0;
+    const foot = () => document.querySelector("footer");
+    const paint = () => {
+      const f = foot();
+      el.style.setProperty("--fy", `${Math.round(f ? f.getBoundingClientRect().top : window.innerHeight * 2)}px`);
+      el.style.setProperty("--mx", `${(x * 100).toFixed(2)}%`); el.style.setProperty("--my", `${((y + sy) * 100).toFixed(2)}%`);
     };
+    const target = () => {
+      const max = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
+      return reduced ? 0 : (window.scrollY / max - 0.5) * 0.24;   // défilement : le dégradé glisse doucement
+    };
+    let ts = target(); sy = ts;
+    const tick = () => {
+      x += (px - x) * 0.08; y += (py - y) * 0.08; sy += (ts - sy) * 0.08;
+      paint();
+      raf = Math.abs(px - x) + Math.abs(py - y) + Math.abs(ts - sy) > 0.001 ? requestAnimationFrame(tick) : 0;
+    };
+    const kick = () => { if (!raf) raf = requestAnimationFrame(tick); };
+    paint();
+    const onScroll = () => { ts = target(); if (reduced) paint(); else kick(); };
+    const onResize = () => paint();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onResize);
+    if (reduced) return () => { window.removeEventListener("scroll", onScroll); window.removeEventListener("resize", onResize); };
     const mv = e => {
       if (e.pointerType !== "mouse") return;
-      tx = e.clientX / window.innerWidth; ty = e.clientY / window.innerHeight;
-      if (!raf) raf = requestAnimationFrame(tick);
+      px = e.clientX / window.innerWidth; py = e.clientY / window.innerHeight; kick();
+    };
+    /* Doigt : amplitude réduite de moitié autour de la position de repos. */
+    const tm = e => {
+      const t = e.touches[0]; if (!t) return;
+      px = 0.72 + (t.clientX / window.innerWidth - 0.72) * 0.5; py = 0.18 + (t.clientY / window.innerHeight - 0.18) * 0.5; kick();
     };
     window.addEventListener("pointermove", mv, { passive: true });
-    return () => { window.removeEventListener("pointermove", mv); cancelAnimationFrame(raf); };
+    window.addEventListener("touchmove", tm, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll); window.removeEventListener("resize", onResize);
+      window.removeEventListener("pointermove", mv); window.removeEventListener("touchmove", tm); cancelAnimationFrame(raf);
+    };
   }, [reduced]);
-  return <div ref={ref} aria-hidden className="rs-glow rp-deco" />;
+  return <div ref={ref} aria-hidden className="rs-glow rp-deco"><i /></div>;
 }
 
 /* Fins d'accroche et scènes synchronisées : même cadence, même fondu, un lien de sens entre le mot et l'image. */
@@ -68,8 +94,6 @@ function Hero({ go }) {
   const [w, setW] = useTicker(SCENES.length, PACE.scene, reduced || hover || stopped);
   return (
     <section style={{ position: "relative", overflowX: "clip" }}>
-      <Halo style={{ width: 640, height: 640, background: GLOW.blue, top: -160, right: -120 }} />
-      <Halo style={{ width: 480, height: 480, background: GLOW.violet, bottom: -200, left: -200 }} />
       <div className="rs-pad" style={{ position: "relative", maxWidth: W.page, margin: "0 auto", padding: "80px 24px" }}>
         <div className="rs-hero">
           <div className="up" style={{ display: "grid", gap: 24, justifyItems: "start" }}>
@@ -80,7 +104,7 @@ function Hero({ go }) {
             <h1 className="ty-display" style={{ ...TY.display, color: T.primary, margin: 0 }}>
               <span className="rs-sr">Répétez votre entretien d'embauche, {SCENES.map(x => x.ending.replace(".", "")).join(", ")}.</span>
               <span aria-hidden>
-                <span style={{ background: GRAD_TITLE, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>Répétez votre entretien d'embauche,</span>
+                <span style={{ color: T.navy }}>Répétez votre entretien d'embauche,</span>
                 <span className="rs-rot">
                   {SCENES.map(({ ending: e }, i) => (
                     <span key={e} className={i === w ? "on" : ""} style={{ background: GRAD_ACCROCHE, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>{e}</span>

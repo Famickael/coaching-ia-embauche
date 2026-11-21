@@ -93,11 +93,13 @@ export const GRAD_SOFT = `linear-gradient(135deg, rgba(56,96,151,.08), rgba(92,7
 export const GRAD_AI_BORDER = `linear-gradient(120deg, ${FIX.blueDk} 0%, ${FIX.violet} 50%, ${FIX.blueDk} 100%)`;
 /* Masque opaque (découpe des bordures en dégradé) : la couleur n'est jamais visible. */
 export const MASK = "linear-gradient(#000 0 0)";
-/* Couleurs du symbole animé (bulles du logo), identiques à l'écran de chargement d'index.html. */
-export const LOGO_GRAD = { l: ["#4A7BFB", "#3B48E9"], r: ["#4549E8", "#A064FB"] };
+/* Fond de l'accueil : opaque jusqu'à 160 px avant le pied de page (--fy, position du pied dans la fenêtre), puis transparent. */
+export const FADE_FOOT = "linear-gradient(to bottom, #000 0, #000 calc(var(--fy, 200vh) - 160px), transparent var(--fy, 200vh))";
+/* Symbole du logo (bulles) : dégradé de la marque du site, bleu clair vers violet, en variables (variante claire en thème sombre).
+   Mêmes couleurs dans le logo animé d'attente (BrandLoader) et l'écran de chargement d'index.html. */
+export const GRAD_LOGO = `linear-gradient(45deg, ${T.blue} 0%, ${T.violet} 100%)`;
 export const GRAD_NIGHT = `linear-gradient(160deg, ${FIX.navy} 0%, ${FIX.primaryDk} 60%, ${FIX.violet} 100%)`;
 /* Profondeur et marque (v3.1, demande du propriétaire) : titre d'accroche et fonds des sections clés. */
-export const GRAD_TITLE = `linear-gradient(120deg, ${T.navy} 0%, ${T.primary} 100%)`;        // début du titre d'accroche (texte, AA)
 export const GRAD_ACCROCHE = `linear-gradient(90deg, ${T.blueDk} 0%, ${T.violet} 100%)`;    // fin d'accroche, mots-clés de la phrase (texte large, AA)
 export const GRAD_HERO = `linear-gradient(180deg, ${T.surface} 0%, ${T.primaryBg} 100%)`;   // fond du héros de l'accueil
 export const GRAD_SECTION = `linear-gradient(180deg, ${T.bg} 0%, ${T.primaryBg} 50%, ${T.bg} 100%)`; // fond d'une section clé (strate)
@@ -220,6 +222,6 @@ export const PAIRS = [
   ["surface", "violet", 4.5], ["surface", "errorDk", 4.5], ["surface", "successDk", 4.5], ["surface", "blueDk", 4.5], ["surface", "navy", 4.5],
   ["accentLt", "navy", 4.5, "clair"],
   ["lineStrong", "surface", 3], ["lineStrong", "bg", 3],
-  // dégradés de texte de l'accueil (texte de 32 px et plus : seuil 3) ; GRAD_TITLE commence en navy
+  // dégradés de texte de l'accueil (texte de 32 px et plus : seuil 3) 
   ["primary", "primaryBg", 3], ["blueDk", "bg", 3], ["blueDk", "primaryBg", 3], ["violet", "primaryBg", 3],
 ];
